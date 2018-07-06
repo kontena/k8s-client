@@ -69,6 +69,8 @@ module Pharos
 
       # @param *options [Hash]
       def requests(*options, response_class: nil)
+        return [] if options.empty? # excon chokes
+
         excon.requests(options).map{|response| parse_response(response,
           response_class: response_class,
         ) }
