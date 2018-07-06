@@ -8,6 +8,8 @@ Options = Struct.new(
   :config,
   :server,
   :insecure_skip_tls_verify,
+  :namespace,
+  :all_namespaces,
 )
 
 options = Options.new()
@@ -21,6 +23,12 @@ parser = OptionParser.new do |parser|
   end
   parser.on('--insecure-skip-tls-verify') do
     options.insecure_skip_tls_verify = true
+  end
+  parser.on('-n', '--namespace=NAMESPACE') do |namespace|
+    options.namespace = namespace
+  end
+  parser.on('--all-namespaces') do
+    options.all_namespaces = true
   end
 end
 
@@ -36,6 +44,16 @@ end
 
 puts "Kube server version: #{client.version[:gitVersion]}"
 
-client.api('v1').resource('pods').list.each do |pod|
-  puts "pod: #{pod[:metadata][:name]}"
+if options.all_namespaces
+  namespace = nil # all
+elsif options.namespace
+  namespace = options.namespace
+elsif options.config && ns = options.config.context.namespace
+  namespace = ns
+else
+  namespace = nil # all
+end
+
+client.api('v1').resource('pods', namespace: namespace).list.each do |pod|
+  puts "namespace=#{pod[:metadata][:namespace]} pod: #{pod[:metadata][:name]}"
 end

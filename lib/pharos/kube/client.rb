@@ -42,8 +42,10 @@ module Pharos
       end
 
       # @param server [String] URL with protocol://host:port - any /path is ignored
-      def initialize(transport)
+      def initialize(transport, namespace: nil)
         @transport = transport
+        @namespace = namespace
+        
         @api_clients = {}
       end
 
