@@ -56,6 +56,18 @@ module Pharos
           namespace: namespace,
         ) }
       end
+
+      # Pipline request list requests.
+      # Returns flattened array with mixed resource kinds
+      #
+      # @param resources [Array<Pharos::Kube::ResourceClient>]
+      # @param namespace [String, nil]
+      # @return [Array<Hash>]
+      def list_resources(resources, namespace: nil)
+        api_paths = resources.map{|resource| resource.path(namespace: namespace) }
+        api_lists = @transport.gets(*api_paths, response_class: Pharos::Kube::API::MetaV1::List)
+        api_lists.map{|list| list.items}.flatten
+      end
     end
   end
 end

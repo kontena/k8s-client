@@ -59,13 +59,11 @@ end
 
   api.resources.each do |resource|
     puts "api=#{api.api_version} resource=#{resource.name}"
+  end
 
-    if resource.list?
-      resource_namespace = resource.namespaced? ? namespace : nil
-      resource.list(namespace: resource_namespace).each do |object|
-        puts "api=#{api.api_version} resource=#{resource.name} namespace=#{object[:metadata][:namespace]} name=#{object[:metadata][:name]}"
-      end
-    end
+  api.list_resources(api.resources.select{|resource| resource.list? }, namespace: namespace).each do |object|
+    # TODO: map resource name
+    puts "api=#{object[:apiVersion]} kind=#{object[:kind]} namespace=#{object[:metadata][:namespace]} name=#{object[:metadata][:name]}"
   end
 end
 
