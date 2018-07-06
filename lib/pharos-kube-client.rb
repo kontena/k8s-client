@@ -1,0 +1,1 @@
+require "pharos/kube/client"

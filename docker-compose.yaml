@@ -1,0 +1,5 @@
+rspec:
+  build: .
+  volumes:
+  - .:/app
+  command: rspec
