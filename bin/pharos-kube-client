@@ -13,6 +13,7 @@ Options = Struct.new(
 )
 
 options = Options.new()
+logger = Logger.new(STDERR)
 
 parser = OptionParser.new do |parser|
   parser.on('--kubeconfig=PATH') do |path|
@@ -42,7 +43,7 @@ else
   )
 end
 
-puts "Kube server version: #{client.version[:gitVersion]}"
+logger.info "Kube server version: #{client.version[:gitVersion]}"
 
 if options.all_namespaces
   namespace = nil # all
@@ -55,15 +56,17 @@ else
 end
 
 ([client.api] + client.apis(prefetch_resources: true)).each do |api|
-  puts "api=#{api.api_version}"
+  logger.info "api=#{api.api_version}"
 
-  api.resources.each do |resource|
-    puts "api=#{api.api_version} resource=#{resource.name}"
+  resources = api.resources.select{|resource| resource.list? }
+
+  resources.each do |resource|
+    logger.info "api=#{api.api_version} resource=#{resource.name}"
   end
 
-  api.list_resources(api.resources.select{|resource| resource.list? }, namespace: namespace).each do |object|
+  api.list_resources(resources, namespace: namespace).each do |object|
     # TODO: map resource name
-    puts "api=#{object[:apiVersion]} kind=#{object[:kind]} namespace=#{object[:metadata][:namespace]} name=#{object[:metadata][:name]}"
+    logger.info "api=#{object[:apiVersion]} kind=#{object[:kind]} namespace=#{object[:metadata][:namespace]} name=#{object[:metadata][:name]}"
   end
 end
 
