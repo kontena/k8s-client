@@ -66,7 +66,12 @@ module Pharos
       def list_resources(resources, namespace: nil)
         api_paths = resources.map{|resource| resource.path(namespace: namespace) }
         api_lists = @transport.gets(*api_paths, response_class: Pharos::Kube::API::MetaV1::List)
-        api_lists.map{|list| list.items}.flatten
+        api_lists_items = api_lists.map{|list| list.items.map {|item|
+          # XXX: hack because list items do not include kind/apiVersion
+          item.merge(apiVersion: list.apiVersion, kind: list.kind.sub(/List$/, ''))
+        } }
+
+        api_lists_items.flatten
       end
     end
   end
