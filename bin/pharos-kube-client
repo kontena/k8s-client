@@ -10,9 +10,12 @@ Options = Struct.new(
   :insecure_skip_tls_verify,
   :namespace,
   :all_namespaces,
+  :pipeline_list,
+  :label_selector,
 )
 
 options = Options.new()
+options.pipeline_list = true
 logger = Logger.new(STDERR)
 
 parser = OptionParser.new do |parser|
@@ -30,6 +33,9 @@ parser = OptionParser.new do |parser|
   end
   parser.on('--all-namespaces') do
     options.all_namespaces = true
+  end
+  parser.on('-l', '--label-selector=LABEL=VALUE') do |selector|
+    options.label_selector = selector
   end
 end
 
@@ -59,12 +65,24 @@ end
   logger.info "api=#{api.api_version}"
 
   resources = api.resources.select{|resource| resource.list? }
+  objects = []
 
   resources.each do |resource|
     logger.info "api=#{api.api_version} resource=#{resource.name}"
+
+    if !options.pipeline_list
+      objects << resource.list(labelSelector: options.label_selector)
+    end
   end
 
-  api.list_resources(resources, namespace: namespace).each do |object|
+  if options.pipeline_list
+    objects = api.list_resources(resources, namespace: namespace, labelSelector: options.label_selector)
+  else
+    objects.flatten!
+  end
+
+
+  objects.each do |object|
     # TODO: map resource name
     logger.info "api=#{object[:apiVersion]} kind=#{object[:kind]} namespace=#{object[:metadata][:namespace]} name=#{object[:metadata][:name]}"
   end

@@ -61,11 +61,15 @@ module Pharos
       end
 
       # @return [Array]
-      def list(namespace: @namespace)
+      def list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
         list = @transport.request(
           method: 'GET',
           path: self.path(namespace: namespace),
           response_class: Pharos::Kube::API::MetaV1::List,
+          query: {
+            'labelSelector' => labelSelector,
+            'fieldSelector' => fieldSelector,
+          },
         )
         list.items.map {|item|
           # XXX: hack because list items do not include kind/apiVersion
