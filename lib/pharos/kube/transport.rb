@@ -34,9 +34,7 @@ module Pharos
         File.join('/', *path)
       end
 
-      def request(response_class: nil, **options)
-        response = excon.request(**options)
-
+      def parse_response(response, response_class: nil)
         case response.headers['Content-Type']
         when 'application/json'
           response_data = JSON.parse(response.body,
@@ -49,7 +47,7 @@ module Pharos
 
 
         if response.status.between? 200, 299
-          
+
         elsif response_data.is_a?(Hash) && response_data[:kind] == 'Status'
           raise StandardError, response_data[:message] # XXX
         else
@@ -63,11 +61,36 @@ module Pharos
         end
       end
 
+      def request(response_class: nil, **options)
+        parse_response(excon.request(**options),
+          response_class: response_class,
+        )
+      end
+
+      # @param *options [Hash]
+      def requests(*options, response_class: nil)
+        excon.requests(options).map{|response| parse_response(response,
+          response_class: response_class,
+        ) }
+      end
+
+      # @param *path [String]
       def get(*path, **options)
         request(
           method: 'GET',
           path: self.path(*path),
           **options,
+        )
+      end
+
+      # @param *paths [String]
+      def gets(*paths, response_class: nil, **options)
+        requests(*paths.map{|path| {
+            method: 'GET',
+            path: self.path(path),
+            **options,
+          } },
+          response_class: response_class,
         )
       end
     end

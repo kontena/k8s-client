@@ -1,11 +1,22 @@
 module Pharos
   module Kube
     class APIClient
+      def self.path(api_version)
+        if api_version.include? '/'
+          File.join('/apis', api_version)
+        else
+          File.join('/api', api_version)
+        end
+
+      end
+
       # @param transport [Pharos::Kube::Transport]
       # @param api_version [String] "group/version" or "version" (core)
-      def initialize(transport, api_version)
+      # @param api_resources [Array<Pharos::Kube::API::MetaV1::APIResource>]
+      def initialize(transport, api_version, api_resources: nil)
         @transport = transport
         @api_version = api_version
+        @api_resources = api_resources
       end
 
       # @return [String]
@@ -14,11 +25,7 @@ module Pharos
       end
 
       def path(*path)
-        if @api_version.include? '/'
-          @transport.path('/apis', @api_version, *path)
-        else
-          @transport.path('/api', @api_version, *path)
-        end
+        @transport.path(self.class.path(@api_version), *path)
       end
 
       # @return [Array<Pharos::Kube::API::MetaV1::APIResource>]

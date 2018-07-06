@@ -54,7 +54,7 @@ else
   namespace = nil # all
 end
 
-([client.api] + client.apis).each do |api|
+([client.api] + client.apis(prefetch_resources: true)).each do |api|
   puts "api=#{api.api_version}"
 
   api.resources.each do |resource|
