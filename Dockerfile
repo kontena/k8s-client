@@ -8,4 +8,4 @@ RUN bundle install
 
 COPY . .
 
-CMD ["rspec"]
+ENTRYPOINT ["bundle", "exec"]
