@@ -8,6 +8,11 @@ module Pharos
         @api_version = api_version
       end
 
+      # @return [String]
+      def api_version
+        @api_version
+      end
+
       def path(*path)
         if @api_version.include? '/'
           @transport.path('/apis', @api_version, *path)
@@ -23,15 +28,26 @@ module Pharos
         ).resources
       end
 
+      # @param resource_name [String]
+      # @param namespace [String, nil]
       # @return [Pharos::Kube::ResourceClient]
       def resource(resource_name, namespace: nil)
-        api_resource = api_resources.find{|api_resource| api_resource[:name] == resource_name }
+        api_resource = api_resources.find{ |api_resource| api_resource[:name] == resource_name }
 
         fail "Unknown resource #{resource_name} for #{@api_version}" unless api_resource
 
         ResourceClient.new(@transport, self, api_resource,
           namespace: namespace,
         )
+      end
+
+      # @param resource_name [String]
+      # @param namespace [String, nil]
+      # @return [Array<Pharos::Kube::ResourceClient>]
+      def resources(namespace: nil)
+        api_resources.map{ |api_resource| ResourceClient.new(@transport, self, api_resource,
+          namespace: namespace,
+        ) }
       end
     end
   end

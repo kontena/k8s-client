@@ -47,18 +47,19 @@ module Pharos
           fail "Unknown response type: #{response.headers['Content-Type']}"
         end
 
-        if response_class
-          response_value = response_class.new(**response_data)
-        else
-          response_value = response_data # Hash
-        end
 
         if response.status.between? 200, 299
-          return response_value
+          
         elsif response_data.is_a?(Hash) && response_data[:kind] == 'Status'
           raise StandardError, response_data[:message] # XXX
         else
           raise StandardError, response.reason_phrase # XXX
+        end
+
+        if response_class
+          return response_class.new(**response_data)
+        else
+          return response_data # Hash
         end
       end
 

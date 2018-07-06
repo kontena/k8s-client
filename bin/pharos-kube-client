@@ -54,6 +54,21 @@ else
   namespace = nil # all
 end
 
-client.api('v1').resource('pods', namespace: namespace).list.each do |pod|
-  puts "namespace=#{pod[:metadata][:namespace]} pod: #{pod[:metadata][:name]}"
+([client.api] + client.apis).each do |api|
+  puts "api=#{api.api_version}"
+
+  api.resources.each do |resource|
+    puts "api=#{api.api_version} resource=#{resource.name}"
+
+    if resource.list?
+      resource_namespace = resource.namespaced? ? namespace : nil
+      resource.list(namespace: resource_namespace).each do |object|
+        puts "api=#{api.api_version} resource=#{resource.name} namespace=#{object[:metadata][:namespace]} name=#{object[:metadata][:name]}"
+      end
+    end
+  end
 end
+
+#client.api('v1').resource('pods', namespace: namespace).list.each do |pod|
+#  puts "namespace=#{pod[:metadata][:namespace]} pod: #{pod[:metadata][:name]}"
+#end

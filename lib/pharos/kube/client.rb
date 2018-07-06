@@ -45,7 +45,7 @@ module Pharos
       def initialize(transport, namespace: nil)
         @transport = transport
         @namespace = namespace
-        
+
         @api_clients = {}
       end
 
@@ -58,6 +58,15 @@ module Pharos
       # @return [APIClient]
       def api(api_version = 'v1')
         @api_clients[api_version] ||= APIClient.new(@transport, api_version)
+      end
+
+      # @return [Array<APIClient>]
+      def apis
+        api_group_list = @transport.get('/apis',
+          response_class: Pharos::Kube::API::MetaV1::APIGroupList,
+        )
+
+        api_group_list.groups.map{|api_group| api(api_group.preferredVersion.groupVersion) }
       end
     end
   end
