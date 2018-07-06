@@ -14,11 +14,9 @@ module Pharos
       }
 
       # @param server [String] URL with protocol://host:port - any /path is ignored
-      def initialize(server,
-        insecure_skip_tls_verify: false
-      )
+      def initialize(server, **options)
         @server = server
-        @insecure_skip_tls_verify = insecure_skip_tls_verify
+        @options = options
       end
 
       # @return [Excon::Connection]
@@ -27,7 +25,7 @@ module Pharos
           persistent: true,
           middlewares: EXCON_MIDDLEWARES,
           headers: REQUEST_HEADERS,
-          ssl_verify_peer: @insecure_skip_tls_verify ? false : true,
+          **@options
         )
       end
 

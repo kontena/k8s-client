@@ -2,6 +2,7 @@ module Pharos
   module Kube
     module API
       module MetaV1
+        # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#APIResource
         class APIResource < Struct
           attribute :name, Types::Strict::String
           attribute :singularName, Types::Strict::String
@@ -14,6 +15,7 @@ module Pharos
           attribute :categories, Types::Strict::Array.of(Types::Strict::String).optional.default([])
         end
 
+        # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#APIResourceList
         class APIResourceList < Resource
           attribute :groupVersion, Types::Strict::String
           attribute :resources, Types::Strict::Array.of(APIResource)
