@@ -29,11 +29,14 @@ module Pharos
         )
       end
 
+      # @return [Array]
       def list()
-        @transport.request(
+        list = @transport.request(
           method: 'GET',
           path: self.path(),
+          response_class: Pharos::Kube::API::MetaV1::List,
         )
+        list.items
       end
     end
   end

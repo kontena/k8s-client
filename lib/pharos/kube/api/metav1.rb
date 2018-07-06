@@ -16,3 +16,4 @@ module Pharos
 end
 
 require 'pharos/kube/api/metav1/api_resource'
+require 'pharos/kube/api/metav1/list'
