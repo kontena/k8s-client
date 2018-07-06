@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'uri'
+require 'pharos-kube-client'
+
+Options = Struct.new(
+  :config,
+  :server,
+  :insecure_skip_tls_verify,
+)
+
+options = Options.new()
+
+parser = OptionParser.new do |parser|
+  parser.on('--kubeconfig=PATH') do |path|
+    options.config = Pharos::Kube::Config.load_file(path)
+  end
+  parser.on('--server=SERVER') do |server|
+    options.server = URI(server)
+  end
+  parser.on('--insecure-skip-tls-verify') do
+    options.insecure_skip_tls_verify = true
+  end
+end
+
+parser.parse!
+
+if options.config
+  client = Pharos::Kube::Client.config(options.config)
+else
+  client = Pharos::Kube.client(options.server.to_s,
+    ssl_verify_peer: !options.insecure_skip_tls_verify,
+  )
+end
+
+puts "Kube server version: #{client.version[:gitVersion]}"
+
+client.api('v1').resource('pods').list.each do |pod|
+  puts "pod: #{pod[:metadata][:name]}"
+end
