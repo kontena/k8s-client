@@ -15,7 +15,6 @@ Options = Struct.new(
 )
 
 options = Options.new()
-options.pipeline_list = true
 logger = Logger.new(STDERR)
 
 parser = OptionParser.new do |parser|
@@ -36,6 +35,9 @@ parser = OptionParser.new do |parser|
   end
   parser.on('-l', '--label-selector=LABEL=VALUE') do |selector|
     options.label_selector = selector
+  end
+  parser.on('--pipeline-list') do
+    options.pipeline_list = true
   end
 end
 
@@ -65,26 +67,23 @@ end
   logger.info "api=#{api.api_version}"
 
   resources = api.resources.select{|resource| resource.list? }
-  objects = []
-
-  resources.each do |resource|
-    logger.info "api=#{api.api_version} resource=#{resource.name}"
-
-    if !options.pipeline_list
-      objects << resource.list(labelSelector: options.label_selector)
-    end
-  end
 
   if options.pipeline_list
     objects = api.list_resources(resources, namespace: namespace, labelSelector: options.label_selector)
+    objects.each do |object|
+      # TODO: map resource name
+      logger.info "api=#{object[:apiVersion]} kind=#{object[:kind]} namespace=#{object[:metadata][:namespace]} name=#{object[:metadata][:name]}"
+    end
   else
-    objects.flatten!
-  end
+    resources.each do |resource|
+      logger.info "api=#{api.api_version} resource=#{resource.name}"
 
-
-  objects.each do |object|
-    # TODO: map resource name
-    logger.info "api=#{object[:apiVersion]} kind=#{object[:kind]} namespace=#{object[:metadata][:namespace]} name=#{object[:metadata][:name]}"
+      objects = resource.list(labelSelector: options.label_selector)
+      objects.each do |object|
+        # TODO: map resource name
+        logger.info "api=#{object[:apiVersion]} kind=#{object[:kind]} namespace=#{object[:metadata][:namespace]} name=#{object[:metadata][:name]}"
+      end
+    end
   end
 end
 

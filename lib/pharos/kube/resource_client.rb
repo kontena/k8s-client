@@ -72,8 +72,8 @@ module Pharos
           },
         )
         list.items.map {|item|
-          # XXX: hack because list items do not include kind/apiVersion
-          item.merge(apiVersion: list.apiVersion, kind: list.kind.sub(/List$/, ''))
+          # list items omit kind/apiVersion
+          item.merge(apiVersion: list.apiVersion, kind: @api_resource.kind)
         }
       end
     end
