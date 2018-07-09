@@ -1,5 +1,5 @@
 rspec:
   build: .
   volumes:
-  - .:/app:ro
+  - .:/app
   command: rspec

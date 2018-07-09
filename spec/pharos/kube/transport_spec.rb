@@ -43,4 +43,45 @@ RSpec.describe Pharos::Kube::Transport do
       expect(subject.path('apis/test', 'foo')).to eq '/apis/test/foo'
     end
   end
+
+  context "for a stub /test" do
+    before do
+      stub_request(:get, 'localhost:8080/test')
+        .to_return(
+          status: 200,
+          body: JSON.dump({'test' => true}),
+          headers: { 'Content-Type' => 'application/json' }
+        )
+    end
+
+    describe '#get' do
+      it "returns the test JSON" do
+        expect(subject.get('/test')).to eq({test: true})
+      end
+    end
+  end
+
+  context "for a stub /api/v1/nodes" do
+    before do
+      stub_request(:get, 'localhost:8080/api/v1/nodes')
+        .to_return(
+          status: 200,
+          body: fixture('api/nodes-list.json'),
+          headers: { 'Content-Type' => 'application/json' }
+        )
+    end
+
+    describe '#get response_class:' do
+      it "returns the list" do
+        list = subject.get('/api/v1/nodes',
+          response_class: Pharos::Kube::API::MetaV1::List,
+        )
+
+        expect(list).to be_a Pharos::Kube::API::MetaV1::List
+        expect(list.items).to match [
+          hash_including(metadata: hash_including(name: 'ubuntu-xenial')),
+        ]
+      end
+    end
+  end
 end
