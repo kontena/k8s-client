@@ -1,5 +1,5 @@
 require "bundler/setup"
-require "pharos/kube/client"
+require "pharos-kube-client"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
