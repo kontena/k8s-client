@@ -84,4 +84,21 @@ RSpec.describe Pharos::Kube::Transport do
       end
     end
   end
+
+  context "for a 403 error" do
+    before do
+      stub_request(:get, 'localhost:8080/api/v1/nodes')
+        .to_return(
+          status: 403,
+          body: fixture('api/error-forbidden.json'),
+          headers: { 'Content-Type' => 'application/json' }
+        )
+    end
+
+    describe '#get:' do
+      it "raises Forbidden" do
+        expect{subject.get('/api/v1/nodes')}.to raise_error Pharos::Kube::Error::Forbidden, 'nodes is forbidden: User "system:anonymous" cannot list nodes at the cluster scope'
+      end
+    end
+  end
 end

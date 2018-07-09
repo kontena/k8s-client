@@ -1,0 +1,14 @@
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {
+    
+  },
+  "status": "Failure",
+  "message": "nodes is forbidden: User \"system:anonymous\" cannot list nodes at the cluster scope",
+  "reason": "Forbidden",
+  "details": {
+    "kind": "nodes"
+  },
+  "code": 403
+}

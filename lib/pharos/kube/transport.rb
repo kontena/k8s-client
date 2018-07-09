@@ -69,24 +69,33 @@ module Pharos
         File.join('/', *path)
       end
 
+      # @raise [Pharos::Kube::Error]
+      # @raise [Excon::Error] XXX: wrap?
+      # @return [response_class, Hash]
       def parse_response(response, response_class: nil)
         case response.headers['Content-Type']
         when 'application/json'
           response_data = JSON.parse(response.body,
             symbolize_names: true,
           )
+
+          unless response_data.is_a? Hash
+            raise Pharos::Kube::Error, "Invalid JSON response: #{response_data.inspect}"
+          end
+        # XXX: text/plain for errors?
         else
-          # TODO: raise appropriate error
-          fail "Unknown response type: #{response.headers['Content-Type']}"
+          raise Pharos::Kube::Error, "Invalid response Content-Type: #{response.headers['Content-Type']}"
         end
 
-
         if response.status.between? 200, 299
+          # success
+        elsif response_data[:kind] == 'Status'
+          status = Pharos::Kube::API::MetaV1::Status.new(**response_data)
+          error_class = Pharos::Kube::Error::HTTP_STATUS_ERRORS[response.status] || Pharos::Kube::Error::Status
 
-        elsif response_data.is_a?(Hash) && response_data[:kind] == 'Status'
-          raise StandardError, response_data[:message] # XXX
+          raise error_class.new(response.status, status)
         else
-          raise StandardError, response.reason_phrase # XXX
+          raise Pharos::Kube::Error::API.new(response.status, response.reason_phrase)
         end
 
         if response_class
