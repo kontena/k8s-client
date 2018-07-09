@@ -10,29 +10,19 @@ module Pharos
         include Dry::Types.module
       end
 
-      class Struct < Dry::Struct
-        transform_keys do |key|
-          key.gsub('-', '_').to_sym
-        end
-      end
-
-      transform_keys do |key|
-        key.gsub('-', '_').to_sym
-      end
-
-      class Cluster < Struct
+      class Cluster < Dry::Struct
         attribute :server, Types::String
         attribute :insecure_skip_tls_verify, Types::Bool.optional.default(nil)
         attribute :certificate_authority, Types::String.optional.default(nil)
         attribute :certificate_authority_data, Types::String.optional.default(nil)
         attribute :extensions, Types::Strict::Array.optional.default(nil)
       end
-      class NamedCluster < Struct
+      class NamedCluster < Dry::Struct
         attribute :name, Types::String
         attribute :cluster, Cluster
       end
 
-      class User < Struct
+      class User < Dry::Struct
         attribute :client_certificate, Types::String.optional.default(nil)
         attribute :client_certificate_data, Types::String.optional.default(nil)
         attribute :client_key, Types::String.optional.default(nil)
@@ -48,18 +38,18 @@ module Pharos
         attribute :exec, Types::Strict::Hash.optional.default(nil)
         attribute :extensions, Types::Strict::Array.optional.default(nil)
       end
-      class NamedUser < Struct
+      class NamedUser < Dry::Struct
         attribute :name, Types::String
         attribute :user, User
       end
 
-      class Context < Struct
+      class Context < Dry::Struct
         attribute :cluster, Types::Strict::String
         attribute :user, Types::Strict::String
         attribute :namespace, Types::Strict::String.optional.default(nil)
         attribute :extensions, Types::Strict::Array.optional.default(nil)
       end
-      class NamedContext < Struct
+      class NamedContext < Dry::Struct
         attribute :name, Types::String
         attribute :context, Context
       end
@@ -73,10 +63,24 @@ module Pharos
       attribute :current_context, Types::Strict::String
       attribute :extensions, Types::Strict::Array.optional.default(nil)
 
+      # recursively transform YAML keys to ruby attribute symbols
+      def self.transform_yaml(value)
+        case value
+        when Hash
+          Hash[value.keys.map{|key|
+            [key.gsub('-', '_').to_sym, transform_yaml(value[key])]
+          }]
+        when Array
+          value.map{|v| transform_yaml(v)}
+        else
+          value
+        end
+      end
+
       # @param path [String]
       # @return [Pharos::Kube::Config]
       def self.load_file(path)
-        return new(YAML.load_file(path))
+        return new(transform_yaml(YAML.load_file(path)))
       end
 
       # TODO: raise error if not found
