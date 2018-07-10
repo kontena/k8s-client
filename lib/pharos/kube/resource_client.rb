@@ -79,6 +79,25 @@ module Pharos
           @resource_class.new(apiVersion: list.apiVersion, kind: @api_resource.kind, **item)
         }
       end
+
+      # @return [Bool]
+      def update?
+        @api_resource.verbs.include? 'update'
+      end
+
+      # @param resource [resource_class] with metadata.resourceVersion set
+      # @return [resource_class]
+      def update(resource)
+        @transport.request(
+          method: 'PUT',
+          path: self.path(resource.metadata.name, namespace: resource.metadata.namespace),
+          headers: {
+            'Content-Type' => 'application/json',
+          },
+          body: JSON.generate(resource.to_json),
+          response_class: @resource_class,
+        )
+      end
     end
   end
 end

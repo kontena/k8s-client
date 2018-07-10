@@ -14,6 +14,14 @@ module Pharos
         @attrs
       end
 
+      def to_hash
+        @attrs
+      end
+
+      def to_json
+        @attrs
+      end
+
       def [](attr)
         @attrs[attr]
       end

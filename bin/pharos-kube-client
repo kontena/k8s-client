@@ -14,6 +14,8 @@ Options = Struct.new(
   :label_selector,
   :list_resources,
   :list_pods,
+  :update_node,
+  :node_unschedulable
 )
 
 options = Options.new()
@@ -46,6 +48,12 @@ parser = OptionParser.new do |parser|
   end
   parser.on('--list-pods') do
     options.list_pods = true
+  end
+  parser.on('--update-node=NODE') do |node|
+    options.update_node = node
+  end
+  parser.on('--node-unschedulable=BOOL', TrueClass) do |bool|
+    options.node_unschedulable = bool
   end
 end
 
@@ -99,4 +107,18 @@ if options.list_pods
   client.api('v1').resource('pods', namespace: namespace).list.each do |pod|
     puts "namespace=#{pod.metadata.namespace} pod: #{pod.metadata.name} node=#{pod[:spec][:nodeName]}"
   end
+end
+
+if options.update_node
+  node = client.api('v1').resource('nodes').get(options.update_node)
+
+  puts "Update node=#{node.metadata.name}..."
+
+  if !options.node_unschedulable.nil?
+    puts "Set node=#{node.metadata.name} unschedulable: #{node[:spec][:unschedulable]} => #{options.node_unschedulable}"
+
+    node[:spec][:unschedulable] = options.node_unschedulable
+  end
+
+  client.api('v1').resource('nodes').update(node)
 end
