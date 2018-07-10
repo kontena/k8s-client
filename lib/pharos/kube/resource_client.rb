@@ -94,7 +94,7 @@ module Pharos
           headers: {
             'Content-Type' => 'application/json',
           },
-          body: JSON.generate(resource.to_json),
+          body: JSON.generate(resource.to_hash),
           response_class: @resource_class,
         )
       end
