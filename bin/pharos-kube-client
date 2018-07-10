@@ -27,6 +27,7 @@ Options = Struct.new(
   :delete_resources,
   :stack_name,
   :stack,
+  :prune_stack,
 )
 
 options = Options.new()
@@ -104,6 +105,9 @@ parser = OptionParser.new do |parser|
     options.stack = Pharos::Kube::Stack.load(path,
       name: options.stack_name,
     )
+  end
+  parser.on('--prune-stack=TRUE|FALSE', TrueClass) do |flag|
+    options.prune_stack = flag
   end
 end
 
@@ -240,5 +244,7 @@ end
 if options.stack
   logger.info "Apply stack #{options.stack.name}..."
 
-  options.stack.apply(client)
+  options.stack.apply(client,
+    prune: options.prune_stack,
+  )
 end

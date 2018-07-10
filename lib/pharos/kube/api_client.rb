@@ -87,10 +87,12 @@ module Pharos
       # Pipline request list requests.
       # Returns flattened array with mixed resource kinds
       #
-      # @param resources [Array<Pharos::Kube::ResourceClient>]
+      # @param resources [Array<Pharos::Kube::ResourceClient>] default is all listable resources
       # @param namespace [String, nil]
       # @return [Array<Pharos::Kube::Resource>]
-      def list_resources(resources, namespace: nil, labelSelector: nil, fieldSelector: nil)
+      def list_resources(resources = nil, namespace: nil, labelSelector: nil, fieldSelector: nil)
+        resources ||= self.resources.select{|resource| resource.list? }
+
         # TODO: skip non-namespaced resources if namespace is set?
         api_paths = resources.map{|resource| resource.path(namespace: namespace) }
         api_lists = @transport.gets(*api_paths,

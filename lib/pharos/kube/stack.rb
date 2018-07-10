@@ -29,15 +29,15 @@ module Pharos
         h = existing_resource ? existing_resource.to_hash : {}
         h.deep_merge!(resource.to_hash, overwrite_arrays: true)
         h.deep_merge!(metadata: {
-          labels: { LABEL => name },
-          annotations: { CHECKSUM_ANNOTATION => checksum },
+          labels: { LABEL.to_sym => name }, # XXX: map keys are symbols...
+          annotations: { CHECKSUM_ANNOTATION.to_sym => checksum }, # XXX: map keys are symbols...
         })
 
         Pharos::Kube::Resource.new(h)
       end
 
       # @return [Array<Pharos::Kube::Resource>]
-      def apply(client)
+      def apply(client, prune: true)
         resources.map do |resource|
           begin
             existing_resource = client.get_resource(resource)
@@ -45,6 +45,19 @@ module Pharos
             client.create_resource(apply_resource(resource))
           else
             client.update_resource(apply_resource(resource, existing_resource))
+          end
+        end
+
+        prune(client) if prune
+      end
+
+      def prune(client)
+        client.apis(prefetch_resources: true).each do |api|
+          api.list_resources(labelSelector: "#{LABEL}=#{name}").each do |resource|
+            resource_checksum = resource.metadata.annotations[CHECKSUM_ANNOTATION.to_sym] # XXX: map keys are symbols...
+            if resource_checksum != checksum
+              client.delete_resource(resource)
+            end
           end
         end
       end
