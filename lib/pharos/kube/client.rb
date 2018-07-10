@@ -56,6 +56,38 @@ module Pharos
 
         @api_group_list.groups.map{|api_group| api(api_group.preferredVersion.groupVersion) }
       end
+
+      # @param resource [Pharos::Kube::Resource]
+      # @param namespace [String, nil] default if resource is missing namespace
+      # @raise [Pharos::Kube::Error] unknown resource
+      # @return [Pharos::Kube::ResourceClient]
+      def client_for_resource(resource, namespace: nil)
+        api(resource.apiVersion).client_for_resource(resource, namespace: namespace)
+      end
+
+      # @param resource [Pharos::Kube::Resource]
+      # @return [Pharos::Kube::Resource]
+      def create_resource(resource)
+        client_for_resource(resource).create_resource(resource)
+      end
+
+      # @param resource [Pharos::Kube::Resource]
+      # @return [Pharos::Kube::Resource]
+      def get_resource(resource)
+        client_for_resource(resource).get_resource(resource)
+      end
+
+      # @param resource [Pharos::Kube::Resource]
+      # @return [Pharos::Kube::Resource]
+      def update_resource(resource)
+        client_for_resource(resource).update_resource(resource)
+      end
+
+      # @param resource [Pharos::Kube::Resource]
+      # @return [Pharos::Kube::Resource]
+      def delete_resource(resource)
+        client_for_resource(resource).delete_resource(resource)
+      end
     end
   end
 end

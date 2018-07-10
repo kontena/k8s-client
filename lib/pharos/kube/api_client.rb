@@ -57,6 +57,24 @@ module Pharos
         )
       end
 
+      # @param resource [Pharos::Kube::Resource]
+      # @param namespace [String, nil] default if resource is missing namespace
+      # @raise [Pharos::Kube::Error] unknown resource
+      # @return [Pharos::Kube::ResourceClient]
+      def client_for_resource(resource, namespace: nil)
+        unless @api_version == resource.apiVersion
+          raise Pharos::Kube::Error, "Invalid apiVersion=#{resource.apiVersion} for #{@api_version} client"
+        end
+
+        unless api_resource = api_resources.find{ |api_resource| api_resource.kind == resource.kind }
+          raise Pharos::Kube::Error, "Unknown resource kind=#{api_resource.kind} for #{@api_version}"
+        end
+
+        ResourceClient.new(@transport, self, api_resource,
+          namespace: resource.metadata.namespace || namespace,
+        )
+      end
+
       # @param resource_name [String]
       # @param namespace [String, nil]
       # @return [Array<Pharos::Kube::ResourceClient>]

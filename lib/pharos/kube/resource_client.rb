@@ -95,6 +95,16 @@ module Pharos
         )
       end
 
+      # @param resource [resource_class]
+      # @return [resource_class]
+      def get_resource(resource)
+        @transport.request(
+          method: 'GET',
+          path: self.path(resource.metadata.name, namespace: resource.metadata.namespace),
+          response_class: @resource_class,
+        )
+      end
+
       # @return [Bool]
       def list?
         @api_resource.verbs.include? 'list'
