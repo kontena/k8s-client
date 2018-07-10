@@ -8,6 +8,12 @@ module Pharos
         return new(**data)
       end
 
+      # @param filename [String] file path
+      # @return [self]
+      def self.from_file(filename)
+        return new(YAML.load_file(filename))
+      end
+
       attr_reader :kind, :apiVersion, :metadata
 
       def initialize(**attrs)
@@ -27,8 +33,8 @@ module Pharos
       end
 
       # @return [String]
-      def to_json
-        to_hash.to_json
+      def to_json(**options)
+        to_hash.to_json(**options)
       end
 
       def [](attr)

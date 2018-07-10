@@ -63,24 +63,10 @@ module Pharos
       attribute :current_context, Types::Strict::String
       attribute :extensions, Types::Strict::Array.optional.default(nil)
 
-      # recursively transform YAML keys to ruby attribute symbols
-      def self.transform_yaml(value)
-        case value
-        when Hash
-          Hash[value.keys.map{|key|
-            [key.gsub('-', '_').to_sym, transform_yaml(value[key])]
-          }]
-        when Array
-          value.map{|v| transform_yaml(v)}
-        else
-          value
-        end
-      end
-
       # @param path [String]
       # @return [Pharos::Kube::Config]
       def self.load_file(path)
-        return new(transform_yaml(YAML.load_file(path)))
+        return new(YAML.load_file(path))
       end
 
       # TODO: raise error if not found
