@@ -12,11 +12,9 @@ module Pharos
 
       # @param transport [Pharos::Kube::Transport]
       # @param api_version [String] "group/version" or "version" (core)
-      # @param api_resources [Array<Pharos::Kube::API::MetaV1::APIResource>]
-      def initialize(transport, api_version, api_resources: nil)
+      def initialize(transport, api_version)
         @transport = transport
         @api_version = api_version
-        @api_resources = api_resources
       end
 
       # @return [String]
@@ -28,6 +26,16 @@ module Pharos
         @transport.path(self.class.path(@api_version), *path)
       end
 
+      # @return [Bool] loaded yet?
+      def api_resources?
+        !!@api_resources
+      end
+
+      # @param api_resources [Array<Pharos::Kube::API::MetaV1::APIResource>]
+      def api_resources=(api_resources)
+        @api_resources = api_resources
+      end
+
       # @return [Array<Pharos::Kube::API::MetaV1::APIResource>]
       def api_resources
         @api_resources ||= @transport.get(self.path,
@@ -37,11 +45,12 @@ module Pharos
 
       # @param resource_name [String]
       # @param namespace [String, nil]
+      # @raise [Pharos::Kube::Error] unknown resource
       # @return [Pharos::Kube::ResourceClient]
       def resource(resource_name, namespace: nil)
-        api_resource = api_resources.find{ |api_resource| api_resource[:name] == resource_name }
-
-        fail "Unknown resource #{resource_name} for #{@api_version}" unless api_resource
+        unless api_resource = api_resources.find{ |api_resource| api_resource.name == resource_name }
+          raise Pharos::Kube::Error, "Unknown resource #{resource_name} for #{@api_version}"
+        end
 
         ResourceClient.new(@transport, self, api_resource,
           namespace: namespace,
