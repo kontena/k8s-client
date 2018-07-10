@@ -69,6 +69,17 @@ module Pharos
         File.join('/', *path)
       end
 
+      # @return [Hash]
+      def request_options(request_object: nil, **options)
+        if request_object
+          options[:headers] ||= {}
+          options[:headers]['Content-Type'] = 'application/json'
+          options[:body] = request_object.to_json
+        end
+
+        options
+      end
+
       # @raise [Pharos::Kube::Error]
       # @raise [Excon::Error] XXX: wrap?
       # @return [response_class, Hash]
@@ -99,14 +110,16 @@ module Pharos
         end
 
         if response_class
-          return response_class.new(**response_data)
+          return response_class.from_json(response_data)
         else
           return response_data # Hash
         end
       end
 
       def request(response_class: nil, **options)
-        parse_response(excon.request(**options),
+        response = excon.request(**request_options(**options))
+
+        parse_response(response,
           response_class: response_class,
         )
       end
@@ -115,7 +128,9 @@ module Pharos
       def requests(*options, response_class: nil)
         return [] if options.empty? # excon chokes
 
-        excon.requests(options).map{|response| parse_response(response,
+        excon.requests(
+          options.map{|options| request_options(**options)}
+        ).map{|response| parse_response(response,
           response_class: response_class,
         ) }
       end

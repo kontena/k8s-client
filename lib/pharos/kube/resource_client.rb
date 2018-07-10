@@ -98,10 +98,7 @@ module Pharos
         @transport.request(
           method: 'PUT',
           path: self.path(resource.metadata.name, namespace: resource.metadata.namespace),
-          headers: {
-            'Content-Type' => 'application/json',
-          },
-          body: JSON.generate(resource.to_hash),
+          request_object: resource,
           response_class: @resource_class,
         )
       end
