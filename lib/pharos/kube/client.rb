@@ -54,7 +54,8 @@ module Pharos
           end
         end
 
-        @api_group_list.groups.map{|api_group| api(api_group.preferredVersion.groupVersion) }
+        # TODO: also prefetch api_resources for the core api?
+        [api] + @api_group_list.groups.map{|api_group| api(api_group.preferredVersion.groupVersion) }
       end
 
       # @param resource [Pharos::Kube::Resource]

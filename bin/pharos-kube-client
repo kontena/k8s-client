@@ -143,7 +143,7 @@ else
 end
 
 if options.list_resources
-  ([client.api] + client.apis(prefetch_resources: true)).each do |api|
+  client.apis(prefetch_resources: true).each do |api|
     logger.info "api=#{api.api_version}"
 
     resources = api.resources.select{|resource| resource.list? }
