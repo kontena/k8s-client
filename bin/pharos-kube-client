@@ -15,7 +15,9 @@ Options = Struct.new(
   :list_resources,
   :list_pods,
   :update_node,
-  :node_unschedulable
+  :node_unschedulable,
+  :delete_pod,
+  :delete_pods,
 )
 
 options = Options.new()
@@ -54,6 +56,12 @@ parser = OptionParser.new do |parser|
   end
   parser.on('--node-unschedulable=BOOL', TrueClass) do |bool|
     options.node_unschedulable = bool
+  end
+  parser.on('--delete-pod=POD') do |pod|
+    options.delete_pod = pod
+  end
+  parser.on('--delete-pods') do
+    options.delete_pods = true
   end
 end
 
@@ -121,4 +129,22 @@ if options.update_node
   end
 
   client.api('v1').resource('nodes').update(node)
+end
+
+if options.delete_pod
+  logger.info "Delete pod=#{options.delete_pod} in namespace=#{namespace}"
+
+  pod = client.api('v1').resource('pods', namespace: namespace).delete(options.delete_pod)
+
+  logger.debug { pod.metadata }
+end
+
+if options.delete_pods
+  logger.info "Delete pods with labelSelector=#{options.label_selector} in namespace=#{namespace}"
+
+  pods = client.api('v1').resource('pods', namespace: namespace).delete_collection(labelSelector: options.label_selector)
+
+  pods.each do |pod|
+    logger.info "Deleted pod=#{pod.metadata.name} in namespace=#{pod.metadata.namespace} on node=#{pod[:spec][:nodeName]}"
+  end
 end

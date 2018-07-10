@@ -63,6 +63,16 @@ module Pharos
         @api_resource.verbs.include? 'list'
       end
 
+      # @param list [Pharos::Kube::API::MetaV1::List]
+      # @return [Array<resource_class>]
+      def process_list(list)
+        list.items.map {|item|
+          # list items omit kind/apiVersion
+          @resource_class.new(apiVersion: list.apiVersion, kind: @api_resource.kind, **item)
+        }
+      end
+
+
       # @return [Array<resource_class>]
       def list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
         list = @transport.request(
@@ -74,10 +84,7 @@ module Pharos
             'fieldSelector' => fieldSelector,
           }.select{|k, v| !v.nil? },
         )
-        list.items.map {|item|
-          # list items omit kind/apiVersion
-          @resource_class.new(apiVersion: list.apiVersion, kind: @api_resource.kind, **item)
-        }
+        process_list(list)
       end
 
       # @return [Bool]
@@ -97,6 +104,47 @@ module Pharos
           body: JSON.generate(resource.to_hash),
           response_class: @resource_class,
         )
+      end
+
+      # @return [Bool]
+      def delete?
+        @api_resource.verbs.include? 'delete'
+      end
+
+      # @param name [String]
+      # @param namespace [String]
+      # @return [Pharos::Kube::API::MetaV1::Status]
+      def delete(name, namespace: @namespace, propagationPolicy: nil)
+        @transport.request(
+          method: 'DELETE',
+          path: self.path(name, namespace: namespace),
+          query: {
+            'propagationPolicy' => propagationPolicy,
+          }.select{|k, v| !v.nil? },
+          response_class: @resource_class, # XXX: documented as returning Status
+        )
+      end
+
+      # @param namespace [String]
+      # @return [Pharos::Kube::API::MetaV1::Status]
+      def delete_collection(namespace: @namespace, labelSelector: nil, fieldSelector: nil, propagationPolicy: nil)
+        list = @transport.request(
+          method: 'DELETE',
+          path: self.path(namespace: namespace),
+          query: {
+            'labelSelector' => labelSelector,
+            'fieldSelector' => fieldSelector,
+            'propagationPolicy' => propagationPolicy,
+          }.select{|k, v| !v.nil? },
+          response_class: Pharos::Kube::API::MetaV1::List, # XXX: documented as returning Status
+        )
+        process_list(list)
+      end
+
+      # @param resource [resource_class] with metadata
+      # @return [Pharos::Kube::API::MetaV1::Status]
+      def delete_resource(resource, **options)
+        delete(resource.metadata.name, namespace: resource.metadata.namespace, **options)
       end
     end
   end
