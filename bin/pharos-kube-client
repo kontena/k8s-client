@@ -12,6 +12,8 @@ Options = Struct.new(
   :all_namespaces,
   :pipeline_list,
   :label_selector,
+  :list_resources,
+  :list_pods,
 )
 
 options = Options.new()
@@ -39,6 +41,12 @@ parser = OptionParser.new do |parser|
   parser.on('--pipeline-list') do
     options.pipeline_list = true
   end
+  parser.on('--list-resources') do
+    options.list_resources = true
+  end
+  parser.on('--list-pods') do
+    options.list_pods = true
+  end
 end
 
 parser.parse!
@@ -63,28 +71,32 @@ else
   namespace = nil # all
 end
 
-([client.api] + client.apis(prefetch_resources: true)).each do |api|
-  logger.info "api=#{api.api_version}"
+if options.list_resources
+  ([client.api] + client.apis(prefetch_resources: true)).each do |api|
+    logger.info "api=#{api.api_version}"
 
-  resources = api.resources.select{|resource| resource.list? }
+    resources = api.resources.select{|resource| resource.list? }
 
-  if options.pipeline_list
-    objects = api.list_resources(resources, namespace: namespace, labelSelector: options.label_selector)
-    objects.each do |object|
-      logger.info "api=#{object.apiVersion} kind=#{object.kind} namespace=#{object.metadata.namespace} name=#{object.metadata.name}"
-    end
-  else
-    resources.each do |resource|
-      logger.info "api=#{api.api_version} resource=#{resource.name}"
-
-      objects = resource.list(labelSelector: options.label_selector)
+    if options.pipeline_list
+      objects = api.list_resources(resources, namespace: namespace, labelSelector: options.label_selector)
       objects.each do |object|
         logger.info "api=#{object.apiVersion} kind=#{object.kind} namespace=#{object.metadata.namespace} name=#{object.metadata.name}"
+      end
+    else
+      resources.each do |resource|
+        logger.info "api=#{api.api_version} resource=#{resource.name}"
+
+        objects = resource.list(labelSelector: options.label_selector)
+        objects.each do |object|
+          logger.info "api=#{object.apiVersion} kind=#{object.kind} namespace=#{object.metadata.namespace} name=#{object.metadata.name}"
+        end
       end
     end
   end
 end
 
-#client.api('v1').resource('pods', namespace: namespace).list.each do |pod|
-#  puts "namespace=#{pod[:metadata][:namespace]} pod: #{pod[:metadata][:name]}"
-#end
+if options.list_pods
+  client.api('v1').resource('pods', namespace: namespace).list.each do |pod|
+    puts "namespace=#{pod.metadata.namespace} pod: #{pod.metadata.name} node=#{pod[:spec][:nodeName]}"
+  end
+end

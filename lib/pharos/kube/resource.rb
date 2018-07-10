@@ -1,13 +1,17 @@
 module Pharos
   module Kube
-    class Resource < Pharos::Kube::API::MetaV1::ObjectCommon
+    class Resource
+      attr_reader :kind, :apiVersion, :metadata
+
       def initialize(**attrs)
-        super(
-          kind: attrs[:kind],
-          apiVersion: attrs[:apiVersion],
-          metadata: attrs[:metadata],
-        )
+        @kind = attrs[:kind]
+        @apiVersion = attrs[:apiVersion]
+        @metadata = Pharos::Kube::API::MetaV1::ObjectMeta.new(**attrs[:metadata])
         @attrs = attrs
+      end
+
+      def attrs
+        @attrs
       end
 
       def [](attr)
