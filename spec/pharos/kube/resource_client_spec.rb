@@ -123,6 +123,41 @@ RSpec.describe Pharos::Kube::ResourceClient do
         end
       end
     end
+
+    context "POST /api/v1/nodes/" do
+      let(:resource) { Pharos::Kube::Resource.new(
+        kind: 'Node',
+        metadata: { name: 'test' },
+        spec: { unschedulable: true },
+      ) }
+
+      before do
+        stub_request(:post, 'localhost:8080/api/v1/nodes')
+          .with(
+            headers: { 'Content-Type' => 'application/json' },
+            body: {
+              'kind' => 'Node',
+              'metadata' => { 'name' => 'test' },
+              'spec' => { 'unschedulable' => true },
+            },
+          )
+          .to_return(
+            status: 201,
+            headers: { 'Content-Type' => 'application/json' },
+            body: JSON.generate(resource.to_hash),
+          )
+      end
+
+      describe '#create_resource' do
+        it "returns a resource" do
+          obj = subject.create_resource(resource)
+
+          expect(obj).to match Pharos::Kube::Resource
+          expect(obj.kind).to eq "Node"
+          expect(obj.metadata.name).to eq "test"
+        end
+      end
+    end
   end
 
   context "for the pods API" do
@@ -152,21 +187,50 @@ RSpec.describe Pharos::Kube::ResourceClient do
 
     subject { described_class.new(transport, api_client, api_resource) }
 
-    context "DELETE /api/v1/pods/*" do
-      let(:resource) { Pharos::Kube::Resource.new(
-        kind: 'Pod',
-        metadata: { namespace: 'kube-system', name: 'test' }
-      ) }
-      let(:resource_list) { Pharos::Kube::API::MetaV1::List.new(metadata: {}, items: [resource]) }
+    let(:resource) { Pharos::Kube::Resource.new(
+      kind: 'Pod',
+      metadata: { name: 'test', namespace: 'default' },
+    ) }
+    let(:resource_list) { Pharos::Kube::API::MetaV1::List.new(metadata: {}, items: [resource]) }
 
+    context "POST /api/v1/pods/namespaces/default/pods" do
       before do
-        stub_request(:delete, 'localhost:8080/api/v1/namespaces/kube-system/pods/test')
+        stub_request(:post, 'localhost:8080/api/v1/namespaces/default/pods')
+          .with(
+            headers: { 'Content-Type' => 'application/json' },
+            body: {
+              'kind' => 'Pod',
+              'metadata' => { 'name' => 'test', 'namespace' => 'default' },
+            },
+          )
+          .to_return(
+            status: 201,
+            headers: { 'Content-Type' => 'application/json' },
+            body: JSON.generate(resource.to_hash),
+          )
+      end
+
+      describe '#create_resource' do
+        it "returns a resource" do
+          obj = subject.create_resource(resource)
+
+          expect(obj).to match Pharos::Kube::Resource
+          expect(obj.kind).to eq "Pod"
+          expect(obj.metadata.namespace).to eq "default"
+          expect(obj.metadata.name).to eq "test"
+        end
+      end
+    end
+
+    context "DELETE /api/v1/pods/*" do
+      before do
+        stub_request(:delete, 'localhost:8080/api/v1/namespaces/default/pods/test')
           .to_return(
             status: 200,
             body: JSON.generate(resource.to_hash),
             headers: { 'Content-Type' => 'application/json' }
           )
-        stub_request(:delete, 'localhost:8080/api/v1/namespaces/kube-system/pods?labelSelector=app=test')
+        stub_request(:delete, 'localhost:8080/api/v1/namespaces/default/pods?labelSelector=app=test')
           .to_return(
             status: 200,
             body: JSON.generate(resource_list.to_hash), # XXX: to_json?
@@ -176,7 +240,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
 
       describe '#delete' do
         it "deletes a resource and returns it" do
-          obj = subject.delete('test', namespace: 'kube-system')
+          obj = subject.delete('test', namespace: 'default')
 
           expect(obj).to match Pharos::Kube::Resource
           expect(obj.kind).to eq "Pod"
@@ -186,7 +250,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
 
       describe '#delete_collection' do
         it "deletes resources and returns them" do
-          items = subject.delete_collection(namespace: 'kube-system', labelSelector: 'app=test')
+          items = subject.delete_collection(namespace: 'default', labelSelector: 'app=test')
 
           expect(items).to match [Pharos::Kube::Resource]
           expect(items[0].kind).to eq "Pod"

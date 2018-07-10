@@ -45,6 +45,22 @@ module Pharos
       end
 
       # @return [Bool]
+      def create?
+        @api_resource.verbs.include? 'create'
+      end
+
+      # @param resource [resource_class] with metadata.namespace and metadata.name set
+      # @return [resource_class]
+      def create_resource(resource)
+        @transport.request(
+          method: 'POST',
+          path: self.path(namespace: resource.metadata.namespace),
+          request_object: resource,
+          response_class: @resource_class,
+        )
+      end
+
+      # @return [Bool]
       def get?
         @api_resource.verbs.include? 'get'
       end
@@ -71,7 +87,6 @@ module Pharos
           @resource_class.new(apiVersion: list.apiVersion, kind: @api_resource.kind, **item)
         }
       end
-
 
       # @return [Array<resource_class>]
       def list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)

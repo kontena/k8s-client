@@ -18,6 +18,9 @@ Options = Struct.new(
   :node_unschedulable,
   :delete_pod,
   :delete_pods,
+  :create_service,
+  :service_type,
+  :service_port,
 )
 
 options = Options.new()
@@ -62,6 +65,15 @@ parser = OptionParser.new do |parser|
   end
   parser.on('--delete-pods') do
     options.delete_pods = true
+  end
+  parser.on('--create-service=SERVICE') do |service|
+    options.create_service = service
+  end
+  parser.on('--service-type=SERVICE-TYPE') do |type|
+    options.service_type = type
+  end
+  parser.on('--service-port=PORT', Integer) do |port|
+    options.service_port = port
   end
 end
 
@@ -147,4 +159,28 @@ if options.delete_pods
   pods.each do |pod|
     logger.info "Deleted pod=#{pod.metadata.name} in namespace=#{pod.metadata.namespace} on node=#{pod[:spec][:nodeName]}"
   end
+end
+
+if options.create_service
+  service = Pharos::Kube::Resource.new(
+    apiVersion: 'v1',
+    kind: 'Service',
+    metadata: {
+      namespace: namespace,
+      name: options.create_service,
+    },
+    spec: {
+      type: options.service_type,
+      ports: [
+        { port: options.service_port },
+      ],
+      selector: Hash[options.label_selector.split('=', 2)],
+    },
+  )
+
+  logger.info "Create service=#{service.metadata.name} in namespace=#{service.metadata.namespace}"
+
+  service = client.api('v1').resource('services').create_resource(service)
+
+  logger.debug { service }
 end
