@@ -54,8 +54,13 @@ module Pharos
       def prune(client)
         client.apis(prefetch_resources: true).each do |api|
           api.list_resources(labelSelector: "#{LABEL}=#{name}").each do |resource|
-            resource_checksum = resource.metadata.annotations[CHECKSUM_ANNOTATION.to_sym] # XXX: map keys are symbols...
-            if resource_checksum != checksum
+            next if resource.apiVersion == 'v1' && resource.kind == 'ComponentStatus' # WTF: apiserver ignores the ?labelSelector query and returns everything
+            next if resource.apiVersion == 'v1' && resource.kind == 'Endpoint' # inherits stack labels from service, does not have any ownerReference...
+
+            resource_label = resource.metadata.labels ? resource.metadata.labels[LABEL.to_sym] : nil
+            resource_checksum = resource.metadata.annotations ? resource.metadata.annotations[CHECKSUM_ANNOTATION.to_sym] : nil # XXX: map keys are symbols...
+
+            if resource_label == name && resource_checksum != checksum
               client.delete_resource(resource)
             end
           end
