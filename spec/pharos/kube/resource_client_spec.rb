@@ -88,6 +88,41 @@ RSpec.describe Pharos::Kube::ResourceClient do
         end
       end
     end
+
+    context "UPDATE /api/v1/nodes/*" do
+      let(:resource) { Pharos::Kube::Resource.new(
+        kind: 'Node',
+        metadata: { name: 'test', resourceVersion: "1" },
+        spec: { unschedulable: true },
+      ) }
+
+      before do
+        stub_request(:put, 'localhost:8080/api/v1/nodes/test')
+          .with(
+            headers: { 'Content-Type' => 'application/json' },
+            body: {
+              'kind' => 'Node',
+              'metadata' => { 'name' => 'test', 'resourceVersion' => "1" },
+              'spec' => { 'unschedulable' => true },
+            },
+          )
+          .to_return(
+            status: 200,
+            headers: { 'Content-Type' => 'application/json' },
+            body: JSON.generate(resource.to_hash),
+          )
+      end
+
+      describe '#update_resource' do
+        it "returns a resource" do
+          obj = subject.update_resource(resource)
+
+          expect(obj).to match Pharos::Kube::Resource
+          expect(obj.kind).to eq "Node"
+          expect(obj.metadata.name).to eq "test"
+        end
+      end
+    end
   end
 
   context "for the pods API" do

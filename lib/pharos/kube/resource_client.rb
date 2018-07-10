@@ -94,7 +94,7 @@ module Pharos
 
       # @param resource [resource_class] with metadata.resourceVersion set
       # @return [resource_class]
-      def update(resource)
+      def update_resource(resource)
         @transport.request(
           method: 'PUT',
           path: self.path(resource.metadata.name, namespace: resource.metadata.namespace),

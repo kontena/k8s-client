@@ -128,7 +128,7 @@ if options.update_node
     node[:spec][:unschedulable] = options.node_unschedulable
   end
 
-  client.api('v1').resource('nodes').update(node)
+  client.api('v1').resource('nodes').update_resource(node)
 end
 
 if options.delete_pod
