@@ -2,4 +2,9 @@ rspec:
   build: .
   volumes:
   - .:/app
-  command: rspec
+  entrypoint: bundle exec rspec
+pharos-kube-client:
+  build: .
+  volumes:
+  - .:/app
+  entrypoint: bundle exec bin/pharos-kube-client
