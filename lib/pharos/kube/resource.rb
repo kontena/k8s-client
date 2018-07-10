@@ -9,9 +9,15 @@ module Pharos
       end
 
       # @param filename [String] file path
-      # @return [self]
+      # @return [Pharos::Kube::Resource]
       def self.from_file(filename)
-        return new(YAML.load_file(filename))
+        new(YAML.load_file(filename))
+      end
+
+      # @param filename [String] file path
+      # @return [Array<Pharos::Kube::Resource>]
+      def self.from_files(path)
+        YAML.load_files(path).map{|data| new(data) }
       end
 
       attr_reader :kind, :apiVersion, :metadata

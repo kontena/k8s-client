@@ -21,13 +21,17 @@ Options = Struct.new(
   :create_service,
   :service_type,
   :service_port,
-  :resource,
-  :create_resource,
-  :update_resource,
-  :delete_resource,
+  :resources,
+  :create_resources,
+  :update_resources,
+  :delete_resources,
 )
 
 options = Options.new()
+options.create_resources = []
+options.update_resources = []
+options.delete_resources = []
+
 logger = Logger.new(STDERR)
 
 parser = OptionParser.new do |parser|
@@ -79,17 +83,17 @@ parser = OptionParser.new do |parser|
   parser.on('--service-port=PORT', Integer) do |port|
     options.service_port = port
   end
-  parser.on('--resource-file=FILE') do |file|
-    options.resource = Pharos::Kube::Resource.from_file(file)
+  parser.on('--resource-file=path') do |path|
+    options.resources = Pharos::Kube::Resource.from_files(path)
   end
-  parser.on('--create-resource') do
-    options.create_resource = options.resource
+  parser.on('--create') do
+    options.create_resources = options.resources
   end
-  parser.on('--update-resource') do
-    options.update_resource = options.resource
+  parser.on('--update') do
+    options.update_resources = options.resources
   end
-  parser.on('--delete-resource') do
-    options.delete_resource = options.resource
+  parser.on('--delete') do
+    options.delete_resources = options.resources
   end
 end
 
@@ -201,20 +205,24 @@ if options.create_service
   logger.debug { service }
 end
 
-if resource = options.create_resource
-  logger.info "Create #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}"
+for resource in options.create_resources
+  resource = client.create_resource(resource)
 
-  puts client.create_resource(resource).to_json(indent: '  ', space: ' ', object_nl: "\n", array_nl: "\n")
+  logger.info "Created #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}:\n#{JSON.pretty_generate(resource)}"
 end
 
-if resource = options.update_resource
-  logger.info "Update #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}"
+for resource in options.update_resources
+  resource = client.update_resource(resource)
 
-  puts client.update_resource(resource).to_json(indent: '  ', space: ' ', object_nl: "\n", array_nl: "\n")
+  logger.info "Updated #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}:\n#{JSON.pretty_generate(resource)}"
 end
 
-if resource = options.delete_resource
-  logger.info "Delete #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}"
+for resource in options.delete_resources
+  begin
+    resource = client.delete_resource(resource)
 
-  puts client.delete_resource(resource).to_json(indent: '  ', space: ' ', object_nl: "\n", array_nl: "\n")
+    logger.info "Deleted #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}:\n#{JSON.pretty_generate(resource)}"
+  rescue Pharos::Kube::Error::NotFound => exc
+    logger.info "Skip #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}: #{exc}"
+  end
 end

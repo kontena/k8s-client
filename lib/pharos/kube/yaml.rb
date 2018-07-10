@@ -20,6 +20,18 @@ module Pharos
       def self.load_file(file)
         transform_keys(::YAML.load_file(file))
       end
+
+      # @param path [String] path
+      # @return [Array<Hash>]
+      def self.load_files(path)
+        stat = File.stat(path)
+
+        if stat.directory?
+          Dir.glob("#{path}/*.{yml,yaml}").map{|path| load_files(path) }.flatten
+        else
+          ::YAML.load_stream(File.read(path), path).map{|doc| transform_keys(doc) }
+        end
+      end
     end
   end
 end
