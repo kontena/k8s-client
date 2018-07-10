@@ -71,8 +71,7 @@ end
   if options.pipeline_list
     objects = api.list_resources(resources, namespace: namespace, labelSelector: options.label_selector)
     objects.each do |object|
-      # TODO: map resource name
-      logger.info "api=#{object[:apiVersion]} kind=#{object[:kind]} namespace=#{object[:metadata][:namespace]} name=#{object[:metadata][:name]}"
+      logger.info "api=#{object.apiVersion} kind=#{object.kind} namespace=#{object.metadata.namespace} name=#{object.metadata.name}"
     end
   else
     resources.each do |resource|
@@ -80,8 +79,7 @@ end
 
       objects = resource.list(labelSelector: options.label_selector)
       objects.each do |object|
-        # TODO: map resource name
-        logger.info "api=#{object[:apiVersion]} kind=#{object[:kind]} namespace=#{object[:metadata][:namespace]} name=#{object[:metadata][:name]}"
+        logger.info "api=#{object.apiVersion} kind=#{object.kind} namespace=#{object.metadata.namespace} name=#{object.metadata.name}"
       end
     end
   end

@@ -1,0 +1,221 @@
+{
+  "kind": "Node",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "ubuntu-xenial",
+    "selfLink": "/api/v1/nodes/ubuntu-xenial",
+    "uid": "031bde48-801d-11e8-9abd-02a3be24b14f",
+    "resourceVersion": "32204",
+    "creationTimestamp": "2018-07-05T06:31:12Z",
+    "labels": {
+      "beta.kubernetes.io/arch": "amd64",
+      "beta.kubernetes.io/os": "linux",
+      "kubernetes.io/hostname": "ubuntu-xenial",
+      "pharos-node.kontena.io/external-ip": "10.0.2.15",
+      "pharos-node.kontena.io/internal-ip": "192.168.56.11"
+    },
+    "annotations": {
+      "node.alpha.kubernetes.io/ttl": "0",
+      "volumes.kubernetes.io/controller-managed-attach-detach": "true"
+    }
+  },
+  "spec": {
+    "externalID": "ubuntu-xenial",
+    "providerID": "pharos://ubuntu-xenial"
+  },
+  "status": {
+    "capacity": {
+      "cpu": "2",
+      "ephemeral-storage": "10098468Ki",
+      "hugepages-2Mi": "0",
+      "memory": "2048032Ki",
+      "pods": "110"
+    },
+    "allocatable": {
+      "cpu": "2",
+      "ephemeral-storage": "9306748094",
+      "hugepages-2Mi": "0",
+      "memory": "1945632Ki",
+      "pods": "110"
+    },
+    "conditions": [
+      {
+        "type": "OutOfDisk",
+        "status": "False",
+        "lastHeartbeatTime": "2018-07-10T07:23:50Z",
+        "lastTransitionTime": "2018-07-05T06:31:12Z",
+        "reason": "KubeletHasSufficientDisk",
+        "message": "kubelet has sufficient disk space available"
+      },
+      {
+        "type": "MemoryPressure",
+        "status": "False",
+        "lastHeartbeatTime": "2018-07-10T07:23:50Z",
+        "lastTransitionTime": "2018-07-05T06:31:12Z",
+        "reason": "KubeletHasSufficientMemory",
+        "message": "kubelet has sufficient memory available"
+      },
+      {
+        "type": "DiskPressure",
+        "status": "False",
+        "lastHeartbeatTime": "2018-07-10T07:23:50Z",
+        "lastTransitionTime": "2018-07-05T06:31:12Z",
+        "reason": "KubeletHasNoDiskPressure",
+        "message": "kubelet has no disk pressure"
+      },
+      {
+        "type": "PIDPressure",
+        "status": "False",
+        "lastHeartbeatTime": "2018-07-10T07:23:50Z",
+        "lastTransitionTime": "2018-07-05T06:31:12Z",
+        "reason": "KubeletHasSufficientPID",
+        "message": "kubelet has sufficient PID available"
+      },
+      {
+        "type": "Ready",
+        "status": "True",
+        "lastHeartbeatTime": "2018-07-10T07:23:50Z",
+        "lastTransitionTime": "2018-07-05T06:31:22Z",
+        "reason": "KubeletReady",
+        "message": "kubelet is posting ready status. AppArmor enabled"
+      }
+    ],
+    "addresses": [
+      {
+        "type": "InternalIP",
+        "address": "192.168.56.11"
+      },
+      {
+        "type": "ExternalIP",
+        "address": "10.0.2.15"
+      },
+      {
+        "type": "Hostname",
+        "address": "ubuntu-xenial"
+      }
+    ],
+    "daemonEndpoints": {
+      "kubeletEndpoint": {
+        "Port": 10250
+      }
+    },
+    "nodeInfo": {
+      "machineID": "44d915fd9de84d3ea3308169cb55f894",
+      "systemUUID": "97B11341-4C13-4AE7-8D4C-3A35892A98B9",
+      "bootID": "4b63d257-243d-44c5-8df5-83dbf89b7abe",
+      "kernelVersion": "4.4.0-130-generic",
+      "osImage": "Ubuntu 16.04.4 LTS",
+      "containerRuntimeVersion": "docker://18.3.1",
+      "kubeletVersion": "v1.10.5",
+      "kubeProxyVersion": "v1.10.5",
+      "operatingSystem": "linux",
+      "architecture": "amd64"
+    },
+    "images": [
+      {
+        "names": [
+          "\u003cnone\u003e@\u003cnone\u003e",
+          "\u003cnone\u003e:\u003cnone\u003e"
+        ],
+        "sizeBytes": 2393726364
+      },
+      {
+        "names": [
+          "\u003cnone\u003e@\u003cnone\u003e",
+          "\u003cnone\u003e:\u003cnone\u003e"
+        ],
+        "sizeBytes": 2393726317
+      },
+      {
+        "names": [
+          "golang@sha256:8b3ed28f0d8bfc47159744481fa58b6f89867579de3b724bd328862a8dcded43",
+          "golang:1.10.2"
+        ],
+        "sizeBytes": 793917703
+      },
+      {
+        "names": [
+          "k8s.gcr.io/kube-apiserver-amd64@sha256:ca54685b89b3e1809ea3fa9936e32e3a05083a84483813604178275e02352454",
+          "k8s.gcr.io/kube-apiserver-amd64:v1.10.5"
+        ],
+        "sizeBytes": 228059419
+      },
+      {
+        "names": [
+          "k8s.gcr.io/etcd-amd64@sha256:68235934469f3bc58917bcf7018bf0d3b72129e6303b0bef28186d96b2259317",
+          "k8s.gcr.io/etcd-amd64:3.1.12"
+        ],
+        "sizeBytes": 193214599
+      },
+      {
+        "names": [
+          "\u003cnone\u003e@\u003cnone\u003e",
+          "\u003cnone\u003e:\u003cnone\u003e"
+        ],
+        "sizeBytes": 159795177
+      },
+      {
+        "names": [
+          "kontena/pharos-cloud-controller:dev"
+        ],
+        "sizeBytes": 159795177
+      },
+      {
+        "names": [
+          "k8s.gcr.io/kube-controller-manager-amd64@sha256:20afa70465a92fd3d573ddc78351fb1d69415e65e7e8e957adae19d60d75960d",
+          "k8s.gcr.io/kube-controller-manager-amd64:v1.10.5"
+        ],
+        "sizeBytes": 150807988
+      },
+      {
+        "names": [
+          "debian@sha256:6ee341d1cf3da8e6ea059f8bc3af9940613c4287205cd71d7c6f9e1718fdcb9b",
+          "debian:stretch"
+        ],
+        "sizeBytes": 100561066
+      },
+      {
+        "names": [
+          "k8s.gcr.io/kube-proxy-amd64@sha256:b81228e8ad694f05a5a6e035167ad705600aead5cfd63628a38984fc60f0b989",
+          "k8s.gcr.io/kube-proxy-amd64:v1.10.5"
+        ],
+        "sizeBytes": 97862813
+      },
+      {
+        "names": [
+          "k8s.gcr.io/kube-scheduler-amd64@sha256:ccd7da1c35fefdb8077f80baf0724b861b94b3fc182ae0b5e0b7644257a0dd41",
+          "k8s.gcr.io/kube-scheduler-amd64:v1.10.5"
+        ],
+        "sizeBytes": 51195168
+      },
+      {
+        "names": [
+          "k8s.gcr.io/k8s-dns-kube-dns-amd64@sha256:6d8e0da4fb46e9ea2034a3f4cab0e095618a2ead78720c12e791342738e5f85d",
+          "k8s.gcr.io/k8s-dns-kube-dns-amd64:1.14.8"
+        ],
+        "sizeBytes": 50456751
+      },
+      {
+        "names": [
+          "k8s.gcr.io/k8s-dns-sidecar-amd64@sha256:23df717980b4aa08d2da6c4cfa327f1b730d92ec9cf740959d2d5911830d82fb",
+          "k8s.gcr.io/k8s-dns-sidecar-amd64:1.14.8"
+        ],
+        "sizeBytes": 42210862
+      },
+      {
+        "names": [
+          "k8s.gcr.io/k8s-dns-dnsmasq-nanny-amd64@sha256:93c827f018cf3322f1ff2aa80324a0306048b0a69bc274e423071fb0d2d29d8b",
+          "k8s.gcr.io/k8s-dns-dnsmasq-nanny-amd64:1.14.8"
+        ],
+        "sizeBytes": 40951779
+      },
+      {
+        "names": [
+          "k8s.gcr.io/pause-amd64@sha256:59eec8837a4d942cc19a52b8c09ea75121acc38114a2c68b98983ce9356b8610",
+          "k8s.gcr.io/pause-amd64:3.1"
+        ],
+        "sizeBytes": 742472
+      }
+    ]
+  }
+}

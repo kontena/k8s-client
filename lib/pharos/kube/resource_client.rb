@@ -5,11 +5,12 @@ module Pharos
       # @param api_client [Pharos::Kube::APIClient]
       # @param api_resource [Pharos::Kube::API::MetaV1::APIResource]
       # @param namespace [String]
-      def initialize(transport, api_client, api_resource, namespace: nil)
+      def initialize(transport, api_client, api_resource, namespace: nil, resource_class: Pharos::Kube::Resource)
         @transport = transport
         @api_client = api_client
         @api_resource = api_resource
         @namespace = namespace
+        @resource_class = resource_class
 
         fail "Resource #{api_resource.name} is not namespaced" if namespace unless api_resource.namespaced
       end
@@ -48,10 +49,12 @@ module Pharos
         @api_resource.verbs.include? 'get'
       end
 
+      # @return [resource_class]
       def get(name, namespace: @namespace)
         @transport.request(
           method: 'GET',
           path: self.path(name, namespace: namespace),
+          response_class: @resource_class,
         )
       end
 
@@ -60,7 +63,7 @@ module Pharos
         @api_resource.verbs.include? 'list'
       end
 
-      # @return [Array]
+      # @return [Array<resource_class>]
       def list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
         list = @transport.request(
           method: 'GET',
@@ -69,11 +72,11 @@ module Pharos
           query: {
             'labelSelector' => labelSelector,
             'fieldSelector' => fieldSelector,
-          },
+          }.select{|k, v| !v.nil? },
         )
         list.items.map {|item|
           # list items omit kind/apiVersion
-          item.merge(apiVersion: list.apiVersion, kind: @api_resource.kind)
+          @resource_class.new(apiVersion: list.apiVersion, kind: @api_resource.kind, **item)
         }
       end
     end
