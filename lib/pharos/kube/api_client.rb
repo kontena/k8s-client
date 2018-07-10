@@ -62,8 +62,9 @@ module Pharos
       #
       # @param resources [Array<Pharos::Kube::ResourceClient>]
       # @param namespace [String, nil]
-      # @return [Array<Hash>]
+      # @return [Array<Pharos::Kube::Resource>]
       def list_resources(resources, namespace: nil, labelSelector: nil, fieldSelector: nil)
+        # TODO: skip non-namespaced resources if namespace is set?
         api_paths = resources.map{|resource| resource.path(namespace: namespace) }
         api_lists = @transport.gets(*api_paths,
            response_class: Pharos::Kube::API::MetaV1::List,
@@ -74,7 +75,7 @@ module Pharos
          )
         api_lists_items = api_lists.map{|list| list.items.map {|item|
           # XXX: hack because list items do not include kind/apiVersion
-          item.merge(apiVersion: list.apiVersion, kind: list.kind.sub(/List$/, ''))
+          Pharos::Kube::Resource.new(apiVersion: list.apiVersion, kind: list.kind.sub(/List$/, ''), **item)
         } }
 
         api_lists_items.flatten

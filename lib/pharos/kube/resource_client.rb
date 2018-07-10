@@ -22,6 +22,11 @@ module Pharos
         fail "Resource #{api_resource.name} is not namespaced" if namespace unless api_resource.namespaced
       end
 
+      # @return [String] resource or resource/subresource
+      def name
+        @api_resource.name
+      end
+
       # @return [String, nil]
       def namespace
         @namespace
