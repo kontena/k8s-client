@@ -12,6 +12,13 @@ module Pharos
         @namespace = namespace
         @resource_class = resource_class
 
+        if @api_resource.name.include? '/'
+          @resource, @subresource = @api_resource.name.split('/', 2)
+        else
+          @resource = @api_resource.name
+          @subresource = nil
+        end
+
         fail "Resource #{api_resource.name} is not namespaced" if namespace unless api_resource.namespaced
       end
 
@@ -21,8 +28,13 @@ module Pharos
       end
 
       # @return [String]
-      def name
-        @api_resource.name
+      def resource
+        @resource
+      end
+
+      # @return [String, nil]
+      def subresource
+        @subresource
       end
 
       # @return [String]
@@ -36,11 +48,15 @@ module Pharos
       end
 
       # @return [String]
-      def path(*path, namespace: @namespace)
-        if namespace
-          @api_client.path('namespaces', namespace, @api_resource.name, *path)
+      def path(name = nil, subresource: @subresource, namespace: @namespace)
+        namespace_part = namespace ? ['namespaces', namespace] : []
+
+        if name && subresource
+          @api_client.path(*namespace_part, @resource, name, subresource)
+        elsif name
+          @api_client.path(*namespace_part, @resource, name)
         else
-          @api_client.path(@api_resource.name, *path)
+          @api_client.path(*namespace_part, @resource)
         end
       end
 

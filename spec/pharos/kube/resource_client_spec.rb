@@ -37,7 +37,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
       end
 
       it 'returns a path to node subresource' do
-        expect(subject.path('testNode', 'proxy')).to eq '/api/v1/nodes/testNode/proxy'
+        expect(subject.path('testNode', subresource: 'proxy')).to eq '/api/v1/nodes/testNode/proxy'
       end
     end
 
@@ -89,7 +89,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
       end
     end
 
-    context "UPDATE /api/v1/nodes/*" do
+    context "PUT /api/v1/nodes/*" do
       let(:resource) { Pharos::Kube::Resource.new(
         kind: 'Node',
         metadata: { name: 'test', resourceVersion: "1" },
@@ -151,6 +151,64 @@ RSpec.describe Pharos::Kube::ResourceClient do
       describe '#create_resource' do
         it "returns a resource" do
           obj = subject.create_resource(resource)
+
+          expect(obj).to match Pharos::Kube::Resource
+          expect(obj.kind).to eq "Node"
+          expect(obj.metadata.name).to eq "test"
+        end
+      end
+    end
+  end
+
+  context "for the nodes status API" do
+    let(:api_client) { Pharos::Kube::APIClient.new(transport, 'v1') }
+    let(:api_resource) { Pharos::Kube::API::MetaV1::APIResource.new(
+      name: "nodes/status",
+      singularName: "",
+      namespaced: false,
+      kind: "Node",
+      verbs: [
+        "get",
+        "patch",
+        "update",
+      ],
+    ) }
+
+    subject { described_class.new(transport, api_client, api_resource) }
+
+    describe '#path' do
+      it 'returns a path to node subresource' do
+        expect(subject.path('test')).to eq '/api/v1/nodes/test/status'
+      end
+    end
+
+    context "PUT /api/v1/nodes/*/status" do
+      let(:resource) { Pharos::Kube::Resource.new(
+        kind: 'Node',
+        metadata: { name: 'test', resourceVersion: "1" },
+        status: { foo: 'bar' },
+      ) }
+
+      before do
+        stub_request(:put, 'localhost:8080/api/v1/nodes/test/status')
+          .with(
+            headers: { 'Content-Type' => 'application/json' },
+            body: {
+              'kind' => 'Node',
+              'metadata' => { 'name' => 'test', 'resourceVersion' => "1" },
+              'status' => { 'foo' => 'bar' },
+            },
+          )
+          .to_return(
+            status: 200,
+            headers: { 'Content-Type' => 'application/json' },
+            body: JSON.generate(resource.to_hash),
+          )
+      end
+
+      describe '#update_resource' do
+        it "returns a resource" do
+          obj = subject.update_resource(resource)
 
           expect(obj).to match Pharos::Kube::Resource
           expect(obj.kind).to eq "Node"
