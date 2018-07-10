@@ -25,6 +25,8 @@ Options = Struct.new(
   :create_resources,
   :update_resources,
   :delete_resources,
+  :stack_name,
+  :stack,
 )
 
 options = Options.new()
@@ -94,6 +96,14 @@ parser = OptionParser.new do |parser|
   end
   parser.on('--delete') do
     options.delete_resources = options.resources
+  end
+  parser.on('--stack-name=NAME') do |name|
+    options.stack_name = name
+  end
+  parser.on('--stack=PATH') do |path|
+    options.stack = Pharos::Kube::Stack.load(path,
+      name: options.stack_name,
+    )
   end
 end
 
@@ -225,4 +235,10 @@ for resource in options.delete_resources
   rescue Pharos::Kube::Error::NotFound => exc
     logger.info "Skip #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}: #{exc}"
   end
+end
+
+if options.stack
+  logger.info "Apply stack #{options.stack.name}..."
+
+  options.stack.apply(client)
 end
