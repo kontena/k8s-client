@@ -8,10 +8,11 @@ Options = Struct.new(
   :config,
   :server,
   :insecure_skip_tls_verify,
+  :prefetch_resources,
   :namespace,
   :all_namespaces,
-  :pipeline_list,
   :label_selector,
+  :pipeline_list,
   :list_resources,
   :list_pods,
   :update_node,
@@ -46,6 +47,9 @@ parser = OptionParser.new do |parser|
   end
   parser.on('--insecure-skip-tls-verify') do
     options.insecure_skip_tls_verify = true
+  end
+  parser.on('--prefetch-resources=BOOL', TrueClass) do |bool|
+    options.prefetch_resources = bool
   end
   parser.on('-n', '--namespace=NAMESPACE') do |namespace|
     options.namespace = namespace
@@ -122,6 +126,11 @@ else
 end
 
 logger.info "Kube server version: #{client.version[:gitVersion]}"
+
+if options.prefetch_resources
+  # client.api.api_resources XXX: unnecessary separate request TODO: also pipeline?
+  client.apis(prefetch_resources: true)
+end
 
 if options.all_namespaces
   namespace = nil # all
