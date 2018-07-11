@@ -75,6 +75,8 @@ module Pharos
         )
       end
 
+      # TODO: skip non-namespaced resources if namespace is given, or ignore namespace?
+      #
       # @param resource_name [String]
       # @param namespace [String, nil]
       # @return [Array<Pharos::Kube::ResourceClient>]
@@ -95,7 +97,6 @@ module Pharos
       def list_resources(resources = nil, namespace: nil, labelSelector: nil, fieldSelector: nil)
         resources ||= self.resources.select{|resource| resource.list? }
 
-        # TODO: skip non-namespaced resources if namespace is set?
         api_paths = resources.map{|resource| resource.path(namespace: namespace) }
         api_lists = @transport.gets(*api_paths,
            response_class: Pharos::Kube::API::MetaV1::List,
