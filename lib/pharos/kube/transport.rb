@@ -6,6 +6,8 @@ module Pharos
     class Transport
       include Logging
 
+      quiet! # do not log warnings by default
+
       EXCON_MIDDLEWARES = [
         # XXX: necessary? redirected requests omit authz headers?
         Excon::Middleware::RedirectFollower,
