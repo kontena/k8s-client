@@ -1,5 +1,4 @@
 require 'securerandom'
-require 'deep_merge'
 
 module Pharos
   module Kube
@@ -31,23 +30,18 @@ module Pharos
       end
 
       # @param resource [Pharos::Kube::Resource] to apply
-      # @param merge_resource [Pharos::Kube::Resource] to merge additional attributes from
+      # @param base_resource [Pharos::Kube::Resource] preserve existing attributes from base resource
       # @return [Pharos::Kube::Resource]
-      def prepare_resource(resource, merge_resource: nil)
-        if merge_resource
-          h = merge_resource.to_hash
-          h.deep_merge!(resource.to_hash, overwrite_arrays: true)
-        else
-          h = resource.to_hash
+      def prepare_resource(resource, base_resource: nil)
+        if base_resource
+          resource = base_resource.merge(resource)
         end
 
-        # stack metadata
-        h.deep_merge!(metadata: {
+        # add stack metadata
+        resource.merge(metadata: {
           labels: { LABEL.to_sym => name }, # XXX: map keys are symbols...
           annotations: { CHECKSUM_ANNOTATION.to_sym => checksum }, # XXX: map keys are symbols...
         })
-
-        Pharos::Kube::Resource.new(h)
       end
 
       # @return [Array<Pharos::Kube::Resource>]
@@ -61,7 +55,7 @@ module Pharos
             client.create_resource(prepare_resource(resource))
           else
             logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
-            client.update_resource(prepare_resource(resource, merge_resource: existing_resource))
+            client.update_resource(prepare_resource(resource, base_resource: existing_resource))
           end
         end
 

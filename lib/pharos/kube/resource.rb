@@ -1,3 +1,5 @@
+require 'deep_merge'
+
 module Pharos
   module Kube
     # generic untyped resource
@@ -45,6 +47,16 @@ module Pharos
 
       def [](attr)
         @attrs[attr]
+      end
+
+      # new resource with merged fields
+      #
+      # @return [Pharos::Kube:Resource]
+      def merge(**attrs)
+        h = to_hash
+        h.deep_merge!(attrs, overwrite_arrays: true)
+
+        self.class.new(**h)
       end
     end
   end
