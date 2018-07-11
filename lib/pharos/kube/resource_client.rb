@@ -1,6 +1,36 @@
 module Pharos
   module Kube
     class ResourceClient
+      module Utils
+        # @param selector [nil, String, Hash{String => String}]
+        # @return [nil, String]
+        def selector_query(selector)
+          case selector
+          when nil
+            nil
+          when String
+            selector
+          when Hash
+            selector.map{|k, v| "#{k}=#{v}"}.join ','
+          else
+            fail "Invalid selector type. #{selector.inspect}"
+          end
+        end
+
+        # @param options [Hash]
+        # @return [Hash, nil]
+        def make_query(options)
+          query = options.compact
+
+          return nil if query.empty?
+
+          query
+        end
+      end
+
+      include Utils
+      extend Utils
+
       # @param transport [Pharos::Kube::Transport]
       # @param api_client [Pharos::Kube::APIClient]
       # @param api_resource [Pharos::Kube::API::MetaV1::APIResource]
@@ -119,16 +149,18 @@ module Pharos
         }
       end
 
+      # @param labelSelector [nil, String, Hash{String => String}]
+      # @param fieldSelector [nil, String, Hash{String => String}]
       # @return [Array<resource_class>]
       def list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
         list = @transport.request(
           method: 'GET',
           path: self.path(namespace: namespace),
           response_class: Pharos::Kube::API::MetaV1::List,
-          query: {
-            'labelSelector' => labelSelector,
-            'fieldSelector' => fieldSelector,
-          }.select{|k, v| !v.nil? },
+          query: make_query(
+            'labelSelector' => selector_query(labelSelector),
+            'fieldSelector' => selector_query(fieldSelector),
+          ),
         )
         process_list(list)
       end
@@ -161,24 +193,26 @@ module Pharos
         @transport.request(
           method: 'DELETE',
           path: self.path(name, namespace: namespace),
-          query: {
+          query: make_query(
             'propagationPolicy' => propagationPolicy,
-          }.select{|k, v| !v.nil? },
+          ),
           response_class: @resource_class, # XXX: documented as returning Status
         )
       end
 
       # @param namespace [String]
+      # @param labelSelector [nil, String, Hash{String => String}]
+      # @param fieldSelector [nil, String, Hash{String => String}]
       # @return [Pharos::Kube::API::MetaV1::Status]
       def delete_collection(namespace: @namespace, labelSelector: nil, fieldSelector: nil, propagationPolicy: nil)
         list = @transport.request(
           method: 'DELETE',
           path: self.path(namespace: namespace),
-          query: {
-            'labelSelector' => labelSelector,
-            'fieldSelector' => fieldSelector,
+          query: make_query(
+            'labelSelector' => selector_query(labelSelector),
+            'fieldSelector' => selector_query(fieldSelector),
             'propagationPolicy' => propagationPolicy,
-          }.select{|k, v| !v.nil? },
+          ),
           response_class: Pharos::Kube::API::MetaV1::List, # XXX: documented as returning Status
         )
         process_list(list)

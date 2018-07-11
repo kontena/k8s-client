@@ -176,7 +176,7 @@ if options.list_resources
 end
 
 if options.list_pods
-  client.api('v1').resource('pods', namespace: namespace).list.each do |pod|
+  client.api('v1').resource('pods', namespace: namespace).list(labelSelector: options.label_selector).each do |pod|
     puts "namespace=#{pod.metadata.namespace} pod: #{pod.metadata.name} node=#{pod[:spec][:nodeName]}"
   end
 end

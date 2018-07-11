@@ -89,6 +89,8 @@ module Pharos
       #
       # @param resources [Array<Pharos::Kube::ResourceClient>] default is all listable resources
       # @param namespace [String, nil]
+      # @param labelSelector [nil, String, Hash{String => String}]
+      # @param fieldSelector [nil, String, Hash{String => String}]
       # @return [Array<Pharos::Kube::Resource>]
       def list_resources(resources = nil, namespace: nil, labelSelector: nil, fieldSelector: nil)
         resources ||= self.resources.select{|resource| resource.list? }
@@ -97,11 +99,12 @@ module Pharos
         api_paths = resources.map{|resource| resource.path(namespace: namespace) }
         api_lists = @transport.gets(*api_paths,
            response_class: Pharos::Kube::API::MetaV1::List,
-           query: {
-             'labelSelector' => labelSelector,
-             'fieldSelector' => fieldSelector,
-           },
+           query: ResourceClient.make_query(
+             'labelSelector' => ResourceClient.selector_query(labelSelector),
+             'fieldSelector' => ResourceClient.selector_query(fieldSelector),
+           ),
          )
+         # TODO: use ResourceClient#process_list instead?
         api_lists_items = api_lists.map{|list| list.items.map {|item|
           # XXX: hack because list items do not include kind/apiVersion
           Pharos::Kube::Resource.new(apiVersion: list.apiVersion, kind: list.kind.sub(/List$/, ''), **item)

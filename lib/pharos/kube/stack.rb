@@ -72,7 +72,7 @@ module Pharos
         client.apis(prefetch_resources: true).each do |api|
           logger.debug { "List resources in #{api.api_version}..."}
 
-          api.list_resources(labelSelector: "#{LABEL}=#{name}").each do |resource|
+          api.list_resources(labelSelector: {LABEL => name}).each do |resource|
             next if PRUNE_IGNORE.include? "#{resource.apiVersion}:#{resource.kind}"
 
             # XXX: map keys are symbols...
