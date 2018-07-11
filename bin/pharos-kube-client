@@ -40,7 +40,6 @@ logger = Logger.new(STDERR)
 
 parser = OptionParser.new do |parser|
   parser.on('--debug') do
-    puts "--debug"
     Pharos::Kube::Logging.debug!
   end
   parser.on('--verbose') do
