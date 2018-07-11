@@ -6,6 +6,10 @@ module Pharos
     class Stack
       LABEL = 'pharos.kontena.io/stack'
       CHECKSUM_ANNOTATION = 'pharos.kontena.io/stack-checksum'
+      PRUNE_IGNORE = [
+        'v1:ComponentStatus', # apiserver ignores GET /v1/componentstatuses?labelSelector=... and returns all resources
+        'v1:Endpoint', # inherits stack label from service, but not checksum annotation
+      ]
 
       def self.load(path, name: nil)
         new(name || File.basename(path), Pharos::Kube::Resource.from_files(path))
@@ -22,12 +26,18 @@ module Pharos
         @checksum ||= SecureRandom.hex(16)
       end
 
-      # @param resource [Pharos::Kube::Resource]
-      # @param existing_resource [Pharos::Kube::Resource]
+      # @param resource [Pharos::Kube::Resource] to apply
+      # @param merge_resource [Pharos::Kube::Resource] to merge additional attributes from
       # @return [Pharos::Kube::Resource]
-      def apply_resource(resource, existing_resource = nil)
-        h = existing_resource ? existing_resource.to_hash : {}
-        h.deep_merge!(resource.to_hash, overwrite_arrays: true)
+      def prepare_resource(resource, merge_resource: nil)
+        if merge_resource
+          h = merge_resource.to_hash
+          h.deep_merge!(resource.to_hash, overwrite_arrays: true)
+        else
+          h = resource.to_hash
+        end
+
+        # stack metadata
         h.deep_merge!(metadata: {
           labels: { LABEL.to_sym => name }, # XXX: map keys are symbols...
           annotations: { CHECKSUM_ANNOTATION.to_sym => checksum }, # XXX: map keys are symbols...
@@ -42,9 +52,9 @@ module Pharos
           begin
             existing_resource = client.get_resource(resource)
           rescue Pharos::Kube::Error::NotFound
-            client.create_resource(apply_resource(resource))
+            client.create_resource(prepare_resource(resource))
           else
-            client.update_resource(apply_resource(resource, existing_resource))
+            client.update_resource(prepare_resource(resource, merge_resource: existing_resource))
           end
         end
 
@@ -54,9 +64,9 @@ module Pharos
       def prune(client)
         client.apis(prefetch_resources: true).each do |api|
           api.list_resources(labelSelector: "#{LABEL}=#{name}").each do |resource|
-            next if resource.apiVersion == 'v1' && resource.kind == 'ComponentStatus' # WTF: apiserver ignores the ?labelSelector query and returns everything
-            next if resource.apiVersion == 'v1' && resource.kind == 'Endpoint' # inherits stack labels from service, does not have any ownerReference...
+            next if PRUNE_IGNORE.include? "#{resource.apiVersion}:#{resource.kind}"
 
+            # XXX: map keys are symbols...
             resource_label = resource.metadata.labels ? resource.metadata.labels[LABEL.to_sym] : nil
             resource_checksum = resource.metadata.annotations ? resource.metadata.annotations[CHECKSUM_ANNOTATION.to_sym] : nil # XXX: map keys are symbols...
 
