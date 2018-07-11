@@ -1,0 +1,32 @@
+{
+  "kind": "APIResourceList",
+  "apiVersion": "v1",
+  "groupVersion": "apiregistration.k8s.io/v1",
+  "resources": [
+    {
+      "name": "apiservices",
+      "singularName": "",
+      "namespaced": false,
+      "kind": "APIService",
+      "verbs": [
+        "create",
+        "delete",
+        "deletecollection",
+        "get",
+        "list",
+        "patch",
+        "update",
+        "watch"
+      ]
+    },
+    {
+      "name": "apiservices/status",
+      "singularName": "",
+      "namespaced": false,
+      "kind": "APIService",
+      "verbs": [
+        "update"
+      ]
+    }
+  ]
+}

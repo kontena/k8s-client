@@ -13,17 +13,47 @@ RSpec.describe Pharos::Kube::Client do
       '/apis' => 'api/apis.json',
     }
 
+    API_GROUPS = (
+        # curl -v http://localhost:8001/apis | jq -r '.groups[].preferredVersion.groupVersion'
+        <<-EOM
+          apiregistration.k8s.io/v1
+          extensions/v1beta1
+          apps/v1
+          events.k8s.io/v1beta1
+          authentication.k8s.io/v1
+          authorization.k8s.io/v1
+          autoscaling/v1
+          batch/v1
+          certificates.k8s.io/v1beta1
+          networking.k8s.io/v1
+          policy/v1beta1
+          rbac.authorization.k8s.io/v1
+          storage.k8s.io/v1
+          admissionregistration.k8s.io/v1beta1
+          apiextensions.k8s.io/v1beta1
+        EOM
+    ).split
+
+
     before do
       STUB_APIS.each do |path, fixture_path|
         stub_request(:get, "localhost:8080#{path}")
-        .to_return(
-          status: 200,
-          body: fixture(fixture_path),
-          headers: { 'Content-Type' => 'application/json' }
-        )
+          .to_return(
+            status: 200,
+            body: fixture(fixture_path),
+            headers: { 'Content-Type' => 'application/json' }
+          )
+      end
+
+      for api_version in API_GROUPS
+        stub_request(:get, "localhost:8080/apis/#{api_version}")
+          .to_return(
+            status: 200,
+            body: fixture("apis/#{api_version.sub('/', '-')}.json"),
+            headers: { 'Content-Type' => 'application/json' }
+          )
       end
     end
-
 
     describe '#version' do
       it "returns version JSON" do
@@ -73,6 +103,21 @@ RSpec.describe Pharos::Kube::Client do
             apiextensions.k8s.io/v1beta1
           EOM
         ).split)
+      end
+
+      context "with partially cached api resources" do
+        before do
+          subject.api.api_resources
+        end
+
+        it "prefetches missing resources for apis" do
+          expect(transport).to receive(:get).once.with('/apis', hash_including(:response_class)).and_call_original
+          expect(transport).to receive(:gets).once.and_call_original
+
+          apis = subject.apis(prefetch_resources: true)
+
+          expect(apis.map{|api| api.api_resources}.flatten.map{|r| r.name}).to include 'nodes', 'pods', 'deployments', 'jobs'
+        end
       end
     end
   end
