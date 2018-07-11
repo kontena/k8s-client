@@ -120,5 +120,123 @@ RSpec.describe Pharos::Kube::Client do
         end
       end
     end
+
+    describe '#create_resource' do
+      context "for a service resource" do
+        let(:resource) { resource_fixture('resources/service.yaml') }
+        let(:created_resource) { resource_fixture('resources/service.yaml').merge!(
+          metadata: { resourceVersion: '1'}
+        ) }
+
+        before do
+          stub_request(:post, 'localhost:8080/api/v1/namespaces/default/services')
+            .with(
+              headers: { 'Content-Type' => 'application/json' },
+              body: resource.to_hash,
+            )
+            .to_return(
+              status: 201,
+              headers: { 'Content-Type' => 'application/json' },
+              body: created_resource.to_json,
+            )
+        end
+
+        it "returns the created resource" do
+          r = subject.create_resource(resource)
+
+          expect(r).to match Pharos::Kube::Resource
+          expect(r.kind).to eq 'Service'
+          expect(r.metadata.name).to eq 'whoami'
+          expect(r.metadata.resourceVersion).to eq '1'
+        end
+      end
+    end
+
+    describe '#get_resource' do
+      context "for a service resource" do
+        let(:resource) { resource_fixture('resources/service.yaml') }
+        let(:server_resource) { resource_fixture('resources/service.yaml').merge!(
+          metadata: { resourceVersion: '1'}
+        ) }
+
+        before do
+          stub_request(:get, 'localhost:8080/api/v1/namespaces/default/services/whoami')
+            .to_return(
+              status: 200,
+              headers: { 'Content-Type' => 'application/json' },
+              body: server_resource.to_json,
+            )
+        end
+
+        it "returns the server resource" do
+          r = subject.get_resource(resource)
+
+          expect(r).to match Pharos::Kube::Resource
+          expect(r.kind).to eq 'Service'
+          expect(r.metadata.name).to eq 'whoami'
+          expect(r.metadata.resourceVersion).to eq '1'
+        end
+      end
+    end
+
+    describe '#update_resource' do
+      context "for a service resource" do
+        let(:resource) { resource_fixture('resources/service.yaml').merge!(
+          metadata: { resourceVersion: '1'}
+        ) }
+        let(:server_resource) { resource_fixture('resources/service.yaml').merge!(
+          metadata: { resourceVersion: '2'}
+        ) }
+
+        before do
+          stub_request(:put, 'localhost:8080/api/v1/namespaces/default/services/whoami')
+            .with(
+              headers: { 'Content-Type' => 'application/json' },
+              body: resource.to_hash,
+            )
+            .to_return(
+              status: 200,
+              headers: { 'Content-Type' => 'application/json' },
+              body: server_resource.to_json,
+            )
+        end
+
+        it "returns the updated resource" do
+          r = subject.update_resource(resource)
+
+          expect(r).to match Pharos::Kube::Resource
+          expect(r.kind).to eq 'Service'
+          expect(r.metadata.name).to eq 'whoami'
+          expect(r.metadata.resourceVersion).to eq '2'
+        end
+      end
+    end
+
+    describe '#delete_resource' do
+      context "for a service resource" do
+        let(:resource) { resource_fixture('resources/service.yaml') }
+        let(:server_resource) { resource_fixture('resources/service.yaml').merge!(
+          metadata: { resourceVersion: '3'}
+        ) }
+
+        before do
+          stub_request(:delete, 'localhost:8080/api/v1/namespaces/default/services/whoami')
+            .to_return(
+              status: 200,
+              headers: { 'Content-Type' => 'application/json' },
+              body: server_resource.to_json,
+            )
+        end
+
+        it "returns the deleted resource" do
+          r = subject.delete_resource(resource)
+
+          expect(r).to match Pharos::Kube::Resource
+          expect(r.kind).to eq 'Service'
+          expect(r.metadata.name).to eq 'whoami'
+          expect(r.metadata.resourceVersion).to eq '3'
+        end
+      end
+    end
   end
 end

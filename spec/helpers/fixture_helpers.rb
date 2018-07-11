@@ -10,4 +10,9 @@ module FixtureHelpers
   def fixture(*path)
     File.read(fixture_path(*path))
   end
+
+  # @return [Pharos::Kube::Resource]
+  def resource_fixture(*path)
+    Pharos::Kube::Resource.from_file(fixture_path(*path))
+  end
 end
