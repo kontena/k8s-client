@@ -65,10 +65,11 @@ module Pharos
           end
         end
 
-        prune(client) if prune
+        prune(client, checksum: checksum) if prune
       end
 
-      def prune(client)
+      # Delete all stack resources that were not applied
+      def prune(client, checksum: )
         client.apis(prefetch_resources: true).each do |api|
           logger.debug { "List resources in #{api.api_version}..."}
 
@@ -83,7 +84,7 @@ module Pharos
 
             if resource_label != name
               # apiserver did not respect labelSelector
-            elsif resource_checksum == checksum
+            elsif checksum && resource_checksum == checksum
               # resource is up-to-date
             else
               logger.info "Delete resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
@@ -91,6 +92,11 @@ module Pharos
             end
           end
         end
+      end
+
+      # Delete all stack resources
+      def delete(client)
+        prune(client, checksum: nil)
       end
     end
   end

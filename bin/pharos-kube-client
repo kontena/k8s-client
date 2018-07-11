@@ -29,6 +29,7 @@ Options = Struct.new(
   :stack_name,
   :stack,
   :prune_stack,
+  :delete_stack,
 )
 
 options = Options.new()
@@ -128,6 +129,9 @@ parser = OptionParser.new do |parser|
   end
   parser.on('--prune-stack=TRUE|FALSE', TrueClass) do |flag|
     options.prune_stack = flag
+  end
+  parser.on('--delete-stack') do
+    options.delete_stack = options.stack
   end
 end
 
@@ -265,7 +269,12 @@ for resource in options.delete_resources
   end
 end
 
-if options.stack
+if stack = options.delete_stack
+  logger.info "Delete stack #{stack.name}..."
+
+  stack.delete(client)
+
+elsif options.stack
   logger.info "Apply stack #{options.stack.name}..."
 
   options.stack.apply(client,
