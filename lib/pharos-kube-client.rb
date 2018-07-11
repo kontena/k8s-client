@@ -1,6 +1,7 @@
 require 'pharos/kube/api/metav1'
 
 require 'pharos/kube/config'
+require 'pharos/kube/logging'
 
 require 'pharos/kube/api_client'
 require "pharos/kube/client"
