@@ -40,22 +40,21 @@ module Pharos
           response_class: Pharos::Kube::API::MetaV1::APIGroupList,
         )
 
+        api_versions = ['v1'] + @api_group_list.groups.map{|api_group| api_group.preferredVersion.groupVersion }
+
         if prefetch_resources
           # api groups that are missing their api_resources
-          api_paths = @api_group_list.groups
-            .select{|api_group| !api(api_group.preferredVersion.groupVersion).api_resources? }
-            .map{|api_group| APIClient.path(api_group.preferredVersion.groupVersion) }
+          api_paths = api_versions
+            .select{|api_version| !api(api_version).api_resources? }
+            .map{|api_version| APIClient.path(api_version) }
 
-          unless api_paths.empty?
-            # load into APIClient.api_resources=
-            @transport.gets(*api_paths, response_class: Pharos::Kube::API::MetaV1::APIResourceList).each do |api_resource_list|
-              api(api_resource_list.groupVersion).api_resources = api_resource_list.resources
-            end
+          # load into APIClient.api_resources=
+          @transport.gets(*api_paths, response_class: Pharos::Kube::API::MetaV1::APIResourceList).each do |api_resource_list|
+            api(api_resource_list.groupVersion).api_resources = api_resource_list.resources
           end
         end
 
-        # TODO: also prefetch api_resources for the core api?
-        [api] + @api_group_list.groups.map{|api_group| api(api_group.preferredVersion.groupVersion) }
+        api_versions.map{|api_version| api(api_version) }
       end
 
       # @param resource [Pharos::Kube::Resource]

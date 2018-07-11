@@ -138,7 +138,6 @@ end
 logger.info "Kube server version: #{client.version[:gitVersion]}"
 
 if options.prefetch_resources
-  # client.api.api_resources XXX: unnecessary separate request TODO: also pipeline?
   client.apis(prefetch_resources: true)
 end
 
