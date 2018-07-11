@@ -89,8 +89,8 @@ module Pharos
         path = options[:path]
         body = nil
 
-        if query = options[:query]
-          path += "?" + Excon::Utils.query_string(query)
+        if options[:query]
+          path += Excon::Utils.query_string(options)
         end
         if obj = options[:request_object]
           body = "<#{obj.class.name}>"
