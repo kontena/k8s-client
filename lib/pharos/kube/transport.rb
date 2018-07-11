@@ -4,6 +4,8 @@ require 'json'
 module Pharos
   module Kube
     class Transport
+      include Logging
+
       EXCON_MIDDLEWARES = [
         # XXX: necessary? redirected requests omit authz headers?
         Excon::Middleware::RedirectFollower,
@@ -52,6 +54,8 @@ module Pharos
       def initialize(server, **options)
         @server = server
         @options = options
+
+        logger! progname: @server
       end
 
       # @return [Excon::Connection]
@@ -78,6 +82,21 @@ module Pharos
         end
 
         options
+      end
+
+      def format_request(options)
+        method = options[:method]
+        path = options[:path]
+        body = nil
+
+        if query = options[:query]
+          path += "?" + Excon::Utils.query_string(query)
+        end
+        if obj = options[:request_object]
+          body = "<#{obj.class.name}>"
+        end
+
+        [method, path, body].compact.join " "
       end
 
       # @raise [Pharos::Kube::Error]
@@ -117,22 +136,42 @@ module Pharos
       end
 
       def request(response_class: nil, **options)
-        response = excon.request(**request_options(**options))
+        excon_options = request_options(**options)
 
-        parse_response(response,
+        start = Time.now
+        response = excon.request(**excon_options)
+        t = Time.now - start
+
+        obj = parse_response(response,
           response_class: response_class,
         )
+      rescue Pharos::Kube::Error::API => exc
+        logger.warn { "#{format_request(options)} => HTTP #{exc.http_status}: #{exc} in #{'%.3f' % t}s"}
+        raise
+      else
+        logger.info { "#{format_request(options)} => HTTP #{response.status}: <#{obj.class}> in #{'%.3f' % t}s"}
+        return obj
       end
 
       # @param *options [Hash]
       def requests(*options, response_class: nil)
         return [] if options.empty? # excon chokes
 
-        excon.requests(
+        start = Time.now
+        responses = excon.requests(
           options.map{|options| request_options(**options)}
-        ).map{|response| parse_response(response,
+        )
+        objects = responses.map{|response| parse_response(response,
           response_class: response_class,
         ) }
+        t = Time.now - start
+
+      rescue Pharos::Kube::Error => exc
+        logger.warn { "[#{options.map{|o| format_request(o)}.join ', '}] => HTTP #{exc.http_status}: #{exc} in #{'%.3f' % t}s"}
+        raise
+      else
+        logger.info { "[#{options.map{|o| format_request(o)}.join ', '}] => HTTP [#{responses.map{|r| r.status}.join ', '}] in #{'%.3f' % t}s" }
+        return objects
       end
 
       # @param *path [String]

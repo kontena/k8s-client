@@ -5,10 +5,12 @@ module Pharos
     class Error < StandardError
       class API < Error
 
-        # @param code [Integer] HTTP response code
+        attr_reader :http_status
+
+        # @param http_status [Integer] HTTP response code
         # @param reason [String] HTTP response reason
-        def initialize(code, message)
-          @code = code
+        def initialize(http_status, message)
+          @http_status = http_status
 
           super(message)
         end
@@ -21,8 +23,8 @@ module Pharos
         def_delegators :@status, :status, :message, :reason, :details, :code
 
         # @param status [Pharos::Kube::API::MetaV1::Status]
-        def initialize(code, status)
-          super(code, status.message)
+        def initialize(http_status, status)
+          super(http_status, status.message)
 
           @status = status
         end
