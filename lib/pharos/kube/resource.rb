@@ -49,14 +49,14 @@ module Pharos
         @attrs[attr]
       end
 
-      # new resource with merged fields
+      # merge in fields
       #
       # @return [Pharos::Kube:Resource]
-      def merge(**attrs)
-        h = to_hash
-        h.deep_merge!(attrs, overwrite_arrays: true)
-
-        self.class.new(**h)
+      def merge!(**attrs)
+        # XXX: dirty trick to re-initialize the immutable @metadata
+        initialize(@attrs.deep_merge!(attrs, overwrite_arrays: true))
+        
+        self
       end
     end
   end
