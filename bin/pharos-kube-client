@@ -49,7 +49,7 @@ parser = OptionParser.new do |parser|
   end
   parser.on('--verbose') do
     Pharos::Kube::Logging.verbose!
-    Pharos::Kube::Transport.verbose!
+    Pharos::Kube::Transport.quiet!
   end
   parser.on('--quiet') do
     Pharos::Kube::Logging.quiet!
