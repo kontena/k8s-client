@@ -39,14 +39,21 @@ options.delete_resources = []
 logger = Logger.new(STDERR)
 
 parser = OptionParser.new do |parser|
+  parser.on('--debug-api') do
+    Pharos::Kube::Logging.debug!
+    Pharos::Kube::Transport.debug!
+  end
   parser.on('--debug') do
     Pharos::Kube::Logging.debug!
+    Pharos::Kube::Transport.verbose!
   end
   parser.on('--verbose') do
     Pharos::Kube::Logging.verbose!
+    Pharos::Kube::Transport.verbose!
   end
   parser.on('--quiet') do
     Pharos::Kube::Logging.quiet!
+    Pharos::Kube::Transport.quiet!
   end
   parser.on('--kubeconfig=PATH') do |path|
     options.config = Pharos::Kube::Config.load_file(path)

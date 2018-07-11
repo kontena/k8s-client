@@ -147,9 +147,13 @@ module Pharos
         )
       rescue Pharos::Kube::Error::API => exc
         logger.warn { "#{format_request(options)} => HTTP #{exc.http_status}: #{exc} in #{'%.3f' % t}s"}
+        logger.debug { "Request: #{excon_options[:body]}"} if excon_options[:body]
+        logger.debug { "Response: #{response.body}"}
         raise
       else
         logger.info { "#{format_request(options)} => HTTP #{response.status}: <#{obj.class}> in #{'%.3f' % t}s"}
+        logger.debug { "Request: #{excon_options[:body]}"} if excon_options[:body]
+        logger.debug { "Response: #{response.body}"}
         return obj
       end
 
