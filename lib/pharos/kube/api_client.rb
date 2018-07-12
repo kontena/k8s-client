@@ -105,13 +105,8 @@ module Pharos
              'fieldSelector' => ResourceClient.selector_query(fieldSelector),
            ),
          )
-         # TODO: use ResourceClient#process_list instead?
-        api_lists_items = api_lists.map{|list| list.items.map {|item|
-          # XXX: hack because list items do not include kind/apiVersion
-          Pharos::Kube::Resource.new(apiVersion: list.apiVersion, kind: list.kind.sub(/List$/, ''), **item)
-        } }
 
-        api_lists_items.flatten
+        resources.zip(api_lists).map {|resource, api_list| resource.process_list(api_list) }.flatten
       end
     end
   end
