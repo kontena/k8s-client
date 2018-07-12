@@ -15,14 +15,15 @@ module Pharos
         end
       end
 
+      #
       # @param file [String] path
-      # @return [Hash]
+      # @return [Hash] with symbol keys
       def self.load_file(file)
         transform_keys(::YAML.load_file(file))
       end
 
       # @param path [String] path
-      # @return [Array<Hash>]
+      # @return [Array<Hash>] with symbol keys
       def self.load_files(path)
         stat = File.stat(path)
 
