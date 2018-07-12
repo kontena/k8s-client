@@ -34,11 +34,11 @@ module Pharos
       # @return [Pharos::Kube::Resource]
       def prepare_resource(resource, base_resource: nil)
         if base_resource
-          resource = base_resource.merge!(resource)
+          resource = base_resource.merge(resource)
         end
 
         # add stack metadata
-        resource.merge!(metadata: {
+        resource.merge(metadata: {
           labels: { LABEL.to_sym => name }, # XXX: map keys are symbols...
           annotations: { CHECKSUM_ANNOTATION.to_sym => checksum }, # XXX: map keys are symbols...
         })

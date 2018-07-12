@@ -124,7 +124,7 @@ RSpec.describe Pharos::Kube::Client do
     describe '#create_resource' do
       context "for a service resource" do
         let(:resource) { resource_fixture('resources/service.yaml') }
-        let(:created_resource) { resource_fixture('resources/service.yaml').merge!(
+        let(:server_resource) { resource.merge(
           metadata: { resourceVersion: '1'}
         ) }
 
@@ -137,7 +137,7 @@ RSpec.describe Pharos::Kube::Client do
             .to_return(
               status: 201,
               headers: { 'Content-Type' => 'application/json' },
-              body: created_resource.to_json,
+              body: server_resource.to_json,
             )
         end
 
@@ -155,7 +155,7 @@ RSpec.describe Pharos::Kube::Client do
     describe '#get_resource' do
       context "for a service resource" do
         let(:resource) { resource_fixture('resources/service.yaml') }
-        let(:server_resource) { resource_fixture('resources/service.yaml').merge!(
+        let(:server_resource) { resource.merge(
           metadata: { resourceVersion: '1'}
         ) }
 
@@ -181,10 +181,10 @@ RSpec.describe Pharos::Kube::Client do
 
     describe '#update_resource' do
       context "for a service resource" do
-        let(:resource) { resource_fixture('resources/service.yaml').merge!(
+        let(:resource) { resource_fixture('resources/service.yaml').merge(
           metadata: { resourceVersion: '1'}
         ) }
-        let(:server_resource) { resource_fixture('resources/service.yaml').merge!(
+        let(:server_resource) { resource_fixture('resources/service.yaml').merge(
           metadata: { resourceVersion: '2'}
         ) }
 
@@ -215,7 +215,7 @@ RSpec.describe Pharos::Kube::Client do
     describe '#delete_resource' do
       context "for a service resource" do
         let(:resource) { resource_fixture('resources/service.yaml') }
-        let(:server_resource) { resource_fixture('resources/service.yaml').merge!(
+        let(:server_resource) { resource.merge(
           metadata: { resourceVersion: '3'}
         ) }
 

@@ -52,11 +52,14 @@ module Pharos
       # merge in fields
       #
       # @return [Pharos::Kube:Resource]
-      def merge!(**attrs)
-        # XXX: dirty trick to re-initialize the immutable @metadata
-        initialize(@attrs.deep_merge!(attrs, overwrite_arrays: true))
-        
-        self
+      def merge(**attrs)
+        # deep clone attrs
+        h = Marshal.load(Marshal.dump(@attrs))
+
+        # merge in-place
+        h.deep_merge!(attrs, overwrite_arrays: true)
+
+        self.class.new(h)
       end
     end
   end
