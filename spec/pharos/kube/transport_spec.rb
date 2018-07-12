@@ -56,7 +56,7 @@ RSpec.describe Pharos::Kube::Transport do
 
     describe '#get' do
       it "returns the test JSON" do
-        expect(subject.get('/test')).to eq({test: true})
+        expect(subject.get('/test')).to eq({'test' => true})
       end
     end
   end
@@ -79,7 +79,7 @@ RSpec.describe Pharos::Kube::Transport do
 
         expect(list).to be_a Pharos::Kube::API::MetaV1::List
         expect(list.items).to match [
-          hash_including(metadata: hash_including(name: 'ubuntu-xenial')),
+          hash_including('metadata' => hash_including('name' => 'ubuntu-xenial')),
         ]
       end
     end

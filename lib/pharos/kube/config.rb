@@ -4,25 +4,38 @@ require 'yaml'
 
 module Pharos
   module Kube
+    class ConfigStruct < Dry::Struct
+      # convert string keys to symbols
+      # normalize foo-bar to foo_bar
+      transform_keys do |key|
+        case key
+        when String
+          key.gsub('-', '_').to_sym
+        else
+          key
+        end
+      end
+    end
+
     # @see https://godoc.org/k8s.io/client-go/tools/clientcmd/api/v1#Config
-    class Config < Dry::Struct
+    class Config < ConfigStruct
       class Types
         include Dry::Types.module
       end
 
-      class Cluster < Dry::Struct
+      class Cluster < ConfigStruct
         attribute :server, Types::String
         attribute :insecure_skip_tls_verify, Types::Bool.optional.default(nil)
         attribute :certificate_authority, Types::String.optional.default(nil)
         attribute :certificate_authority_data, Types::String.optional.default(nil)
         attribute :extensions, Types::Strict::Array.optional.default(nil)
       end
-      class NamedCluster < Dry::Struct
+      class NamedCluster < ConfigStruct
         attribute :name, Types::String
         attribute :cluster, Cluster
       end
 
-      class User < Dry::Struct
+      class User < ConfigStruct
         attribute :client_certificate, Types::String.optional.default(nil)
         attribute :client_certificate_data, Types::String.optional.default(nil)
         attribute :client_key, Types::String.optional.default(nil)
@@ -38,18 +51,18 @@ module Pharos
         attribute :exec, Types::Strict::Hash.optional.default(nil)
         attribute :extensions, Types::Strict::Array.optional.default(nil)
       end
-      class NamedUser < Dry::Struct
+      class NamedUser < ConfigStruct
         attribute :name, Types::String
         attribute :user, User
       end
 
-      class Context < Dry::Struct
+      class Context < ConfigStruct
         attribute :cluster, Types::Strict::String
         attribute :user, Types::Strict::String
         attribute :namespace, Types::Strict::String.optional.default(nil)
         attribute :extensions, Types::Strict::Array.optional.default(nil)
       end
-      class NamedContext < Dry::Struct
+      class NamedContext < ConfigStruct
         attribute :name, Types::String
         attribute :context, Context
       end

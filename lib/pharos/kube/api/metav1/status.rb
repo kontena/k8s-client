@@ -5,13 +5,13 @@ module Pharos
         # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#Status
         class Status < Resource
 
-          class Cause < Dry::Struct
+          class Cause < Struct
             attribute :reason, Types::Strict::String.optional.default(nil)
             attribute :message, Types::Strict::String.optional.default(nil) # human-readable
             attribute :field, Types::Strict::String.optional.default(nil) # human-readable
           end
 
-          class Details < Dry::Struct
+          class Details < Struct
             attribute :name, Types::Strict::String.optional.default(nil)
             attribute :group, Types::Strict::String.optional.default(nil)
             attribute :kind, Types::Strict::String.optional.default(nil)
@@ -20,12 +20,7 @@ module Pharos
             attribute :retryAfterSeconds, Types::Strict::Integer.optional.default(nil)
           end
 
-          attribute :metadata do
-            attribute :selfLink, Types::Strict::String.optional.default(nil)
-            attribute :resourceVersion, Types::Strict::String.optional.default(nil)
-            attribute :continue, Types::Strict::String.optional.default(nil)
-          end
-
+          attribute :metadata, ListMeta
           attribute :status, Types::Strict::String.enum('Success', 'Failure').optional.default(nil)
           attribute :message, Types::Strict::String.optional.default(nil) # human-readable
           attribute :reason, Types::Strict::String.optional.default(nil) # machine-readable

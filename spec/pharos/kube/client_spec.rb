@@ -56,8 +56,8 @@ RSpec.describe Pharos::Kube::Client do
     end
 
     describe '#version' do
-      it "returns version JSON" do
-        expect(subject.version).to match hash_including(
+      it "returns version" do
+        expect(subject.version.to_hash).to match hash_including(
           gitVersion: 'v1.10.5',
         )
       end

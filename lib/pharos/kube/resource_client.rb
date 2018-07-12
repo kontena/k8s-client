@@ -145,7 +145,7 @@ module Pharos
       def process_list(list)
         list.items.map {|item|
           # list items omit kind/apiVersion
-          @resource_class.new(apiVersion: list.apiVersion, kind: @api_resource.kind, **item)
+          @resource_class.new(item.merge('apiVersion' => list.apiVersion, 'kind' => @api_resource.kind))
         }
       end
 

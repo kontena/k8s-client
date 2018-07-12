@@ -23,9 +23,11 @@ module Pharos
       end
 
       # @raise [Pharos::Kube::Error]
-      # @return [Hash{major, minor, ...}]
+      # @return [Pharos::Kube::API::Version]
       def version
-        @transport.get('/version')
+        @transport.get('/version',
+          response_class: Pharos::Kube::API::Version,
+        )
       end
 
       # @param api_version [String] "group/version" or "version" (core)

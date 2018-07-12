@@ -2,17 +2,16 @@ module Pharos
   module Kube
     module API
       module MetaV1
+        class APIGroupVersion < Struct
+          attribute :groupVersion, Types::Strict::String
+          attribute :version, Types::Strict::String
+        end
+
         # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#APIGroup
         class APIGroup < Struct
           attribute :name, Types::Strict::String
-          attribute :versions, Types::Strict::Array do
-            attribute :groupVersion, Types::Strict::String
-            attribute :version, Types::Strict::String
-          end
-          attribute :preferredVersion do
-            attribute :groupVersion, Types::Strict::String
-            attribute :version, Types::Strict::String
-          end
+          attribute :versions, Types::Strict::Array.of(APIGroupVersion)
+          attribute :preferredVersion, APIGroupVersion
         end
 
         # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#APIGroupList

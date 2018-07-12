@@ -17,7 +17,7 @@ RSpec.describe Pharos::Kube::Stack do
             expect(resource.apiVersion).to eq 'apps/v1'
             expect(resource.kind).to eq 'Deployment'
             expect(resource.metadata.name).to eq 'whoami'
-            expect(resource.metadata.labels).to match hash_including(
+            expect(resource.metadata.labels.to_hash).to eq(
               'app'.to_sym => 'whoami',
               'pharos.kontena.io/stack'.to_sym => 'whoami',
             )
@@ -27,7 +27,7 @@ RSpec.describe Pharos::Kube::Stack do
             expect(resource.apiVersion).to eq 'v1'
             expect(resource.kind).to eq 'Service'
             expect(resource.metadata.name).to eq 'whoami'
-            expect(resource.metadata.labels).to match hash_including(
+            expect(resource.metadata.labels.to_hash).to eq(
               'app'.to_sym => 'whoami',
               'pharos.kontena.io/stack'.to_sym => 'whoami',
             )
@@ -37,7 +37,7 @@ RSpec.describe Pharos::Kube::Stack do
             expect(resource.apiVersion).to eq 'extensions/v1beta1'
             expect(resource.kind).to eq 'Ingress'
             expect(resource.metadata.name).to eq 'whoami'
-            expect(resource.metadata.labels).to match hash_including(
+            expect(resource.metadata.labels.to_hash).to eq(
               'pharos.kontena.io/stack'.to_sym => 'whoami',
             )
           end

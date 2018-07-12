@@ -12,11 +12,14 @@ module Pharos
           attribute :blockOwnerDeletion, Types::Strict::Bool.optional.default(nil)
         end
 
+        # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#Initializer
+        class Initializer < Struct
+          attribute :name, Types::Strict::String
+        end
+
         # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#Initializers
-        class Initializers < Dry::Struct
-          attribute :pending do
-            attribute :name, Types::Strict::String
-          end
+        class Initializers < Struct
+          attribute :pending, Initializer
           attribute :result, Status.optional.default(nil)
         end
 
@@ -40,6 +43,7 @@ module Pharos
           attribute :clusterName, Types::Strict::String.optional.default(nil)
         end
 
+        # common attributes shared by all object types
         class ObjectCommon < Resource
           attribute :metadata, ObjectMeta.optional.default(nil)
         end

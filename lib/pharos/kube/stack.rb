@@ -39,8 +39,8 @@ module Pharos
 
         # add stack metadata
         resource.merge(metadata: {
-          labels: { LABEL.to_sym => name }, # XXX: map keys are symbols...
-          annotations: { CHECKSUM_ANNOTATION.to_sym => checksum }, # XXX: map keys are symbols...
+          labels: { LABEL => name },
+          annotations: { CHECKSUM_ANNOTATION => checksum },
         })
       end
 
@@ -70,9 +70,8 @@ module Pharos
           api.list_resources(labelSelector: {LABEL => name}).each do |resource|
             next if PRUNE_IGNORE.include? "#{resource.apiVersion}:#{resource.kind}"
 
-            # XXX: map keys are symbols...
-            resource_label = resource.metadata.labels ? resource.metadata.labels[LABEL.to_sym] : nil
-            resource_checksum = resource.metadata.annotations ? resource.metadata.annotations[CHECKSUM_ANNOTATION.to_sym] : nil # XXX: map keys are symbols...
+            resource_label = resource.metadata.labels ? resource.metadata.labels[LABEL] : nil
+            resource_checksum = resource.metadata.annotations ? resource.metadata.annotations[CHECKSUM_ANNOTATION] : nil
 
             logger.debug { "List resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource_checksum}" }
 
