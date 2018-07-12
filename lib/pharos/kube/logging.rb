@@ -28,10 +28,10 @@ module Pharos
       extend ModuleMethods # global @log_level
 
       module ClassMethods
-        def logger(target: LOG_TARGET, level: Pharos::Kube::Logging.log_level)
+        def logger(target: LOG_TARGET, level: nil)
           @logger ||= Logger.new(target).tap do |logger|
             logger.progname = self.name
-            logger.level = level
+            logger.level = level || self.log_level || Pharos::Kube::Logging.log_level || LOG_LEVEL
           end
         end
       end

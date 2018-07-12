@@ -25,27 +25,39 @@ module Pharos
         options = {}
 
         if config.cluster.insecure_skip_tls_verify
+          logger.debug "Using config with .cluster.insecure_skip_tls_verify"
+
           options[:ssl_verify_peer] = false
         end
 
         if path = config.cluster.certificate_authority
+          logger.debug "Using config with .cluster.certificate_authority"
+
           options[:ssl_ca_file] = path
         end
 
         if data = config.cluster.certificate_authority_data
+          logger.debug "Using config with .cluster.certificate_authority_data"
+
           ssl_cert_store = options[:ssl_cert_store] = OpenSSL::X509::Store.new
           ssl_cert_store.add_cert(OpenSSL::X509::Certificate.new(Base64.decode64(data)))
         end
 
         if (cert = config.user.client_certificate) && (key = config.user.client_key)
+          logger.debug "Using config with .user.client_certificate/client_key"
+
           options[:client_cert] = cert
           options[:client_key] = key
         end
 
         if (cert_data = config.user.client_certificate_data) && (key_data = config.user.client_key_data)
+          logger.debug "Using config with .user.client_certificate_data/client_key_data"
+
           options[:client_cert_data] = Base64.decode64(cert_data)
           options[:client_key_data] = Base64.decode64(key_data)
         end
+
+        logger.info "Using config with server=#{config.cluster.server}"
 
         new(config.cluster.server, **options)
       end
@@ -107,9 +119,7 @@ module Pharos
       def parse_response(response, response_class: nil)
         case response.headers['Content-Type']
         when 'application/json'
-          response_data = JSON.parse(response.body,
-            symbolize_names: true,
-          )
+          response_data = JSON.parse(response.body)
 
           unless response_data.is_a? Hash
             raise Pharos::Kube::Error, "Invalid JSON response: #{response_data.inspect}"
@@ -121,8 +131,8 @@ module Pharos
 
         if response.status.between? 200, 299
           # success
-        elsif response_data[:kind] == 'Status'
-          status = Pharos::Kube::API::MetaV1::Status.new(**response_data)
+        elsif response_data['kind'] == 'Status'
+          status = Pharos::Kube::API::MetaV1::Status.new(response_data)
           error_class = Pharos::Kube::Error::HTTP_STATUS_ERRORS[response.status] || Pharos::Kube::Error::Status
 
           raise error_class.new(response.status, status)
