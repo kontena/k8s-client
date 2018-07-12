@@ -145,7 +145,7 @@ else
   )
 end
 
-logger.info "Kube server version: #{client.version[:gitVersion]}"
+logger.info "Kube server version: #{client.version.gitVersion}"
 
 if options.prefetch_resources
   client.apis(prefetch_resources: true)
@@ -187,7 +187,7 @@ end
 
 if options.list_pods
   client.api('v1').resource('pods', namespace: namespace).list(labelSelector: options.label_selector).each do |pod|
-    puts "namespace=#{pod.metadata.namespace} pod: #{pod.metadata.name} node=#{pod[:spec][:nodeName]}"
+    puts "namespace=#{pod.metadata.namespace} pod: #{pod.metadata.name} node=#{pod.spec.nodeName}"
   end
 end
 
@@ -197,7 +197,7 @@ if options.update_node
   puts "Update node=#{node.metadata.name}..."
 
   if !options.node_unschedulable.nil?
-    puts "Set node=#{node.metadata.name} unschedulable: #{node[:spec][:unschedulable]} => #{options.node_unschedulable}"
+    puts "Set node=#{node.metadata.name} unschedulable: #{node.spec.unschedulable} => #{options.node_unschedulable}"
 
     node[:spec][:unschedulable] = options.node_unschedulable
   end
@@ -219,7 +219,7 @@ if options.delete_pods
   pods = client.api('v1').resource('pods', namespace: namespace).delete_collection(labelSelector: options.label_selector)
 
   pods.each do |pod|
-    logger.info "Deleted pod=#{pod.metadata.name} in namespace=#{pod.metadata.namespace} on node=#{pod[:spec][:nodeName]}"
+    logger.info "Deleted pod=#{pod.metadata.name} in namespace=#{pod.metadata.namespace} on node=#{pod.spec.nodeName}"
   end
 end
 
