@@ -13,7 +13,8 @@ module Pharos
       ]
 
       def self.load(path, name: nil, **options)
-        new(name || File.basename(path), Pharos::Kube::Resource.from_files(path))
+        resources = Pharos::Kube::Resource.from_files(path)
+        new(name || File.basename(path), resources, **options)
       end
 
       attr_reader :name, :resources
