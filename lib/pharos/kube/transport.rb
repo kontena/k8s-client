@@ -114,36 +114,43 @@ module Pharos
       end
 
       # @raise [Pharos::Kube::Error]
-      # @raise [Excon::Error] XXX: wrap?
+      # @raise [Excon::Error] TODO: wrap
       # @return [response_class, Hash]
-      def parse_response(response, response_class: nil)
-        case response.headers['Content-Type']
+      def parse_response(response, request_options, response_class: nil)
+        method = request_options[:method]
+        path = request_options[:path]
+        content_type, = response.headers['Content-Type'].split(';')
+
+        case content_type
         when 'application/json'
           response_data = JSON.parse(response.body)
 
-          unless response_data.is_a? Hash
-            raise Pharos::Kube::Error, "Invalid JSON response: #{response_data.inspect}"
-          end
-        # XXX: text/plain for errors?
+        when 'text/plain'
+          response_data = response.body # XXX: broken if status 2xx
         else
-          raise Pharos::Kube::Error, "Invalid response Content-Type: #{response.headers['Content-Type']}"
+          raise Pharos::Kube::Error::API.new(method, path, response.status, "Invalid response Content-Type: #{response.headers['Content-Type']}")
         end
 
         if response.status.between? 200, 299
-          # success
-        elsif response_data['kind'] == 'Status'
-          status = Pharos::Kube::API::MetaV1::Status.new(response_data)
-          error_class = Pharos::Kube::Error::HTTP_STATUS_ERRORS[response.status] || Pharos::Kube::Error::Status
+          unless response_data.is_a? Hash
+            raise Pharos::Kube::Error::API.new(method, path, response.status, "Invalid JSON response: #{response_data.inspect}")
+          end
 
-          raise error_class.new(response.status, status)
+          if response_class
+            return response_class.from_json(response_data)
+          else
+            return response_data # Hash
+          end
         else
-          raise Pharos::Kube::Error::API.new(response.status, response.reason_phrase)
-        end
+          error_class = Pharos::Kube::Error::HTTP_STATUS_ERRORS[response.status] || Pharos::Kube::Error::API
 
-        if response_class
-          return response_class.from_json(response_data)
-        else
-          return response_data # Hash
+          if response_data.is_a?(Hash) && response_data['kind'] == 'Status'
+            status = Pharos::Kube::API::MetaV1::Status.new(response_data)
+
+            raise error_class.new(method, path, response.status, response.reason_phrase, status)
+          else
+            raise error_class.new(method, path, response.status, response.reason_phrase)
+          end
         end
       end
 
@@ -154,11 +161,11 @@ module Pharos
         response = excon.request(**excon_options)
         t = Time.now - start
 
-        obj = parse_response(response,
+        obj = parse_response(response, options,
           response_class: response_class,
         )
       rescue Pharos::Kube::Error::API => exc
-        logger.warn { "#{format_request(options)} => HTTP #{exc.http_status}: #{exc} in #{'%.3f' % t}s"}
+        logger.warn { "#{format_request(options)} => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s"}
         logger.debug { "Request: #{excon_options[:body]}"} if excon_options[:body]
         logger.debug { "Response: #{response.body}"}
         raise
@@ -177,7 +184,7 @@ module Pharos
         responses = excon.requests(
           options.map{|options| request_options(**options)}
         )
-        objects = responses.map{|response| parse_response(response,
+        objects = responses.zip(options).map{|response, options| parse_response(response, options,
           response_class: response_class,
         ) }
         t = Time.now - start

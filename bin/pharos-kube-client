@@ -30,6 +30,8 @@ Options = Struct.new(
   :stack,
   :prune_stack,
   :delete_stack,
+  :api,
+  :list_api_resources,
 )
 
 options = Options.new()
@@ -133,6 +135,12 @@ parser = OptionParser.new do |parser|
   parser.on('--delete-stack') do
     options.delete_stack = options.stack
   end
+  parser.on('--api=API') do |api|
+    options.api = api
+  end
+  parser.on('--list-api-resources') do
+    options.list_api_resources = options.api
+  end
 end
 
 parser.parse!
@@ -159,6 +167,14 @@ elsif options.config && ns = options.config.context.namespace
   namespace = ns
 else
   namespace = nil # all
+end
+
+if options.list_api_resources
+  logger.info "List resource types for api=#{options.list_api_resources}..."
+
+  client.api(options.list_api_resources).resources do |api_resource|
+    logger.info "api=#{api_resource.api_version} resource=#{api_resource.resource} subresource=#{api_resource.subresource}"
+  end
 end
 
 if options.list_resources

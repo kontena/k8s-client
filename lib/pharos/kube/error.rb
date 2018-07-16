@@ -4,36 +4,34 @@ module Pharos
   module Kube
     class Error < StandardError
       class API < Error
-
-        attr_reader :http_status
-
-        # @param http_status [Integer] HTTP response code
-        # @param reason [String] HTTP response reason
-        def initialize(http_status, message)
-          @http_status = http_status
-
-          super(message)
-        end
-      end
-
-      # API status error
-      class Status < API
         extend Forwardable
 
-        def_delegators :@status, :status, :message, :reason, :details, :code
+        attr_reader :method, :path, :code, :reason, :status
 
+        # @param method [Integer] HTTP request method
+        # @param path [Integer] HTTP request path
+        # @param code [Integer] HTTP response code
+        # @param reason [String] HTTP response reason
         # @param status [Pharos::Kube::API::MetaV1::Status]
-        def initialize(http_status, status)
-          super(http_status, status.message)
-
+        def initialize(method, path, code, reason, status = nil)
+          @method = method
+          @path = path
+          @code = code
+          @reason = reason
           @status = status
+
+          if status
+            super("#{@method} #{@path} => HTTP #{@code} #{@reason}: #{@status.message}")
+          else
+            super("#{@method} #{@path} => HTTP #{@code} #{@reason}")
+          end
         end
       end
 
       HTTP_STATUS_ERRORS = {}
 
       def self.define_status_error(code, name)
-        HTTP_STATUS_ERRORS[code] = self.const_set(name, Class.new(Status))
+        HTTP_STATUS_ERRORS[code] = self.const_set(name, Class.new(API))
       end
 
       define_status_error 400, :BadRequest

@@ -44,7 +44,7 @@ RSpec.describe Pharos::Kube::Transport do
     end
   end
 
-  context "for a stub /test" do
+  context "for a stub /test returning JSON" do
     before do
       stub_request(:get, 'localhost:8080/test')
         .to_return(
@@ -57,6 +57,24 @@ RSpec.describe Pharos::Kube::Transport do
     describe '#get' do
       it "returns the test JSON" do
         expect(subject.get('/test')).to eq({'test' => true})
+      end
+
+    end
+  end
+
+  context "for a stub /test returning non-status 404" do
+    before do
+      stub_request(:get, 'localhost:8080/test')
+        .to_return(
+          status: [404, "Not Found"],
+          body: "404 page not found",
+          headers: { 'Content-Type' => 'text/plain' }
+        )
+    end
+
+    describe '#get' do
+      it "raises API error for non-status 404" do
+        expect{subject.get('/test')}.to raise_error(Pharos::Kube::Error::API, %r(GET /test => HTTP 404 Not Found))
       end
     end
   end
@@ -89,7 +107,7 @@ RSpec.describe Pharos::Kube::Transport do
     before do
       stub_request(:get, 'localhost:8080/api/v1/nodes')
         .to_return(
-          status: 403,
+          status: [403, "Forbidden"],
           body: fixture('api/error-forbidden.json'),
           headers: { 'Content-Type' => 'application/json' }
         )
@@ -97,7 +115,7 @@ RSpec.describe Pharos::Kube::Transport do
 
     describe '#get:' do
       it "raises Forbidden" do
-        expect{subject.get('/api/v1/nodes')}.to raise_error Pharos::Kube::Error::Forbidden, 'nodes is forbidden: User "system:anonymous" cannot list nodes at the cluster scope'
+        expect{subject.get('/api/v1/nodes')}.to raise_error Pharos::Kube::Error::Forbidden, 'GET /api/v1/nodes => HTTP 403 Forbidden: nodes is forbidden: User "system:anonymous" cannot list nodes at the cluster scope'
       end
     end
   end

@@ -8,7 +8,7 @@ RSpec.describe Pharos::Kube::Stack do
 
     context "which is not yet installed" do
       before do
-        allow(client).to receive(:get_resource).with(Pharos::Kube::Resource).and_raise(Pharos::Kube::Error::NotFound.new(404, Pharos::Kube::API::MetaV1::Status.new(metadata: {}, message: "Not Found")))
+        allow(client).to receive(:get_resource).with(Pharos::Kube::Resource).and_raise(Pharos::Kube::Error::NotFound.new('GET', '/xxx', 404, "Not Found", Pharos::Kube::API::MetaV1::Status.new(metadata: {}, message: "Not Found")))
       end
 
       describe '#apply' do
