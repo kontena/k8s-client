@@ -176,17 +176,29 @@ module Pharos
         return obj
       end
 
-      # @param *options [Hash]
-      def requests(*options, response_class: nil)
+      # @param options [Array<Hash>]
+      # @param skip_missing [Boolean] return nil for 404
+      # @return [Array<response_class, Hash, nil>]
+      def requests(*options, response_class: nil, skip_missing: false)
         return [] if options.empty? # excon chokes
 
         start = Time.now
         responses = excon.requests(
           options.map{|options| request_options(**options)}
         )
-        objects = responses.zip(options).map{|response, options| parse_response(response, options,
-          response_class: response_class,
-        ) }
+        objects = responses.zip(options).map{|response, request_options|
+          begin
+            parse_response(response, request_options,
+              response_class: request_options[:response_class] || response_class,
+            )
+          rescue Pharos::Kube::Error::NotFound
+            if skip_missing
+              nil
+            else
+              raise
+            end
+          end
+        }
         t = Time.now - start
 
       rescue Pharos::Kube::Error => exc
