@@ -36,11 +36,20 @@ module Pharos
         @api_resources = api_resources
       end
 
+      # Force-update APIResources
+      #
       # @return [Array<Pharos::Kube::API::MetaV1::APIResource>]
-      def api_resources
-        @api_resources ||= @transport.get(self.path,
+      def api_resources!
+        @api_resources = @transport.get(self.path,
           response_class: Pharos::Kube::API::MetaV1::APIResourceList,
         ).resources
+      end
+
+      # Cached APIResources
+      #
+      # @return [Array<Pharos::Kube::API::MetaV1::APIResource>]
+      def api_resources
+        @api_resources || api_resources!
       end
 
       # @param resource_name [String]
