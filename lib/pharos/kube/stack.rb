@@ -51,11 +51,22 @@ module Pharos
 
         resources.zip(server_resources).map do |resource, server_resource|
           if server_resource
+            # keep server checksum for comparison
+            # NOTE: this will not compare equal for resources with arrays containing hashes with default values applied by the server
+            #       however, that will just cause extra PUTs, so it doesn't have any functional effects
+            compare_resource = server_resource.merge(resource).merge(metadata: {
+              labels: { LABEL => name },
+            })
+          end
+
+          if !server_resource
+            logger.info "Create resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
+            client.create_resource(prepare_resource(resource))
+          elsif server_resource != compare_resource
             logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
             client.update_resource(prepare_resource(resource, base_resource: server_resource))
           else
-            logger.info "Create resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
-            client.create_resource(prepare_resource(resource))
+            logger.info "Keep resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
           end
         end
 
