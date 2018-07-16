@@ -77,7 +77,6 @@ module Pharos
 
       # TODO: skip non-namespaced resources if namespace is given, or ignore namespace?
       #
-      # @param resource_name [String]
       # @param namespace [String, nil]
       # @return [Array<Pharos::Kube::ResourceClient>]
       def resources(namespace: nil)
@@ -86,27 +85,17 @@ module Pharos
         ) }
       end
 
-      # Pipline request list requests.
-      # Returns flattened array with mixed resource kinds
+      # Pipeline list requests for multiple resource types.
       #
-      # @param resources [Array<Pharos::Kube::ResourceClient>] default is all listable resources
-      # @param namespace [String, nil]
-      # @param labelSelector [nil, String, Hash{String => String}]
-      # @param fieldSelector [nil, String, Hash{String => String}]
+      # Returns flattened array with mixed resource kinds.
+      #
+      # @param resources [Array<Pharos::Kube::ResourceClient>] default is all listable resources for api
+      # @param **options @see [Pharos::Kube::ResourceClient#list]
       # @return [Array<Pharos::Kube::Resource>]
-      def list_resources(resources = nil, namespace: nil, labelSelector: nil, fieldSelector: nil)
+      def list_resources(resources = nil, **options)
         resources ||= self.resources.select{|resource| resource.list? }
 
-        api_paths = resources.map{|resource| resource.path(namespace: namespace) }
-        api_lists = @transport.gets(*api_paths,
-           response_class: Pharos::Kube::API::MetaV1::List,
-           query: ResourceClient.make_query(
-             'labelSelector' => ResourceClient.selector_query(labelSelector),
-             'fieldSelector' => ResourceClient.selector_query(fieldSelector),
-           ),
-         )
-
-        resources.zip(api_lists).map {|resource, api_list| resource.process_list(api_list) }.flatten
+        ResourceClient.list(resource, @transport, **options)
       end
     end
   end

@@ -67,7 +67,7 @@ parser = OptionParser.new do |parser|
   parser.on('--insecure-skip-tls-verify') do
     options.insecure_skip_tls_verify = true
   end
-  parser.on('--prefetch-resources=BOOL', TrueClass) do |bool|
+  parser.on('--prefetch-resources', TrueClass) do |bool|
     options.prefetch_resources = bool
   end
   parser.on('-n', '--namespace=NAMESPACE') do |namespace|
@@ -177,25 +177,23 @@ if options.list_api_resources
   end
 end
 
-if options.list_resources
+if options.pipeline_list
+  objects = client.list_resources(namespace: namespace, labelSelector: options.label_selector)
+  objects.each do |object|
+    logger.info "api=#{object.apiVersion} kind=#{object.kind} namespace=#{object.metadata.namespace} name=#{object.metadata.name}"
+  end
+elsif options.list_resources
   client.apis(prefetch_resources: true).each do |api|
     logger.info "api=#{api.api_version}"
 
     resources = api.resources.select{|resource| resource.list? }
 
-    if options.pipeline_list
-      objects = api.list_resources(resources, namespace: namespace, labelSelector: options.label_selector)
+    resources.each do |resource|
+      logger.info "api=#{api.api_version} resource=#{resource.name}"
+
+      objects = resource.list(labelSelector: options.label_selector)
       objects.each do |object|
         logger.info "api=#{object.apiVersion} kind=#{object.kind} namespace=#{object.metadata.namespace} name=#{object.metadata.name}"
-      end
-    else
-      resources.each do |resource|
-        logger.info "api=#{api.api_version} resource=#{resource.name}"
-
-        objects = resource.list(labelSelector: options.label_selector)
-        objects.each do |object|
-          logger.info "api=#{object.apiVersion} kind=#{object.kind} namespace=#{object.metadata.namespace} name=#{object.metadata.name}"
-        end
       end
     end
   end

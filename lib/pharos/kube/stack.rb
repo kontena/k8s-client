@@ -85,28 +85,24 @@ module Pharos
 
       # Delete all stack resources that were not applied
       def prune(client, keep_resources: )
-        client.apis(prefetch_resources: true).each do |api|
-          logger.debug { "List resources in #{api.api_version}..."}
+        client.list_resources(labelSelector: {LABEL => name}).each do |resource|
+          next if PRUNE_IGNORE.include? "#{resource.apiVersion}:#{resource.kind}"
 
-          api.list_resources(labelSelector: {LABEL => name}).each do |resource|
-            next if PRUNE_IGNORE.include? "#{resource.apiVersion}:#{resource.kind}"
+          resource_label = resource.metadata.labels ? resource.metadata.labels[LABEL] : nil
+          resource_checksum = resource.metadata.annotations ? resource.metadata.annotations[CHECKSUM_ANNOTATION] : nil
 
-            resource_label = resource.metadata.labels ? resource.metadata.labels[LABEL] : nil
-            resource_checksum = resource.metadata.annotations ? resource.metadata.annotations[CHECKSUM_ANNOTATION] : nil
+          logger.debug { "List resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource_checksum}" }
 
-            logger.debug { "List resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource_checksum}" }
-
-            if resource_label != name
-              # apiserver did not respect labelSelector
-            elsif keep_resources && keep_resource?(resource)
-              # resource is up-to-date
-            else
-              logger.info "Delete resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
-              begin
-                client.delete_resource(resource)
-              rescue Pharos::Kube::Error::NotFound
-                # assume aliased objects in multiple API groups, like for Deployments
-              end
+          if resource_label != name
+            # apiserver did not respect labelSelector
+          elsif keep_resources && keep_resource?(resource)
+            # resource is up-to-date
+          else
+            logger.info "Delete resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
+            begin
+              client.delete_resource(resource)
+            rescue Pharos::Kube::Error::NotFound
+              # assume aliased objects in multiple API groups, like for Deployments
             end
           end
         end

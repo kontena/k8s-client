@@ -65,6 +65,25 @@ module Pharos
         api_versions.map{|api_version| api(api_version) }
       end
 
+      # @param namespace [String, nil]
+      # @return [Array<Pharos::Kube::ResourceClient>]
+      def resources(namespace: nil)
+        apis(prefetch_resources: true).map { |api| api.resources(namespace: namespace) }.flatten
+      end
+
+      # Pipeline list requests for multiple resource types.
+      #
+      # Returns flattened array with mixed resource kinds.
+      #
+      # @param resources [Array<Pharos::Kube::ResourceClient>] default is all listable resources for api
+      # @param **options @see [Pharos::Kube::ResourceClient#list]
+      # @return [Array<Pharos::Kube::Resource>]
+      def list_resources(resources = nil, **options)
+        resources ||= self.resources.select{|resource| resource.list? }
+
+        ResourceClient.list(resources, @transport, **options)
+      end
+
       # @param resource [Pharos::Kube::Resource]
       # @param namespace [String, nil] default if resource is missing namespace
       # @raise [Pharos::Kube::Error] unknown resource

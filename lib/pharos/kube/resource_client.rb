@@ -31,6 +31,29 @@ module Pharos
       include Utils
       extend Utils
 
+      # Pipeline list requests for multiple resource types.
+      #
+      # Returns flattened array with mixed resource kinds.
+      #
+      # @param resources [Array<Pharos::Kube::ResourceClient>]
+      # @param transport [Pharos::Kube::Transport]
+      # @param namespace [String, nil]
+      # @param labelSelector [nil, String, Hash{String => String}]
+      # @param fieldSelector [nil, String, Hash{String => String}]
+      # @return [Array<Pharos::Kube::Resource>]
+      def self.list(resources, transport, namespace: nil, labelSelector: nil, fieldSelector: nil)
+        api_paths = resources.map{|resource| resource.path(namespace: namespace) }
+        api_lists = transport.gets(*api_paths,
+           response_class: Pharos::Kube::API::MetaV1::List,
+           query: make_query(
+             'labelSelector' => selector_query(labelSelector),
+             'fieldSelector' => selector_query(fieldSelector),
+           ),
+         )
+
+        resources.zip(api_lists).map {|resource, api_list| resource.process_list(api_list) }.flatten
+      end
+
       # @param transport [Pharos::Kube::Transport]
       # @param api_client [Pharos::Kube::APIClient]
       # @param api_resource [Pharos::Kube::API::MetaV1::APIResource]
