@@ -202,7 +202,7 @@ module Pharos
         t = Time.now - start
 
       rescue Pharos::Kube::Error => exc
-        logger.warn { "[#{options.map{|o| format_request(o)}.join ', '}] => HTTP #{exc.http_status}: #{exc} in #{'%.3f' % t}s"}
+        logger.warn { "[#{options.map{|o| format_request(o)}.join ', '}] => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s"}
         raise
       else
         logger.info { "[#{options.map{|o| format_request(o)}.join ', '}] => HTTP [#{responses.map{|r| r.status}.join ', '}] in #{'%.3f' % t}s" }
