@@ -186,6 +186,8 @@ module Pharos
         responses = excon.requests(
           options.map{|options| request_options(**options)}
         )
+        t = Time.now - start
+
         objects = responses.zip(options).map{|response, request_options|
           begin
             parse_response(response, request_options,
@@ -199,8 +201,6 @@ module Pharos
             end
           end
         }
-        t = Time.now - start
-
       rescue Pharos::Kube::Error => exc
         logger.warn { "[#{options.map{|o| format_request(o)}.join ', '}] => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s"}
         raise
