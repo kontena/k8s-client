@@ -36,19 +36,26 @@ module Pharos
         @api_clients[api_version] ||= APIClient.new(@transport, api_version)
       end
 
+      # Force-update /apis cache.
+      # Required if creating new CRDs/apiservices.
+      #
       # @return [Array<String>]
-      def api_versions
-        @api_group_list ||= @transport.get('/apis',
+      def api_groups!
+        @api_groups = @transport.get('/apis',
           response_class: Pharos::Kube::API::MetaV1::APIGroupList,
-        )
+        ).groups.map{|api_group| api_group.preferredVersion.groupVersion }
+      end
 
-        @api_group_list.groups.map{|api_group| api_group.preferredVersion.groupVersion }
+      # Cached /apis preferred group apiVersions
+      # @return [Array<String>]
+      def api_groups
+        @api_groups || api_groups!
       end
 
       # @param api_versions [Array<String>] defaults to all APIs
       # @return [Array<APIClient>]
       def apis(api_versions = nil, prefetch_resources: false)
-        api_versions ||= ['v1'] + self.api_versions
+        api_versions ||= ['v1'] + self.api_groups
 
         if prefetch_resources
           # api groups that are missing their api_resources
