@@ -36,13 +36,19 @@ module Pharos
         @api_clients[api_version] ||= APIClient.new(@transport, api_version)
       end
 
-      # @return [Array<APIClient>]
-      def apis(prefetch_resources: false)
+      # @return [Array<String>]
+      def api_versions
         @api_group_list ||= @transport.get('/apis',
           response_class: Pharos::Kube::API::MetaV1::APIGroupList,
         )
 
-        api_versions = ['v1'] + @api_group_list.groups.map{|api_group| api_group.preferredVersion.groupVersion }
+        @api_group_list.groups.map{|api_group| api_group.preferredVersion.groupVersion }
+      end
+
+      # @param api_versions [Array<String>] defaults to all APIs
+      # @return [Array<APIClient>]
+      def apis(api_versions = nil, prefetch_resources: false)
+        api_versions ||= ['v1'] + self.api_versions
 
         if prefetch_resources
           # api groups that are missing their api_resources
@@ -77,6 +83,23 @@ module Pharos
       # @return [Pharos::Kube::Resource]
       def get_resource(resource)
         client_for_resource(resource).get_resource(resource)
+      end
+
+      # @param resources [Array<Pharos::Kube::Resource>]
+      # @return [Array<Pharos::Kube::Resource, nil>]
+      def get_resources(resources)
+        # prefetch api resources
+        apis(resources.map{|resource| resource.apiVersion }.uniq, prefetch_resources: true)
+
+        resource_clients = resources.map{|resource| client_for_resource(resource) }
+        requests = resources.zip(resource_clients).map{|resource, resource_client|
+          {
+            method: 'GET',
+            path: resource_client.path(resource.metadata.name, namespace: resource.metadata.namespace),
+            response_class: resource_client.resource_class,
+          }
+        }
+        responses = @transport.requests(*requests, skip_missing: true)
       end
 
       # @param resource [Pharos::Kube::Resource]

@@ -47,16 +47,15 @@ module Pharos
 
       # @return [Array<Pharos::Kube::Resource>]
       def apply(client, prune: true)
-        resources.map do |resource|
-          logger.debug { "Applying resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}..." }
-          begin
-            existing_resource = client.get_resource(resource)
-          rescue Pharos::Kube::Error::NotFound
+        server_resources = client.get_resources(resources)
+
+        resources.zip(server_resources).map do |resource, server_resource|
+          if server_resource
+            logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
+            client.update_resource(prepare_resource(resource, base_resource: server_resource))
+          else
             logger.info "Create resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
             client.create_resource(prepare_resource(resource))
-          else
-            logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
-            client.update_resource(prepare_resource(resource, base_resource: existing_resource))
           end
         end
 

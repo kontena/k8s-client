@@ -82,6 +82,11 @@ module Pharos
         @api_resource.kind
       end
 
+      # @return [class] Pharos::Kube::Resource
+      def resource_class
+        @resource_class
+      end
+
       # @return [Bool]
       def namespaced?
         !!@api_resource.namespaced
