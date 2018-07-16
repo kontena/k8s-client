@@ -6,6 +6,7 @@ module Pharos
     # generic untyped resource
     class Resource < RecursiveOpenStruct
       extend Forwardable
+      include Comparable
 
       # @param data [Hash]
       # @return [self]
@@ -44,15 +45,22 @@ module Pharos
         to_hash.to_json(**options)
       end
 
+      # @param other [Pharos::Kube::Resource]
+      # @return [Boolean]
+      def <=>(other)
+        to_hash <=> other.to_hash
+      end
+
       # merge in fields
       #
+      # @param attrs [Hash, Pharos::Kube::Resource]
       # @return [Pharos::Kube::Resource]
       def merge(attrs)
         # deep clone of attrs
         h = to_hash
 
         # merge in-place
-        h.deep_merge!(attrs, overwrite_arrays: true)
+        h.deep_merge!(attrs.to_hash, overwrite_arrays: true)
 
         self.class.new(h)
       end
