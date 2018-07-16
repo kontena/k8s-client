@@ -102,7 +102,11 @@ module Pharos
               # resource is up-to-date
             else
               logger.info "Delete resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
-              client.delete_resource(resource)
+              begin
+                client.delete_resource(resource)
+              rescue Pharos::Kube::Error::NotFound
+                # assume aliased objects in multiple API groups, like for Deployments
+              end
             end
           end
         end
