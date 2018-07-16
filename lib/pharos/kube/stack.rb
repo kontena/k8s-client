@@ -22,6 +22,7 @@ module Pharos
       def initialize(name, resources, debug: false)
         @name = name
         @resources = resources
+        @keep_resources = {}
 
         logger! progname: name, debug: debug
       end
@@ -60,21 +61,30 @@ module Pharos
           end
 
           if !server_resource
-            logger.info "Create resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
-            client.create_resource(prepare_resource(resource))
+            logger.info "Create resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{checksum}"
+            keep_resource! client.create_resource(prepare_resource(resource))
           elsif server_resource != compare_resource
-            logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
-            client.update_resource(prepare_resource(resource, base_resource: server_resource))
+            logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{checksum}"
+            keep_resource! client.update_resource(prepare_resource(resource, base_resource: server_resource))
           else
-            logger.info "Keep resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
+            logger.info "Keep resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{compare_resource.metadata.annotations[CHECKSUM_ANNOTATION]}"
+            keep_resource! compare_resource
           end
         end
 
-        prune(client, checksum: checksum) if prune
+        prune(client, keep_resources: true) if prune
+      end
+
+      # key MUST NOT include resource.apiVersion: the same kind can be aliased in different APIs
+      def keep_resource!(resource)
+        @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] = resource.metadata.annotations[CHECKSUM_ANNOTATION]
+      end
+      def keep_resource?(resource)
+        @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] == resource.metadata.annotations[CHECKSUM_ANNOTATION]
       end
 
       # Delete all stack resources that were not applied
-      def prune(client, checksum: )
+      def prune(client, keep_resources: )
         client.apis(prefetch_resources: true).each do |api|
           logger.debug { "List resources in #{api.api_version}..."}
 
@@ -88,7 +98,7 @@ module Pharos
 
             if resource_label != name
               # apiserver did not respect labelSelector
-            elsif checksum && resource_checksum == checksum
+            elsif keep_resources && keep_resource?(resource)
               # resource is up-to-date
             else
               logger.info "Delete resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
@@ -100,7 +110,7 @@ module Pharos
 
       # Delete all stack resources
       def delete(client)
-        prune(client, checksum: nil)
+        prune(client, keep_resources: false)
       end
     end
   end
