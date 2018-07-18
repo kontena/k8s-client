@@ -1,11 +1,12 @@
 require 'securerandom'
 
 module K8s
+  # Usage: customize the LABEL and CHECKSUM_ANNOTATION
   class Stack
     include Logging
 
-    LABEL = 'pharos.kontena.io/stack'
-    CHECKSUM_ANNOTATION = 'pharos.kontena.io/stack-checksum'
+    LABEL = 'k8s.kontena.io/stack'
+    CHECKSUM_ANNOTATION = 'k8s.kontena.io/stack-checksum'
     PRUNE_IGNORE = [
       'v1:ComponentStatus', # apiserver ignores GET /v1/componentstatuses?labelSelector=... and returns all resources
       'v1:Endpoints', # inherits stack label from service, but not checksum annotation
@@ -18,10 +19,12 @@ module K8s
 
     attr_reader :name, :resources
 
-    def initialize(name, resources, debug: false)
+    def initialize(name, resources, debug: false, label: LABEL, checksum_annotation: CHECKSUM_ANNOTATION)
       @name = name
       @resources = resources
       @keep_resources = {}
+      @label = label
+      @checksum_annotation = checksum_annotation
 
       logger! progname: name, debug: debug
     end
@@ -40,8 +43,8 @@ module K8s
 
       # add stack metadata
       resource.merge(metadata: {
-        labels: { LABEL => name },
-        annotations: { CHECKSUM_ANNOTATION => checksum },
+        labels: { @label => name },
+        annotations: { @checksum_annotation => checksum },
       })
     end
 
@@ -55,7 +58,7 @@ module K8s
           # NOTE: this will not compare equal for resources with arrays containing hashes with default values applied by the server
           #       however, that will just cause extra PUTs, so it doesn't have any functional effects
           compare_resource = server_resource.merge(resource).merge(metadata: {
-            labels: { LABEL => name },
+            labels: { @label => name },
           })
         end
 
@@ -66,7 +69,7 @@ module K8s
           logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{checksum}"
           keep_resource! client.update_resource(prepare_resource(resource, base_resource: server_resource))
         else
-          logger.info "Keep resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{compare_resource.metadata.annotations[CHECKSUM_ANNOTATION]}"
+          logger.info "Keep resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{compare_resource.metadata.annotations[@checksum_annotation]}"
           keep_resource! compare_resource
         end
       end
@@ -76,19 +79,19 @@ module K8s
 
     # key MUST NOT include resource.apiVersion: the same kind can be aliased in different APIs
     def keep_resource!(resource)
-      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] = resource.metadata.annotations[CHECKSUM_ANNOTATION]
+      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] = resource.metadata.annotations[@checksum_annotation]
     end
     def keep_resource?(resource)
-      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] == resource.metadata.annotations[CHECKSUM_ANNOTATION]
+      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] == resource.metadata.annotations[@checksum_annotation]
     end
 
     # Delete all stack resources that were not applied
     def prune(client, keep_resources: )
-      client.list_resources(labelSelector: {LABEL => name}).each do |resource|
+      client.list_resources(labelSelector: {@label => name}).each do |resource|
         next if PRUNE_IGNORE.include? "#{resource.apiVersion}:#{resource.kind}"
 
-        resource_label = resource.metadata.labels ? resource.metadata.labels[LABEL] : nil
-        resource_checksum = resource.metadata.annotations ? resource.metadata.annotations[CHECKSUM_ANNOTATION] : nil
+        resource_label = resource.metadata.labels ? resource.metadata.labels[@label] : nil
+        resource_checksum = resource.metadata.annotations ? resource.metadata.annotations[@checksum_annotation] : nil
 
         logger.debug { "List resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource_checksum}" }
 
