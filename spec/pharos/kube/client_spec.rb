@@ -1,9 +1,8 @@
-RSpec.describe Pharos::Kube::Client do
+RSpec.describe K8s::Client do
   include FixtureHelpers
 
-
   context "for a mocked API" do
-    let(:transport) { Pharos::Kube::Transport.new('http://localhost:8080') }
+    let(:transport) { K8s::Transport.new('http://localhost:8080') }
 
     subject { described_class.new(transport) }
 
@@ -65,7 +64,7 @@ RSpec.describe Pharos::Kube::Client do
 
     describe '#api' do
       it "returns core API with resources" do
-        expect(subject.api).to match Pharos::Kube::APIClient
+        expect(subject.api).to match K8s::APIClient
         expect(subject.api.api_version).to eq 'v1'
         expect(subject.api.api_resources.map{|r| r.name }).to include 'nodes', 'pods', 'services'
       end
@@ -82,7 +81,7 @@ RSpec.describe Pharos::Kube::Client do
     describe '#apis' do
       it "returns client for each api" do
         expect(subject.apis).to match Array
-        expect(subject.apis.first).to match Pharos::Kube::APIClient
+        expect(subject.apis.first).to match K8s::APIClient
         expect(subject.apis.map{|a| a.api_version}).to match(['v1'] + (
           # curl -v http://localhost:8001/apis | jq -r '.groups[].preferredVersion.groupVersion'
           <<-EOM
@@ -144,7 +143,7 @@ RSpec.describe Pharos::Kube::Client do
         it "returns the created resource" do
           r = subject.create_resource(resource)
 
-          expect(r).to match Pharos::Kube::Resource
+          expect(r).to match K8s::Resource
           expect(r.kind).to eq 'Service'
           expect(r.metadata.name).to eq 'whoami'
           expect(r.metadata.resourceVersion).to eq '1'
@@ -171,7 +170,7 @@ RSpec.describe Pharos::Kube::Client do
         it "returns the server resource" do
           r = subject.get_resource(resource)
 
-          expect(r).to match Pharos::Kube::Resource
+          expect(r).to match K8s::Resource
           expect(r.kind).to eq 'Service'
           expect(r.metadata.name).to eq 'whoami'
           expect(r.metadata.resourceVersion).to eq '1'
@@ -204,7 +203,7 @@ RSpec.describe Pharos::Kube::Client do
         it "returns the updated resource" do
           r = subject.update_resource(resource)
 
-          expect(r).to match Pharos::Kube::Resource
+          expect(r).to match K8s::Resource
           expect(r.kind).to eq 'Service'
           expect(r.metadata.name).to eq 'whoami'
           expect(r.metadata.resourceVersion).to eq '2'
@@ -231,7 +230,7 @@ RSpec.describe Pharos::Kube::Client do
         it "returns the deleted resource" do
           r = subject.delete_resource(resource)
 
-          expect(r).to match Pharos::Kube::Resource
+          expect(r).to match K8s::Resource
           expect(r.kind).to eq 'Service'
           expect(r.metadata.name).to eq 'whoami'
           expect(r.metadata.resourceVersion).to eq '3'

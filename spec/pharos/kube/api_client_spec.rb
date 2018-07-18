@@ -1,7 +1,7 @@
-RSpec.describe Pharos::Kube::APIClient do
+RSpec.describe K8s::APIClient do
   include FixtureHelpers
 
-  let(:transport) { Pharos::Kube::Transport.new('http://localhost:8080') }
+  let(:transport) { K8s::Transport.new('http://localhost:8080') }
 
   context "for the v1 API" do
     subject { described_class.new(transport, 'v1') }
@@ -33,7 +33,7 @@ RSpec.describe Pharos::Kube::APIClient do
 
     describe '#api_resources' do
       it "returns array of APIResource" do
-        expect(subject.api_resources.first).to match Pharos::Kube::API::MetaV1::APIResource
+        expect(subject.api_resources.first).to match K8s::API::MetaV1::APIResource
         expect(subject.api_resources.map{|r| r.name}).to match(
           # curl http://localhost:8001/api/v1 | jq -r '.resources[].name'
           <<-EOM
@@ -81,7 +81,7 @@ RSpec.describe Pharos::Kube::APIClient do
 
     describe '#resource' do
       it "raises error for non-existing resource" do
-        expect{subject.resource('wtfs')}.to raise_error(Pharos::Kube::Error)
+        expect{subject.resource('wtfs')}.to raise_error(K8s::Error)
       end
 
       it "returns client for resource name" do
@@ -92,7 +92,7 @@ RSpec.describe Pharos::Kube::APIClient do
     describe '#resources' do
       it "returns array of clients" do
         expect(subject.resources).to match Array
-        expect(subject.resources.first).to match Pharos::Kube::ResourceClient
+        expect(subject.resources.first).to match K8s::ResourceClient
       end
     end
   end

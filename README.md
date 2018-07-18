@@ -1,4 +1,4 @@
-# Pharos::Kube::Client
+# K8s::Client
 
 Ruby client library for the Kubernetes (1.10) API
 
@@ -7,7 +7,7 @@ Ruby client library for the Kubernetes (1.10) API
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'pharos-kube-client'
+gem 'k8s-client'
 ```
 
 And then execute:
@@ -16,12 +16,12 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install pharos-kube-client
+    $ gem install k8s-client
 
 ## Usage
 
-WIP: See [`bin/pharos-kube-client`](bin/pharos-kube-client) for example code.
+WIP: See [`bin/k8s-client`](bin/k8s-client) for example code.
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/kontena/pharos-kube-client.
+Bug reports and pull requests are welcome on GitHub at https://github.com/kontena/k8s-client.

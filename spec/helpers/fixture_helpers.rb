@@ -11,8 +11,8 @@ module FixtureHelpers
     File.read(fixture_path(*path))
   end
 
-  # @return [Pharos::Kube::Resource]
+  # @return [K8s::Resource]
   def resource_fixture(*path)
-    Pharos::Kube::Resource.from_file(fixture_path(*path))
+    K8s::Resource.from_file(fixture_path(*path))
   end
 end
