@@ -1,11 +1,11 @@
-RSpec.describe Pharos::Kube::ResourceClient do
+RSpec.describe K8s::ResourceClient do
   include FixtureHelpers
 
-  let(:transport) { Pharos::Kube::Transport.new('http://localhost:8080') }
+  let(:transport) { K8s::Transport.new('http://localhost:8080') }
 
   context "for the nodes API" do
-    let(:api_client) { Pharos::Kube::APIClient.new(transport, 'v1') }
-    let(:api_resource) { Pharos::Kube::API::MetaV1::APIResource.new(
+    let(:api_client) { K8s::APIClient.new(transport, 'v1') }
+    let(:api_resource) { K8s::API::MetaV1::APIResource.new(
       name: "nodes",
       singularName: "",
       namespaced: false,
@@ -55,7 +55,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
         it "returns an array of resources" do
           list = subject.list
 
-          expect(list).to match [Pharos::Kube::Resource]
+          expect(list).to match [K8s::Resource]
           expect(list.map{|item| {
             kind: item.kind,
             namespace: item.metadata.namespace,
@@ -81,7 +81,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
         it "returns a resource" do
           obj = subject.get('ubuntu-xenial')
 
-          expect(obj).to match Pharos::Kube::Resource
+          expect(obj).to match K8s::Resource
           expect(obj.kind).to eq "Node"
           expect(obj.metadata.namespace).to be nil
           expect(obj.metadata.name).to eq "ubuntu-xenial"
@@ -90,7 +90,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
     end
 
     context "PUT /api/v1/nodes/*" do
-      let(:resource) { Pharos::Kube::Resource.new(
+      let(:resource) { K8s::Resource.new(
         kind: 'Node',
         metadata: { name: 'test', resourceVersion: "1" },
         spec: { unschedulable: true },
@@ -117,7 +117,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
         it "returns a resource" do
           obj = subject.update_resource(resource)
 
-          expect(obj).to match Pharos::Kube::Resource
+          expect(obj).to match K8s::Resource
           expect(obj.kind).to eq "Node"
           expect(obj.metadata.name).to eq "test"
         end
@@ -125,7 +125,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
     end
 
     context "POST /api/v1/nodes/" do
-      let(:resource) { Pharos::Kube::Resource.new(
+      let(:resource) { K8s::Resource.new(
         kind: 'Node',
         metadata: { name: 'test' },
         spec: { unschedulable: true },
@@ -152,7 +152,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
         it "returns a resource" do
           obj = subject.create_resource(resource)
 
-          expect(obj).to match Pharos::Kube::Resource
+          expect(obj).to match K8s::Resource
           expect(obj.kind).to eq "Node"
           expect(obj.metadata.name).to eq "test"
         end
@@ -161,8 +161,8 @@ RSpec.describe Pharos::Kube::ResourceClient do
   end
 
   context "for the nodes status API" do
-    let(:api_client) { Pharos::Kube::APIClient.new(transport, 'v1') }
-    let(:api_resource) { Pharos::Kube::API::MetaV1::APIResource.new(
+    let(:api_client) { K8s::APIClient.new(transport, 'v1') }
+    let(:api_resource) { K8s::API::MetaV1::APIResource.new(
       name: "nodes/status",
       singularName: "",
       namespaced: false,
@@ -183,7 +183,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
     end
 
     context "PUT /api/v1/nodes/*/status" do
-      let(:resource) { Pharos::Kube::Resource.new(
+      let(:resource) { K8s::Resource.new(
         kind: 'Node',
         metadata: { name: 'test', resourceVersion: "1" },
         status: { foo: 'bar' },
@@ -210,7 +210,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
         it "returns a resource" do
           obj = subject.update_resource(resource)
 
-          expect(obj).to match Pharos::Kube::Resource
+          expect(obj).to match K8s::Resource
           expect(obj.kind).to eq "Node"
           expect(obj.metadata.name).to eq "test"
         end
@@ -219,8 +219,8 @@ RSpec.describe Pharos::Kube::ResourceClient do
   end
 
   context "for the pods API" do
-    let(:api_client) { Pharos::Kube::APIClient.new(transport, 'v1') }
-    let(:api_resource) { Pharos::Kube::API::MetaV1::APIResource.new(
+    let(:api_client) { K8s::APIClient.new(transport, 'v1') }
+    let(:api_resource) { K8s::API::MetaV1::APIResource.new(
       name: "pods",
       singularName: "",
       namespaced: true,
@@ -245,11 +245,11 @@ RSpec.describe Pharos::Kube::ResourceClient do
 
     subject { described_class.new(transport, api_client, api_resource) }
 
-    let(:resource) { Pharos::Kube::Resource.new(
+    let(:resource) { K8s::Resource.new(
       kind: 'Pod',
       metadata: { name: 'test', namespace: 'default' },
     ) }
-    let(:resource_list) { Pharos::Kube::API::MetaV1::List.new(metadata: {}, items: [resource]) }
+    let(:resource_list) { K8s::API::MetaV1::List.new(metadata: {}, items: [resource]) }
 
     context "POST /api/v1/pods/namespaces/default/pods" do
       before do
@@ -272,7 +272,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
         it "returns a resource" do
           obj = subject.create_resource(resource)
 
-          expect(obj).to match Pharos::Kube::Resource
+          expect(obj).to match K8s::Resource
           expect(obj.kind).to eq "Pod"
           expect(obj.metadata.namespace).to eq "default"
           expect(obj.metadata.name).to eq "test"
@@ -300,7 +300,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
         it "deletes a resource and returns it" do
           obj = subject.delete('test', namespace: 'default')
 
-          expect(obj).to match Pharos::Kube::Resource
+          expect(obj).to match K8s::Resource
           expect(obj.kind).to eq "Pod"
           expect(obj.metadata.name).to eq "test"
         end
@@ -310,7 +310,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
         it "deletes resources and returns them" do
           items = subject.delete_collection(namespace: 'default', labelSelector: 'app=test')
 
-          expect(items).to match [Pharos::Kube::Resource]
+          expect(items).to match [K8s::Resource]
           expect(items[0].kind).to eq "Pod"
           expect(items[0].metadata.name).to eq "test"
         end
@@ -320,7 +320,7 @@ RSpec.describe Pharos::Kube::ResourceClient do
         it "deletes a resource and returns it" do
           obj = subject.delete_resource(resource)
 
-          expect(obj).to match Pharos::Kube::Resource
+          expect(obj).to match K8s::Resource
           expect(obj.kind).to eq "Pod"
           expect(obj.metadata.name).to eq "test"
         end

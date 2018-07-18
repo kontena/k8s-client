@@ -3,8 +3,8 @@ rspec:
   volumes:
   - .:/app
   entrypoint: bundle exec rspec
-pharos-kube-client:
+k8s-client:
   build: .
   volumes:
   - .:/app
-  entrypoint: bundle exec bin/pharos-kube-client
+  entrypoint: bundle exec bin/k8s-client

@@ -1,7 +1,7 @@
 require "bundler/setup"
 require 'webmock/rspec'
 
-require "pharos-kube-client"
+require "k8s-client"
 
 require_relative 'helpers/fixture_helpers'
 

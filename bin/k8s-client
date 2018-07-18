@@ -2,7 +2,7 @@
 
 require 'optparse'
 require 'uri'
-require 'pharos-kube-client'
+require 'k8s-client'
 
 Options = Struct.new(
   :config,
@@ -43,23 +43,23 @@ logger = Logger.new(STDERR)
 
 parser = OptionParser.new do |parser|
   parser.on('--debug-api') do
-    Pharos::Kube::Logging.debug!
-    Pharos::Kube::Transport.debug!
+    K8s::Logging.debug!
+    K8s::Transport.debug!
   end
   parser.on('--debug') do
-    Pharos::Kube::Logging.debug!
-    Pharos::Kube::Transport.verbose!
+    K8s::Logging.debug!
+    K8s::Transport.verbose!
   end
   parser.on('--verbose') do
-    Pharos::Kube::Logging.verbose!
-    Pharos::Kube::Transport.quiet!
+    K8s::Logging.verbose!
+    K8s::Transport.quiet!
   end
   parser.on('--quiet') do
-    Pharos::Kube::Logging.quiet!
-    Pharos::Kube::Transport.quiet!
+    K8s::Logging.quiet!
+    K8s::Transport.quiet!
   end
   parser.on('--kubeconfig=PATH') do |path|
-    options.config = Pharos::Kube::Config.load_file(path)
+    options.config = K8s::Config.load_file(path)
   end
   parser.on('--server=SERVER') do |server|
     options.server = URI(server)
@@ -110,7 +110,7 @@ parser = OptionParser.new do |parser|
     options.service_port = port
   end
   parser.on('--resource-file=path') do |path|
-    options.resources = Pharos::Kube::Resource.from_files(path)
+    options.resources = K8s::Resource.from_files(path)
   end
   parser.on('--create') do
     options.create_resources = options.resources
@@ -125,7 +125,7 @@ parser = OptionParser.new do |parser|
     options.stack_name = name
   end
   parser.on('--stack=PATH') do |path|
-    options.stack = Pharos::Kube::Stack.load(path,
+    options.stack = K8s::Stack.load(path,
       name: options.stack_name,
     )
   end
@@ -146,9 +146,9 @@ end
 parser.parse!
 
 if options.config
-  client = Pharos::Kube::Client.config(options.config)
+  client = K8s::Client.config(options.config)
 else
-  client = Pharos::Kube.client(options.server.to_s,
+  client = K8s.client(options.server.to_s,
     ssl_verify_peer: !options.insecure_skip_tls_verify,
   )
 end
@@ -238,7 +238,7 @@ if options.delete_pods
 end
 
 if options.create_service
-  service = Pharos::Kube::Resource.new(
+  service = K8s::Resource.new(
     apiVersion: 'v1',
     kind: 'Service',
     metadata: {
@@ -278,7 +278,7 @@ for resource in options.delete_resources
     resource = client.delete_resource(resource)
 
     logger.info "Deleted #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}:\n#{JSON.pretty_generate(resource)}"
-  rescue Pharos::Kube::Error::NotFound => exc
+  rescue K8s::Error::NotFound => exc
     logger.info "Skip #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}: #{exc}"
   end
 end

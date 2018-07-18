@@ -1,4 +1,4 @@
-RSpec.describe Pharos::Kube::Resource do
+RSpec.describe K8s::Resource do
   include FixtureHelpers
 
   context "for a simple service resource" do

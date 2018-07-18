@@ -1,11 +1,11 @@
-RSpec.describe Pharos::Kube::Transport do
+RSpec.describe K8s::Transport do
   include FixtureHelpers
 
   describe '#self.config' do
     context 'for a typical kubeadm admin.conf' do
       let(:server_cert) { OpenSSL::X509::Certificate.new fixture('config/kubeadm-apiserver-cert.pem') }
 
-      subject { described_class.config(Pharos::Kube::Config.load_file(fixture_path('config/kubeadm-admin.conf')))}
+      subject { described_class.config(K8s::Config.load_file(fixture_path('config/kubeadm-admin.conf')))}
 
       it 'uses the correct server' do
         expect(subject.server).to eq 'https://192.168.56.11:6443'
@@ -74,7 +74,7 @@ RSpec.describe Pharos::Kube::Transport do
 
     describe '#get' do
       it "raises API error for non-status 404" do
-        expect{subject.get('/test')}.to raise_error(Pharos::Kube::Error::API, %r(GET /test => HTTP 404 Not Found))
+        expect{subject.get('/test')}.to raise_error(K8s::Error::API, %r(GET /test => HTTP 404 Not Found))
       end
     end
   end
@@ -92,10 +92,10 @@ RSpec.describe Pharos::Kube::Transport do
     describe '#get response_class:' do
       it "returns the list" do
         list = subject.get('/api/v1/nodes',
-          response_class: Pharos::Kube::API::MetaV1::List,
+          response_class: K8s::API::MetaV1::List,
         )
 
-        expect(list).to be_a Pharos::Kube::API::MetaV1::List
+        expect(list).to be_a K8s::API::MetaV1::List
         expect(list.items).to match [
           hash_including('metadata' => hash_including('name' => 'ubuntu-xenial')),
         ]
@@ -115,7 +115,7 @@ RSpec.describe Pharos::Kube::Transport do
 
     describe '#get:' do
       it "raises Forbidden" do
-        expect{subject.get('/api/v1/nodes')}.to raise_error Pharos::Kube::Error::Forbidden, 'GET /api/v1/nodes => HTTP 403 Forbidden: nodes is forbidden: User "system:anonymous" cannot list nodes at the cluster scope'
+        expect{subject.get('/api/v1/nodes')}.to raise_error K8s::Error::Forbidden, 'GET /api/v1/nodes => HTTP 403 Forbidden: nodes is forbidden: User "system:anonymous" cannot list nodes at the cluster scope'
       end
     end
   end
