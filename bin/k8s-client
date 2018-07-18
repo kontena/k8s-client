@@ -125,9 +125,7 @@ parser = OptionParser.new do |parser|
     options.stack_name = name
   end
   parser.on('--stack=PATH') do |path|
-    options.stack = K8s::Stack.load(path,
-      name: options.stack_name,
-    )
+    options.stack = K8s::Stack.load(options.stack_name || File.basename(path, ".*"), path)
   end
   parser.on('--prune-stack', TrueClass) do |flag|
     options.prune_stack = flag

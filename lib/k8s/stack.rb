@@ -12,14 +12,33 @@ module K8s
       'v1:Endpoints', # inherits stack label from service, but not checksum annotation
     ]
 
-    def self.load(path, name: nil, **options)
+    # @param name [String] unique name for stack
+    # @param path [String] load resources from YAML files
+    # @return [K8s::Stack]
+    def self.load(name, path, **options)
       resources = K8s::Resource.from_files(path)
-      new(name || File.basename(path), resources, **options)
+      new(name, resources, **options)
+    end
+
+    # @param name [String] unique name for stack
+    # @param path [String] load resources from YAML files
+    # @param client [K8s::Client] apply using client
+    # @param prune [Boolean] delete old resources
+    def self.apply(name, path, client, prune: true, **options)
+      load(name, path, **options).apply(client, prune: prune)
+    end
+
+    # Remove any installed stack resources.
+    #
+    # @param name [String] unique name for stack
+    # @param client [K8s::Client] apply using client
+    def self.delete(name, client, **options)
+      new(name, **options).delete(client)
     end
 
     attr_reader :name, :resources
 
-    def initialize(name, resources, debug: false, label: LABEL, checksum_annotation: CHECKSUM_ANNOTATION)
+    def initialize(name, resources = [], debug: false, label: LABEL, checksum_annotation: CHECKSUM_ANNOTATION)
       @name = name
       @resources = resources
       @keep_resources = {}
