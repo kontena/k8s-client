@@ -14,7 +14,12 @@ module K8s
       new(Transport.config(config))
     end
 
-    # @param server [String] URL with protocol://host:port - any /path is ignored
+    # @return [K8s::Client]
+    def self.in_cluster_config
+      new(Transport.in_cluster_config)
+    end
+
+    # @param transport [K8s::Transport]
     def initialize(transport, namespace: nil)
       @transport = transport
       @namespace = namespace

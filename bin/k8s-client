@@ -5,6 +5,7 @@ require 'uri'
 require 'k8s-client'
 
 Options = Struct.new(
+  :in_cluster_config,
   :config,
   :server,
   :insecure_skip_tls_verify,
@@ -57,6 +58,9 @@ parser = OptionParser.new do |parser|
   parser.on('--quiet') do
     K8s::Logging.quiet!
     K8s::Transport.quiet!
+  end
+  parser.on('--in-cluster-config') do
+    options.in_cluster_config = true
   end
   parser.on('--kubeconfig=PATH') do |path|
     options.config = K8s::Config.load_file(path)
@@ -145,6 +149,8 @@ parser.parse!
 
 if options.config
   client = K8s::Client.config(options.config)
+elsif options.in_cluster_config
+  client = K8s::Client.in_cluster_config
 else
   client = K8s.client(options.server.to_s,
     ssl_verify_peer: !options.insecure_skip_tls_verify,
