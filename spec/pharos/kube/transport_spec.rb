@@ -25,6 +25,62 @@ RSpec.describe K8s::Transport do
     end
   end
 
+  describe '#self.in_cluster_config' do
+    context "with envs set" do
+      let(:service_host) { '10.96.0.1' }
+      let(:service_port) { '443' }
+      let(:sa_token) { 'eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImRlZmF1bHQtdG9rZW4tbmIybDgiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGVmYXVsdCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6Ijg2Y2EwMTZiLTgwMWMtMTFlOC05YWJkLTAyYTNiZTI0YjE0ZiIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmRlZmF1bHQifQ.qJJP3-CswxUeTss7zIV0ghGS0AaE-ZJpq9mT9p_hS6enoCNZaEBPdSqoRH4YIitQhr4_P0eRe_nOrXD0683cq9e31u_FO9qg_4sv1lYwgH52_9EPSZn5NEj2Os1OhlDoxyFzxzCoq-_O289w6HoQYvic77ycy0tKte8sngz4XzWufzyE1m5_qrV6qHJIeh_ygFfmO_yLMDtza5IwupPTgAXfk06h50iydVgmWTNOYfxb9qVP_w8fZanQ59KgM-9e6csWG2k68nMAm4UDETfz-eergviUEUZCtVLNyy5xv3sK-vxtEHX-HnvZVwwZpkf956cbXY6eQLAIUnF5vJt-' }
+      let(:sa_cacert) {
+        <<-EOF
+        -----BEGIN CERTIFICATE-----
+          MIICyDCCAbCgAwIBAgIBADANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDEwprdWJl
+          cm5ldGVzMB4XDTE4MDcwNTA2MjcxNFoXDTI4MDcwMjA2MjcxNFowFTETMBEGA1UE
+          AxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKEx
+          4tesvWXTWVxvUPw1pKoM6a74XOFTStaxwF+p1LTCT7rfvQ76w0zk8squdHt1ILFH
+          2zbkWvou+pYa5A5aI1R9LfMoHdOCfTypjfgCUTst9ujlngGf+s4TTjFwY30oISQY
+          Ghu/j6A/x3mhaCJl836JHFy6CNq59991Nn09CODWsCOmFzDv7+eZHfbW3H255aJE
+          nsKdGE2vz3RvuindTRMEfxisTdFlua6B1jw01v1daZW/zNlIqz44bxRNNiN4XKVx
+          y2joGXH25innvg8t40/RBI+ojjiqMgAIQPuduRZqmibrLs+CvkFqEUZiwqgVKFFB
+          pTt4tpy65HrFFeWppacCAwEAAaMjMCEwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB
+          /wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAJla7z1VoGO2cb/M/+DIqmoB+xOe
+          cAIMBqa3WeFPQvu7gElhwq0EFwSBdm9JzGLjTtqlfyj//xH0sO0ukwY/MNDa87le
+          WOYldSwEnVAxfV4oSE57bxr/MxMXVyXEuCsUNLXWloR3nucxH4t3PTRWFkz4rgVR
+          OyYKl/l8UoYAd9W+lDpZkVWkj1l6WA2YrNXAWme3golLKqKIJYMHJRXUnpGIcvHu
+          YVChljn5P2znnEkFk9i5mf6td9W4A+sG0MBdWw6mItEdRfc41SPYH+qD0d6Zd3sS
+          6g4aip8ggfDoRn0C/AJoyEVLQ/FOw/nkCI6tCH46jfWjM+ojelUCHtLpqcE=
+          -----END CERTIFICATE-----
+        EOF
+      }
+
+      before do
+        allow(ENV).to receive(:[]).with('KUBERNETES_SERVICE_HOST').and_return(service_host)
+        allow(ENV).to receive(:[]).with('KUBERNETES_SERVICE_PORT_HTTPS').and_return(service_port)
+        allow(File).to receive(:read).with('/var/run/secrets/kubernetes.io/serviceaccount/token').and_return(sa_token)
+        allow(File).to receive(:read).with('/var/run/secrets/kubernetes.io/serviceaccount/ca.crt').and_return(sa_cacert)
+      end
+
+      subject { described_class.in_cluster_config }
+
+
+      it 'uses the correct server' do
+        expect(subject.server).to eq 'https://10.96.0.1:443'
+      end
+
+      it 'uses the correct options' do
+        expect(subject.options).to match(
+          ssl_ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
+          ssl_verify_peer: true,
+        )
+      end
+
+      it 'uses the auth token for request options' do
+        expect(subject.request_options[:headers]).to match hash_including(
+          'Authorization' => "Bearer #{sa_token}",
+        )
+      end
+    end
+  end
+
   let(:server) { 'http://localhost:8080' }
   let(:options) { {} }
 
