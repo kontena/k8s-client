@@ -61,6 +61,20 @@ module K8s
       new(config.cluster.server, **options)
     end
 
+    # In-cluster config within a kube pod, using the kubernetes service envs and serviceaccount secrets
+    #
+    # @return [K8s::Transport]
+    def self.in_cluster_config
+      host = ENV['KUBERNETES_SERVICE_HOST']
+      port = ENV['KUBERNETES_SERVICE_PORT_HTTPS']
+
+      new("https://#{host}:#{port}",
+        ssl_verify_peer: true,
+        ssl_ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
+        auth_token: File.read('/var/run/secrets/kubernetes.io/serviceaccount/token'),
+      )
+    end
+
     attr_reader :server, :options
 
     # @param server [String] URL with protocol://host:port - any /path is ignored
