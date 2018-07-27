@@ -64,8 +64,9 @@ module K8s
     attr_reader :server, :options
 
     # @param server [String] URL with protocol://host:port - any /path is ignored
-    def initialize(server, **options)
+    def initialize(server, auth_token: nil, **options)
       @server = server
+      @auth_token = auth_token
       @options = options
 
       logger! progname: @server
@@ -88,8 +89,13 @@ module K8s
 
     # @return [Hash]
     def request_options(request_object: nil, **options)
+      options[:headers] ||= {}
+
+      if @auth_token
+        options[:headers]['Authorization'] = "Bearer #{@auth_token}"
+      end
+
       if request_object
-        options[:headers] ||= {}
         options[:headers]['Content-Type'] = 'application/json'
         options[:body] = request_object.to_json
       end
