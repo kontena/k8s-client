@@ -1,5 +1,7 @@
 # K8s::Client
 
+[![Build Status](https://travis-ci.com/kontena/k8s-client.svg?branch=master)](https://travis-ci.com/kontena/k8s-client)
+
 Ruby client library for the Kubernetes (1.10) API
 
 ## Installation
