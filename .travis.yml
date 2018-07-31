@@ -1,10 +1,16 @@
 sudo: false
 language: ruby
 rvm:
-  - "2.4"
-  - "2.5"
-  - "ruby-head"
+- '2.4'
+- '2.5'
+- ruby-head
 matrix:
   allow_failures:
-  - rvm: "ruby-head"
+  - rvm: ruby-head
 before_install: gem install bundler -v 1.16.2
+deploy:
+  provider: rubygems
+  api_key:
+    secure: VuKEUIKjQtxQmhd/bnJTdSS/xAlOkqecAl6GBqjITHX3Gt21nWalhzP37BOItYzxuAtLTptX9UgYJ5QRW/hBD0Rkv91+3E7QOX/L4E65xECzwrzVc03pcftxL/xTi28AIgrR5ML/BNsjDJQrOH+Drj9qH8KmJOGMLMCIL+xBkf8hwUmNfSu+eBBHkHHXJ1vP+JgMSOvdNh+cqUbUARBXvGOtz3jSEHDXbvUfyxxxJ1EcepP0SYBdv+JiYzi0AdLko+ZuMY7Q7A8sP3mMjlZVNJASE40yAmla2PIUuLtogNq5GcMox1b2oYt8JnxpJGBuTCic0nst2Rzt0UTimmBNVBbZyuWIRZnbzhBmCgfmX+1b3SmXIC1iZ/BboZKDR+Pz9LeAzepOYXOQWdTK+RsiBmiUC/GyoDVM6w0M01bTPj/vaNWCIhS7elBtsnATKtGI5ySjVedv+hqOUox646Vn1VkyMa73YHTk2vwV4dZIr98+v5Rnqnu++r92S0WpJwCtKhwg3vwsbhAi9DOuP5QQvK6eL6qsbH9qF7oMXk/sAr/7jG+ALY9oTgbRVLjHddP/q4EP/vxHbF4KJgfXtqZ8ljpRi//N7MKJqQMba2aplAwt0CdntEV9CLoJ9HriPz6PrdVFMsY3qLovIQ8dTZuNdiktCJjPFBaYGwPG0pppWFY=
+  on:
+    tags: true
