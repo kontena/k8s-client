@@ -8,6 +8,7 @@ Gem::Specification.new do |spec|
   spec.version       = K8s::Client::VERSION
   spec.authors       = ["Kontena, Inc."]
   spec.email         = ["info@kontena.io"]
+  spec.license       = "Apache-2.0"
 
   spec.summary       = "Kubernetes client library"
   spec.homepage      = "https://github.com/kontena/k8s-client"
