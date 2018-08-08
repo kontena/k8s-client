@@ -102,7 +102,7 @@ module K8s
     end
 
     # @return [Hash]
-    def request_options(request_object: nil, **options)
+    def request_options(request_object: nil, content_type: 'application/json', **options)
       options[:headers] ||= {}
 
       if @auth_token
@@ -110,7 +110,7 @@ module K8s
       end
 
       if request_object
-        options[:headers]['Content-Type'] = 'application/json'
+        options[:headers]['Content-Type'] = content_type
         options[:body] = request_object.to_json
       end
 
