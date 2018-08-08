@@ -33,6 +33,8 @@ Options = Struct.new(
   :delete_stack,
   :api,
   :list_api_resources,
+  :patch_deployment,
+  :replicas,
 )
 
 options = Options.new()
@@ -142,6 +144,12 @@ parser = OptionParser.new do |parser|
   end
   parser.on('--list-api-resources') do
     options.list_api_resources = options.api
+  end
+  parser.on('--patch-deployment=NAME') do |name|
+    options.patch_deployment = name
+  end
+  parser.on('--replicas=COUNT', Integer) do |count|
+    options.replicas = count
   end
 end
 
@@ -298,4 +306,10 @@ elsif options.stack
   options.stack.apply(client,
     prune: options.prune_stack,
   )
+end
+
+if name = options.patch_deployment
+  client.api('apps/v1').resource('deployments', namespace: namespace).merge_patch(name, {
+      spec: { replicas: options.replicas },
+  })
 end
