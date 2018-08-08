@@ -280,6 +280,34 @@ RSpec.describe K8s::ResourceClient do
       end
     end
 
+    context "PATCH /api/v1/pods/namespaces/default/pods/test" do
+      before do
+        stub_request(:patch, 'localhost:8080/api/v1/namespaces/default/pods/test')
+          .with(
+            headers: { 'Content-Type' => 'application/strategic-merge-patch+json' },
+            body: {
+              'spec' => { 'nodeName': 'foo' },
+            }.to_json, # XXX: webmock doesn't understand +json
+          )
+          .to_return(
+            status: 201,
+            headers: { 'Content-Type' => 'application/json' },
+            body: JSON.generate(resource.to_hash),
+          )
+      end
+
+      describe '#merge_patch' do
+        it "returns a resource" do
+          obj = subject.merge_patch('test', {'spec' => { 'nodeName' => 'foo'}}, namespace: 'default')
+
+          expect(obj).to match K8s::Resource
+          expect(obj.kind).to eq "Pod"
+          expect(obj.metadata.namespace).to eq "default"
+          expect(obj.metadata.name).to eq "test"
+        end
+      end
+    end
+
     context "DELETE /api/v1/pods/*" do
       before do
         stub_request(:delete, 'localhost:8080/api/v1/namespaces/default/pods/test')
