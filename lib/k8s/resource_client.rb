@@ -214,6 +214,26 @@ module K8s
     end
 
     # @return [Bool]
+    def patch?
+      @api_resource.verbs.include? 'patch'
+    end
+
+    # @param name [String]
+    # @param obj [Object] supporting to_json
+    # @param namespace [String]
+    # @param strategic_merge [Boolean] use kube Strategic Merge Patch instead of standard Merge Patch (arrays of objects are merged by name)
+    # @return [resource_class]
+    def merge_patch(name, obj, namespace: @namespace, strategic_merge: true)
+      @transport.request(
+        method: 'PATCH',
+        path: self.path(name, namespace: namespace),
+        content_type: strategic_merge ? 'application/strategic-merge-patch+json' : 'application/merge-patch+json',
+        request_object: obj,
+        response_class: @resource_class,
+      )
+    end
+
+    # @return [Bool]
     def delete?
       @api_resource.verbs.include? 'delete'
     end
