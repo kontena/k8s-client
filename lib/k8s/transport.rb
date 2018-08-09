@@ -167,6 +167,8 @@ module K8s
           status = K8s::API::MetaV1::Status.new(response_data)
 
           raise error_class.new(method, path, response.status, response.reason_phrase, status)
+        elsif response_data
+          raise error_class.new(method, path, response.status, "#{response.reason_phrase}: #{response_data}")
         else
           raise error_class.new(method, path, response.status, response.reason_phrase)
         end
