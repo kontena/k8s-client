@@ -175,4 +175,21 @@ RSpec.describe K8s::Transport do
       end
     end
   end
+
+  context "for a 503 error" do
+    before do
+      stub_request(:get, 'localhost:8080/apis/metrics.k8s.io/v1beta1/nodes')
+        .to_return(
+          status: [503, "Service Unavailable"],
+          body: "Error: 'context canceled'\nTrying to reach: 'https://10.250.121.71:443/apis/metrics.k8s.io/v1beta1/nodes?labelSelector=k8s.kontena.io%2Fstack%3Dweave'",
+          headers: { 'Content-Type' => 'text/plain; charset=utf-8' }
+        )
+    end
+
+    describe '#get' do
+      it "raises ServiceUnavailable" do
+        expect{subject.get('/apis/metrics.k8s.io/v1beta1/nodes')}.to raise_error K8s::Error::ServiceUnavailable, %r(GET /apis/metrics.k8s.io/v1beta1/nodes => HTTP 503 Service Unavailable: Error: 'context canceled')
+      end
+    end
+  end
 end

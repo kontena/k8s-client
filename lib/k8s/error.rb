@@ -42,6 +42,7 @@ module K8s
     define_status_error 422, :Invalid
     define_status_error 429, :Timeout
     define_status_error 500, :InternalError
+    define_status_error 503, :ServiceUnavailable
     define_status_error 504, :ServerTimeout
   end
 end
