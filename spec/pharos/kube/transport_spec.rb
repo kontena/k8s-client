@@ -192,4 +192,50 @@ RSpec.describe K8s::Transport do
       end
     end
   end
+
+  describe '#gets' do
+    context 'with HTTP 503 responses for pipelined requests' do
+      before do
+        stub_request(:get, 'localhost:8080/apis/metrics.k8s.io/v1beta1/pods')
+          .to_return(
+            status: 200,
+            body: "{\"kind\":\"PodMetricsList\",\"apiVersion\":\"metrics.k8s.io/v1beta1\",\"metadata\":{\"selfLink\":\"/apis/metrics.k8s.io/v1beta1/pods\"},\"items\":[]}\n",
+            headers: { 'Content-Type' => 'application/json' }
+          )
+        stub_request(:get, 'localhost:8080/apis/metrics.k8s.io/v1beta1/nodes')
+          .to_return(
+            {
+              status: [503, "Service Unavailable"],
+              body: "Error: 'context canceled'\nTrying to reach: 'https://10.250.121.71:443/apis/metrics.k8s.io/v1beta1/nodes?labelSelector=k8s.kontena.io%2Fstack%3Dweave'",
+              headers: { 'Content-Type' => 'text/plain; charset=utf-8' },
+            },
+            {
+              status: 200,
+              body: (
+                <<-EOM
+                {
+                  "kind": "NodeMetricsList",
+                  "apiVersion": "metrics.k8s.io/v1beta1",
+                  "metadata": {
+                    "selfLink": "/apis/metrics.k8s.io/v1beta1/nodes"
+                  },
+                  "items": []
+                }
+                EOM
+              ),
+              headers: { 'Content-Type' => 'application/json' }
+            },
+          )
+      end
+
+      it "retries the 503 request" do
+        expect(subject).to receive(:requests).once.and_call_original
+        expect(subject).to receive(:request).once.with(hash_including(path: '/apis/metrics.k8s.io/v1beta1/nodes')).and_call_original
+
+        result = subject.gets('/apis/metrics.k8s.io/v1beta1/nodes', '/apis/metrics.k8s.io/v1beta1/pods', response_class: K8s::API::MetaV1::List)
+
+        expect(result).to match [K8s::API::MetaV1::List, K8s::API::MetaV1::List]
+      end
+    end
+  end
 end
