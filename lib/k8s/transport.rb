@@ -198,9 +198,10 @@ module K8s
     end
 
     # @param options [Array<Hash>]
-    # @param skip_missing [Boolean] return nil for 404
+    # @param skip_missing [Boolean] return nil for HTTP 404 responses
+    # @param retry_errors [Boolean] retry with non-pipelined request for HTTP 503 responses
     # @return [Array<response_class, Hash, nil>]
-    def requests(*options, response_class: nil, skip_missing: false)
+    def requests(*options, response_class: nil, skip_missing: false, retry_errors: true)
       return [] if options.empty? # excon chokes
 
       start = Time.now
@@ -217,6 +218,15 @@ module K8s
         rescue K8s::Error::NotFound
           if skip_missing
             nil
+          else
+            raise
+          end
+        rescue K8s::Error::ServiceUnavailable => exc
+          if retry_errors
+            logger.warn { "Retry #{format_request(request_options)} => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s" }
+
+            # only retry the failed request, not the entire pipeline
+            request(response_class: response_class, **request_options)
           else
             raise
           end
