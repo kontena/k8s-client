@@ -113,7 +113,7 @@ This will fetch the API resource lists for all API groups in a single pipelined 
 ### Listing resources
 
 ```ruby
-client.api('v1').resource('pods', namespace: namespace).list(labelSelector: label_selector).each do |pod|
+client.api('v1').resource('pods', namespace: 'default').list(labelSelector: {'role' => 'test'}).each do |pod|
   puts "namespace=#{pod.metadata.namespace} pod: #{pod.metadata.name} node=#{pod.spec.nodeName}"
 end
 ```
@@ -121,7 +121,7 @@ end
 ### Updating resources
 
 ```ruby
-node = client.api('v1').resource('nodes').get(node_name)
+node = client.api('v1').resource('nodes').get('test-node')
 
 node[:spec][:unschedulable] = true
 
@@ -131,11 +131,11 @@ client.api('v1').resource('nodes').update_resource(node)
 ### Deleting resources
 
 ```ruby
-pod = client.api('v1').resource('pods', namespace: namespace).delete(pod_name)
+pod = client.api('v1').resource('pods', namespace: 'default').delete('test-pod')
 ```
 
 ```ruby
-pods = client.api('v1').resource('pods', namespace: namespace).delete_collection(labelSelector: {'role' => 'test'})
+pods = client.api('v1').resource('pods', namespace: 'default').delete_collection(labelSelector: {'role' => 'test'})
 ```
 
 ### Creating resources
@@ -168,7 +168,7 @@ service = client.api('v1').resource('services').create_resource(service)
 ```ruby
 resources = K8s::Resource.from_files('./test.yaml')
 
-for resource in options.create_resources
+for resource in resources
   resource = client.create_resource(resource)
 end
 ```
