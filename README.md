@@ -30,6 +30,12 @@ Or install it yourself as:
 
     $ gem install k8s-client
 
+And then load the code using:
+
+```ruby
+require 'k8s-client'
+```
+
 ## Usage
 
 ### Overview
