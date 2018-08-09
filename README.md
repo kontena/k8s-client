@@ -5,7 +5,14 @@
 [![Yard Docs](http://img.shields.io/badge/yard-docs-blue.svg)](http://www.rubydoc.info/github/kontena/k8s-client/master)
 
 
-Ruby client library for the Kubernetes (1.10) API
+Ruby client library for the Kubernetes (1.11) API
+
+## Highlights
+
+* Clean API for dynamic Kubernetes API Groups / Resources
+* Fast API requests using HTTP connection keepalive
+* Fast API discovery and resource listings using pipelined HTTP requests
+* Typed errors with useful debugging information
 
 ## Installation
 
@@ -25,7 +32,148 @@ Or install it yourself as:
 
 ## Usage
 
-WIP: See [`bin/k8s-client`](bin/k8s-client) for example code.
+### Overview
+The top-level `K8s::Client` provides access to separate `APIClient` instances for each Kubernetes API Group (`v1`, `apps/v1`, etc.), which in turns provides access to separate `ResourceClient` instances for each API resource type (`nodes`, `pods`, `deployments`, etc.).
+
+Individual resources are returned as `K8s::Resource` instances, which are `RecursiveOpenStruct` instances providing attribute access (`resource.metadata.name`). The resource instances are returned by methods such as `client.api('v1').resource('nodes').get('foo')`, and passed as arguments for `client.api('v1').resource('nodes').create_resource(res)`. Resources can also be loaded from disk using `K8s::Resource.from_files(path)`, and passed to the top-level methods such as `client.create_resource(res)`, which lookup the correct API/Resource client from the resource `apiVersion` and `kind`.
+
+The different `K8s::Error::API` subclasses represent different HTTP response codes, such as `K8s::Error::NotFound` or `K8s::Error::Conflict`.
+
+See [`bin/k8s-client`](bin/k8s-client) for example code.
+
+### Creating a client
+
+#### Unauthenticated client
+
+```ruby
+client = K8s.client('https://localhost:6443', ssl_verify_peer: false)
+```
+
+The keyword options are [Excon](https://github.com/excon/excon/) options.
+
+#### Client from kubeconfig
+
+```ruby
+client = K8s::Client.config(K8s::Config.load_file('~/.kube/config'))
+```
+
+#### In-cluster client from pod envs/secrets
+
+```ruby
+client = K8s::Client.in_cluster_config
+```
+
+### Logging
+
+#### Quiet
+
+To supress any warning messages:
+
+```ruby
+K8s::Logging.quiet!
+K8s::Transport.quiet!
+```
+
+The `K8s::Transport` is quiet by default, but other components may log warnings in the future.
+
+#### Debugging
+
+Log all API requests
+
+```ruby
+K8s::Logging.debug!
+K8s::Transport.verbose!
+```
+
+```
+I, [2018-08-09T14:19:50.404739 #1]  INFO -- K8s::Transport: Using config with server=https://167.99.39.233:6443
+I, [2018-08-09T14:19:50.629521 #1]  INFO -- K8s::Transport<https://167.99.39.233:6443>: GET /version => HTTP 200: <K8s::API::Version> in 0.224s
+I, [2018-08-09T14:19:50.681367 #1]  INFO -- K8s::Transport<https://167.99.39.233:6443>: GET /api/v1 => HTTP 200: <K8s::API::MetaV1::APIResourceList> in 0.046s
+I, [2018-08-09T14:19:51.018740 #1]  INFO -- K8s::Transport<https://167.99.39.233:6443>: GET /api/v1/pods => HTTP 200: <K8s::API::MetaV1::List> in 0.316s
+```
+
+Using `K8s::Transport.debug!` will also log request/response bodies. The `EXCON_DEBUG=true` env will log all request/response attributes, including headers.
+
+### Prefetching API resources
+
+Operations like mapping a resource `kind` to an API resource URL require knowledge of the API resource lists for the API group. Mapping resources for multiple API groups would require fetching the API resource lists for each API group in turn, leading to additional request latency. This can be optimized using resource prefetching:
+
+```ruby
+client.apis(prefetch_resources: true)
+```
+
+This will fetch the API resource lists for all API groups in a single pipelined request.
+
+### Listing resources
+
+```ruby
+client.api('v1').resource('pods', namespace: namespace).list(labelSelector: label_selector).each do |pod|
+  puts "namespace=#{pod.metadata.namespace} pod: #{pod.metadata.name} node=#{pod.spec.nodeName}"
+end
+```
+
+### Updating resources
+
+```ruby
+node = client.api('v1').resource('nodes').get(node_name)
+
+node[:spec][:unschedulable] = true
+
+client.api('v1').resource('nodes').update_resource(node)
+```
+
+### Deleting resources
+
+```ruby
+pod = client.api('v1').resource('pods', namespace: namespace).delete(pod_name)
+```
+
+```ruby
+pods = client.api('v1').resource('pods', namespace: namespace).delete_collection(labelSelector: {'role' => 'test'})
+```
+
+### Creating resources
+
+#### Programmatically defined resources
+```ruby
+service = K8s::Resource.new(
+  apiVersion: 'v1',
+  kind: 'Service',
+  metadata: {
+    namespace: 'default',
+    name: 'test',
+  },
+  spec: {
+    type: 'ClusterIP',
+    ports: [
+      { port: 80 },
+    ],
+    selector: {'app' => 'test'},
+  },
+)
+
+logger.info "Create service=#{service.metadata.name} in namespace=#{service.metadata.namespace}"
+
+service = client.api('v1').resource('services').create_resource(service)
+```
+
+#### From file(s)
+
+```ruby
+resources = K8s::Resource.from_files('./test.yaml')
+
+for resource in options.create_resources
+  resource = client.create_resource(resource)
+end
+```
+
+### Patching resources
+
+```ruby
+client.api('apps/v1').resource('deployments', namespace: 'default').merge_patch('test', {
+    spec: { replicas: 3 },
+})
+```
 
 ## Contributing
 
