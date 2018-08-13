@@ -262,7 +262,11 @@ RSpec.describe K8s::Client do
           end
 
           it "prefetches API resources and pipelines the requests" do
-            expect(transport).to receive(:requests).once.with(hash_including(path: '/api/v1'), response_class: anything).and_call_original
+            expect(transport).to receive(:requests).once.with(
+              hash_including(path: '/api/v1'),
+              skip_missing: true,
+              response_class: anything,
+            ).and_call_original
             expect(transport).to receive(:requests).once.with(
               hash_including(path: '/api/v1/namespaces/default/services/foo'),
               hash_including(path: '/api/v1/namespaces/default/configmaps/bar'),
@@ -320,6 +324,12 @@ RSpec.describe K8s::Client do
 
         context "which do not yet exist" do
           before do
+            stub_request(:get, 'localhost:8080/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions/test.pharos-test.k8s.io')
+              .to_return(
+                status: 404,
+                headers: { 'Content-Type' => 'text/plain' },
+                body: '404 page not found',
+              )
             stub_request(:get, 'localhost:8080/apis/pharos-test.k8s.io/v0')
               .to_return(
                 status: 404,

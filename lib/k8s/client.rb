@@ -119,21 +119,31 @@ module K8s
       client_for_resource(resource).get_resource(resource)
     end
 
+    # Returns nils for any resources that do not exist.
+    #
     # @param resources [Array<K8s::Resource>]
     # @return [Array<K8s::Resource, nil>]
     def get_resources(resources)
-      # prefetch api resources
-      apis(resources.map{|resource| resource.apiVersion }.uniq, prefetch_resources: true)
+      # prefetch api resources, skip missing APIs
+      resource_apis = apis(resources.map{|resource| resource.apiVersion }, prefetch_resources: true, skip_missing: true)
 
-      resource_clients = resources.map{|resource| client_for_resource(resource) }
-      requests = resources.zip(resource_clients).map{|resource, resource_client|
-        {
-          method: 'GET',
-          path: resource_client.path(resource.metadata.name, namespace: resource.metadata.namespace),
-          response_class: resource_client.resource_class,
+      request_map = Hash[resources.zip(resource_apis)
+        .select{|resource, api_client| api_client.api_resources? } # skip missing APIs
+        .map{|resource, api_client| [resource, api_client.client_for_resource(resource)] }
+        .map{|resource, resource_client|
+          [resource, {
+            method: 'GET',
+            path: resource_client.path(resource.metadata.name, namespace: resource.metadata.namespace),
+            response_class: resource_client.resource_class,
+          }]
         }
-      }
-      responses = @transport.requests(*requests, skip_missing: true)
+      ]
+
+      # sparse array, may omit elements in resources
+      responses = @transport.requests(*request_map.values, skip_missing: true)
+      response_map = Hash[request_map.keys.zip(responses)]
+
+      resources.map{|resource| response_map[resource] }
     end
 
     # @param resource [K8s::Resource]
