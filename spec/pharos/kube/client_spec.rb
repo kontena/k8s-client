@@ -237,5 +237,52 @@ RSpec.describe K8s::Client do
         end
       end
     end
+
+    describe '#get_resources' do
+      context "for standard resources" do
+        let(:resources) {[
+          K8s::Resource.from_file(fixture_path('resources/service-foo.yaml')),
+          K8s::Resource.from_file(fixture_path('resources/configmap-bar.yaml')),
+        ]}
+
+        context "which already exist" do
+          before do
+            stub_request(:get, 'localhost:8080/api/v1/namespaces/default/services/foo')
+              .to_return(
+                status: 200,
+                headers: { 'Content-Type' => 'application/json' },
+                body: fixture('api/services-foo.json'),
+              )
+            stub_request(:get, 'localhost:8080/api/v1/namespaces/default/configmaps/bar')
+              .to_return(
+                status: 200,
+                headers: { 'Content-Type' => 'application/json' },
+                body: fixture('api/configmaps-bar.json'),
+              )
+          end
+
+          it "prefetches API resources and pipelines the requests" do
+            expect(transport).to receive(:requests).once.with(hash_including(path: '/api/v1'), response_class: anything).and_call_original
+            expect(transport).to receive(:requests).once.with(
+              hash_including(path: '/api/v1/namespaces/default/services/foo'),
+              hash_including(path: '/api/v1/namespaces/default/configmaps/bar'),
+              skip_missing: true,
+            ).and_call_original
+
+            r = subject.get_resources(resources)
+
+            expect(r).to match [K8s::Resource, K8s::Resource]
+            expect(r[0].to_hash).to match hash_including(
+              apiVersion: 'v1',
+              kind: 'Service',
+            )
+            expect(r[1].to_hash).to match hash_including(
+              apiVersion: 'v1',
+              kind: 'ConfigMap',
+            )
+          end
+        end
+      end
+    end
   end
 end

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: default
+  name: foo
+spec:
+  selector:
+    app: foo
+  type: ClusterIP
+  ports:
+    - port: 80

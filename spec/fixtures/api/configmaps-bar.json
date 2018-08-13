@@ -1,0 +1,15 @@
+{
+    "apiVersion": "v1",
+    "data": {
+        "foo": "bar"
+    },
+    "kind": "ConfigMap",
+    "metadata": {
+        "creationTimestamp": "2018-08-13T08:07:22Z",
+        "name": "bar",
+        "namespace": "default",
+        "resourceVersion": "3718",
+        "selfLink": "/api/v1/namespaces/default/configmaps/bar",
+        "uid": "e8293208-9ecf-11e8-b464-76d458035df6"
+    }
+}
