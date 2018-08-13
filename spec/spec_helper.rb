@@ -5,6 +5,11 @@ require "k8s-client"
 
 require_relative 'helpers/fixture_helpers'
 
+if ENV['DEBUG']
+  K8s::Logging.debug!
+  K8s::Transport.verbose!
+end
+
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"
