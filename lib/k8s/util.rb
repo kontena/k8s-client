@@ -1,7 +1,8 @@
 module K8s
   module Util
     # Yield with all non-nil args, returning matching array with corresponding return values or nils.
-    # Args must be usable as hash keys.
+    #
+    # Args must be usable as hash keys. Duplicate args will all map to the same return value.
     #
     # @param args [Array<nil, Object>]
     # @yield args
