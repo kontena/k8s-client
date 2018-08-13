@@ -123,7 +123,7 @@ module K8s
     # This includes custom resources that were not yet defined.
     #
     # @param resources [Array<K8s::Resource>]
-    # @return [Array<K8s::Resource, nil>]
+    # @return [Array<K8s::Resource, nil>] matching resources array 1:1
     def get_resources(resources)
       # prefetch api resources, skip missing APIs
       resource_apis = apis(resources.map{ |resource| resource.apiVersion }, prefetch_resources: true, skip_missing: true)
@@ -141,8 +141,8 @@ module K8s
         }
       }
 
-      # map requests to response objects, or nil for nil request options
-      Util.compact_yield(*requests) { |*requests|
+      # map non-nil requests to response objects, or nil for nil request options
+      Util.sparse_map(requests) { |requests|
         @transport.requests(*requests, skip_missing: true)
       }
     end
