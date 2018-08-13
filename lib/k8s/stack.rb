@@ -7,7 +7,7 @@ module K8s
 
     LABEL = 'k8s.kontena.io/stack'
     CHECKSUM_ANNOTATION = 'k8s.kontena.io/stack-checksum'
-    SPECIAL_KINDS = [
+    RESOURCE_DEFINITIONS = [
       'CustomResourceDefinition',
       'ApiService'
     ]
@@ -75,9 +75,9 @@ module K8s
     # @param prune [Boolean] prune automatically after apply
     # @return [Array<K8s::Resource>]
     def apply(client, prune: true)
-      specials, others = resources.partition { |r| SPECIAL_KINDS.include?(r.kind) }
-      apply_resources(client, specials)
-      apply_resources(client, others)
+      definitions, resources = resources.partition { |r| RESOURCE_DEFINITIONS.include?(r.kind) }
+      apply_resources(client, definitions)
+      apply_resources(client, resources)
 
       prune(client, keep_resources: true) if prune
     end
