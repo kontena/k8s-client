@@ -201,19 +201,21 @@ module K8s
     # @param skip_missing [Boolean] return nil for HTTP 404 responses
     # @param retry_errors [Boolean] retry with non-pipelined request for HTTP 503 responses
     # @return [Array<response_class, Hash, nil>]
-    def requests(*options, response_class: nil, skip_missing: false, retry_errors: true)
+    def requests(*options, skip_missing: false, retry_errors: true, **common_options)
       return [] if options.empty? # excon chokes
 
       start = Time.now
       responses = excon.requests(
-        options.map{|options| request_options(**options)}
+        options.map{|options| request_options(**common_options.merge(options))}
       )
       t = Time.now - start
 
       objects = responses.zip(options).map{|response, request_options|
+        response_class = request_options[:response_class] || common_options[:response_class]
+
         begin
           parse_response(response, request_options,
-            response_class: request_options[:response_class] || response_class,
+            response_class: response_class,
           )
         rescue K8s::Error::NotFound
           if skip_missing
@@ -226,7 +228,7 @@ module K8s
             logger.warn { "Retry #{format_request(request_options)} => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s" }
 
             # only retry the failed request, not the entire pipeline
-            request(response_class: response_class, **request_options)
+            request(response_class: response_class, **common_options.merge(request_options))
           else
             raise
           end
@@ -250,13 +252,12 @@ module K8s
     end
 
     # @param *paths [String]
-    def gets(*paths, response_class: nil, **options)
+    def gets(*paths, **options)
       requests(*paths.map{|path| {
           method: 'GET',
           path: self.path(path),
-          **options,
         } },
-        response_class: response_class,
+        **options
       )
     end
   end
