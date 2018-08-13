@@ -1,0 +1,15 @@
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {
+    
+  },
+  "status": "Failure",
+  "message": "configmaps \"bar\" not found",
+  "reason": "NotFound",
+  "details": {
+    "name": "bar",
+    "kind": "configmaps"
+  },
+  "code": 404
+}

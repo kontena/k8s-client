@@ -282,6 +282,34 @@ RSpec.describe K8s::Client do
             )
           end
         end
+
+        context "which may be missing" do
+          before do
+            stub_request(:get, 'localhost:8080/api/v1/namespaces/default/services/foo')
+              .to_return(
+                status: 200,
+                headers: { 'Content-Type' => 'application/json' },
+                body: fixture('api/services-foo.json'),
+              )
+            stub_request(:get, 'localhost:8080/api/v1/namespaces/default/configmaps/bar')
+              .to_return(
+                status: 404,
+                headers: { 'Content-Type' => 'application/json' },
+                body: fixture('api/configmaps-bar-404.json'),
+              )
+          end
+
+          it "returns mixed nils" do
+            r = subject.get_resources(resources)
+
+            expect(r).to match [K8s::Resource, nil]
+            expect(r[0].to_hash).to match hash_including(
+              apiVersion: 'v1',
+              kind: 'Service',
+            )
+            expect(r[1]).to be nil
+          end
+        end
       end
     end
   end
