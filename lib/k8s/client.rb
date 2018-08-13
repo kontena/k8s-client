@@ -126,25 +126,25 @@ module K8s
     # @return [Array<K8s::Resource, nil>]
     def get_resources(resources)
       # prefetch api resources, skip missing APIs
-      resource_apis = apis(resources.map{|resource| resource.apiVersion }, prefetch_resources: true, skip_missing: true)
+      resource_apis = apis(resources.map{ |resource| resource.apiVersion }, prefetch_resources: true, skip_missing: true)
 
-      request_map = Hash[resources.zip(resource_apis)
-        .select{|resource, api_client| api_client.api_resources? } # skip missing APIs
-        .map{|resource, api_client| [resource, api_client.client_for_resource(resource)] }
-        .map{|resource, resource_client|
-          [resource, {
-            method: 'GET',
-            path: resource_client.path(resource.metadata.name, namespace: resource.metadata.namespace),
-            response_class: resource_client.resource_class,
-          }]
+      # map each resource to excon request options, or nil if resource is not (yet) defined
+      requests = resources.zip(resource_apis).map{ |resource, api_client|
+        next nil unless api_client.api_resources?
+
+        resource_client = api_client.client_for_resource(resource)
+
+        {
+          method: 'GET',
+          path: resource_client.path(resource.metadata.name, namespace: resource.metadata.namespace),
+          response_class: resource_client.resource_class,
         }
-      ]
+      }
 
-      # sparse array, may omit elements in resources
-      responses = @transport.requests(*request_map.values, skip_missing: true)
-      response_map = Hash[request_map.keys.zip(responses)]
-
-      resources.map{|resource| response_map[resource] }
+      # map requests to response objects, or nil for nil request options
+      Util.compact_yield(*requests) { |*requests|
+        @transport.requests(*requests, skip_missing: true)
+      }
     end
 
     # @param resource [K8s::Resource]
