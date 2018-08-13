@@ -142,8 +142,8 @@ module K8s
       }
 
       # map non-nil requests to response objects, or nil for nil request options
-      Util.compact_map(requests) { |requests|
-        @transport.requests(*requests, skip_missing: true)
+      Util.compact_map(requests) { |reqs|
+        @transport.requests(*reqs, skip_missing: true)
       }
     end
 
