@@ -58,19 +58,22 @@ module K8s
     end
 
     # @param api_versions [Array<String>] defaults to all APIs
+    # @param prefetch_resources [Boolean] prefetch any missing api_resources for each api_version
+    # @param skip_missing [Boolean] return APIClient without api_resources? if 404
     # @return [Array<APIClient>]
-    def apis(api_versions = nil, prefetch_resources: false)
+    def apis(api_versions = nil, prefetch_resources: false, skip_missing: false)
       api_versions ||= ['v1'] + self.api_groups
 
       if prefetch_resources
         # api groups that are missing their api_resources
         api_paths = api_versions
+          .uniq
           .select{|api_version| !api(api_version).api_resources? }
           .map{|api_version| APIClient.path(api_version) }
 
         # load into APIClient.api_resources=
-        @transport.gets(*api_paths, response_class: K8s::API::MetaV1::APIResourceList).each do |api_resource_list|
-          api(api_resource_list.groupVersion).api_resources = api_resource_list.resources
+        @transport.gets(*api_paths, response_class: K8s::API::MetaV1::APIResourceList, skip_missing: skip_missing).each do |api_resource_list|
+          api(api_resource_list.groupVersion).api_resources = api_resource_list.resources if api_resource_list
         end
       end
 
