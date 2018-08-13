@@ -7,7 +7,7 @@ module K8s
     # @yield args
     # @yieldparam args [Array<Object>] omitting any nil values
     # @return [Array<nil, Object>] matching args array 1:1, containing yielded values for non-nil args
-    def self.sparse_map(args)
+    def self.compact_map(args)
       func_args = args.compact
 
       values = yield func_args
