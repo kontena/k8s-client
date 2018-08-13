@@ -7,6 +7,10 @@ module K8s
 
     LABEL = 'k8s.kontena.io/stack'
     CHECKSUM_ANNOTATION = 'k8s.kontena.io/stack-checksum'
+    RESOURCE_DEFINITIONS = [
+      'CustomResourceDefinition',
+      'ApiService'
+    ]
     PRUNE_IGNORE = [
       'v1:ComponentStatus', # apiserver ignores GET /v1/componentstatuses?labelSelector=... and returns all resources
       'v1:Endpoints', # inherits stack label from service, but not checksum annotation
@@ -67,8 +71,21 @@ module K8s
       })
     end
 
+    # @param client [K8s::Client] apply using client
+    # @param prune [Boolean] prune automatically after apply
     # @return [Array<K8s::Resource>]
     def apply(client, prune: true)
+      definitions, resources = resources.partition { |r| RESOURCE_DEFINITIONS.include?(r.kind) }
+      apply_resources(client, definitions)
+      apply_resources(client, resources)
+
+      prune(client, keep_resources: true) if prune
+    end
+
+    # @param client [K8s::Client] apply using client
+    # @param resources [Array<K8s::Resource>] to apply
+    # @return [Array<K8s::Resource>]
+    def apply_resources(client, resources)
       server_resources = client.get_resources(resources)
 
       resources.zip(server_resources).map do |resource, server_resource|
@@ -92,8 +109,6 @@ module K8s
           keep_resource! compare_resource
         end
       end
-
-      prune(client, keep_resources: true) if prune
     end
 
     # key MUST NOT include resource.apiVersion: the same kind can be aliased in different APIs

@@ -118,6 +118,7 @@ module K8s
 
     # @param resources [Array<K8s::Resource>]
     # @return [Array<K8s::Resource, nil>]
+    # @raise [K8s::Error::NotFound] if resource definition is missing
     def get_resources(resources)
       # prefetch api resources
       apis(resources.map{|resource| resource.apiVersion }.uniq, prefetch_resources: true)
