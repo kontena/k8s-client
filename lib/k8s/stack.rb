@@ -124,6 +124,7 @@ module K8s
             client.delete_resource(resource)
           rescue K8s::Error::NotFound
             # assume aliased objects in multiple API groups, like for Deployments
+            # alternatively, a custom resource whose definition was already deleted earlier
           end
         end
       end

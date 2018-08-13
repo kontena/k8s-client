@@ -237,5 +237,118 @@ RSpec.describe K8s::Client do
         end
       end
     end
+
+    describe '#get_resources' do
+      context "for standard resources" do
+        let(:resources) {[
+          K8s::Resource.from_file(fixture_path('resources/service-foo.yaml')),
+          K8s::Resource.from_file(fixture_path('resources/configmap-bar.yaml')),
+        ]}
+
+        context "which already exist" do
+          before do
+            stub_request(:get, 'localhost:8080/api/v1/namespaces/default/services/foo')
+              .to_return(
+                status: 200,
+                headers: { 'Content-Type' => 'application/json' },
+                body: fixture('api/services-foo.json'),
+              )
+            stub_request(:get, 'localhost:8080/api/v1/namespaces/default/configmaps/bar')
+              .to_return(
+                status: 200,
+                headers: { 'Content-Type' => 'application/json' },
+                body: fixture('api/configmaps-bar.json'),
+              )
+          end
+
+          it "prefetches API resources and pipelines the requests" do
+            expect(transport).to receive(:requests).once.with(
+              hash_including(path: '/api/v1'),
+              skip_missing: true,
+              response_class: anything,
+            ).and_call_original
+            expect(transport).to receive(:requests).once.with(
+              hash_including(path: '/api/v1/namespaces/default/services/foo'),
+              hash_including(path: '/api/v1/namespaces/default/configmaps/bar'),
+              skip_missing: true,
+            ).and_call_original
+
+            r = subject.get_resources(resources)
+
+            expect(r).to match [K8s::Resource, K8s::Resource]
+            expect(r[0].to_hash).to match hash_including(
+              apiVersion: 'v1',
+              kind: 'Service',
+            )
+            expect(r[1].to_hash).to match hash_including(
+              apiVersion: 'v1',
+              kind: 'ConfigMap',
+            )
+          end
+        end
+
+        context "which may be missing" do
+          before do
+            stub_request(:get, 'localhost:8080/api/v1/namespaces/default/services/foo')
+              .to_return(
+                status: 200,
+                headers: { 'Content-Type' => 'application/json' },
+                body: fixture('api/services-foo.json'),
+              )
+            stub_request(:get, 'localhost:8080/api/v1/namespaces/default/configmaps/bar')
+              .to_return(
+                status: 404,
+                headers: { 'Content-Type' => 'application/json' },
+                body: fixture('api/configmaps-bar-404.json'),
+              )
+          end
+
+          it "returns mixed nils" do
+            r = subject.get_resources(resources)
+
+            expect(r).to match [K8s::Resource, nil]
+            expect(r[0].to_hash).to match hash_including(
+              apiVersion: 'v1',
+              kind: 'Service',
+            )
+            expect(r[1]).to be nil
+          end
+        end
+      end
+
+      context "for custom resources" do
+        let(:resources) {[
+          K8s::Resource.from_file(fixture_path('resources/crd-test.yaml')),
+          K8s::Resource.from_file(fixture_path('resources/test.yaml')),
+        ]}
+
+        context "which do not yet exist" do
+          before do
+            stub_request(:get, 'localhost:8080/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions/tests.pharos-test.k8s.io')
+              .to_return(
+                status: 404,
+                headers: { 'Content-Type' => 'text/plain' },
+                body: '404 page not found',
+              )
+            stub_request(:get, 'localhost:8080/apis/pharos-test.k8s.io/v0')
+              .to_return(
+                status: 404,
+                headers: { 'Content-Type' => 'text/plain' },
+                body: '404 page not found',
+              )
+            stub_request(:get, 'localhost:8080/apis/pharos-test.k8s.io/v0/namespaces/default/tests/test')
+              .to_return(
+                status: 404,
+              )
+          end
+
+          it "returns nils" do
+            r = subject.get_resources(resources)
+
+            expect(r).to match [nil, nil]
+          end
+        end
+      end
+    end
   end
 end

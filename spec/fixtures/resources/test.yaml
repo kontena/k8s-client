@@ -1,0 +1,7 @@
+apiVersion: pharos-test.k8s.io/v0
+kind: Test
+metadata:
+  name: test
+  namespace: default
+spec:
+  test: true

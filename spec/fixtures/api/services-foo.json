@@ -1,0 +1,30 @@
+{
+    "apiVersion": "v1",
+    "kind": "Service",
+    "metadata": {
+        "creationTimestamp": "2018-08-13T08:06:38Z",
+        "name": "foo",
+        "namespace": "default",
+        "resourceVersion": "3646",
+        "selfLink": "/api/v1/namespaces/default/services/foo",
+        "uid": "cdc7144a-9ecf-11e8-b464-76d458035df6"
+    },
+    "spec": {
+        "clusterIP": "10.250.83.45",
+        "ports": [
+            {
+                "port": 80,
+                "protocol": "TCP",
+                "targetPort": 80
+            }
+        ],
+        "selector": {
+            "app": "foo"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+    },
+    "status": {
+        "loadBalancer": {}
+    }
+}
