@@ -311,6 +311,34 @@ RSpec.describe K8s::Client do
           end
         end
       end
+
+      context "for custom resources" do
+        let(:resources) {[
+          K8s::Resource.from_file(fixture_path('resources/crd-test.yaml')),
+          K8s::Resource.from_file(fixture_path('resources/test.yaml')),
+        ]}
+
+        context "which do not yet exist" do
+          before do
+            stub_request(:get, 'localhost:8080/apis/pharos-test.k8s.io/v0')
+              .to_return(
+                status: 404,
+                headers: { 'Content-Type' => 'text/plain' },
+                body: '404 page not found',
+              )
+            stub_request(:get, 'localhost:8080/apis/pharos-test.k8s.io/v0/namespaces/default/tests/test')
+              .to_return(
+                status: 404,
+              )
+          end
+
+          it "returns nils" do
+            r = subject.get_resources(resources)
+
+            expect(r).to match [nil, nil]
+          end
+        end
+      end
     end
   end
 end
