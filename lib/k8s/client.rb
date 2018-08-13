@@ -120,6 +120,7 @@ module K8s
     end
 
     # Returns nils for any resources that do not exist.
+    # This includes custom resources that were not yet defined.
     #
     # @param resources [Array<K8s::Resource>]
     # @return [Array<K8s::Resource, nil>]
