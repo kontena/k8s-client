@@ -324,7 +324,7 @@ RSpec.describe K8s::Client do
 
         context "which do not yet exist" do
           before do
-            stub_request(:get, 'localhost:8080/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions/test.pharos-test.k8s.io')
+            stub_request(:get, 'localhost:8080/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions/tests.pharos-test.k8s.io')
               .to_return(
                 status: 404,
                 headers: { 'Content-Type' => 'text/plain' },
