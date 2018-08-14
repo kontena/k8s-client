@@ -101,7 +101,8 @@ module K8s
 
     # @param resource [K8s::Resource]
     # @param namespace [String, nil] default if resource is missing namespace
-    # @raise [K8s::Error] unknown resource
+    # @raise [K8s::Error::NotFound] API Group does not exist
+    # @raise [K8s::Error::UndefinedResource]
     # @return [K8s::ResourceClient]
     def client_for_resource(resource, namespace: nil)
       api(resource.apiVersion).client_for_resource(resource, namespace: namespace)

@@ -44,5 +44,9 @@ module K8s
     define_status_error 500, :InternalError
     define_status_error 503, :ServiceUnavailable
     define_status_error 504, :ServerTimeout
+
+    class UndefinedResource < Error
+
+    end
   end
 end

@@ -57,7 +57,7 @@ module K8s
     # @return [K8s::ResourceClient]
     def resource(resource_name, namespace: nil)
       unless api_resource = api_resources.find{ |api_resource| api_resource.name == resource_name }
-        raise K8s::Error, "Unknown resource #{resource_name} for #{@api_version}"
+        raise K8s::Error::UndefinedResource, "Unknown resource #{resource_name} for #{@api_version}"
       end
 
       ResourceClient.new(@transport, self, api_resource,
@@ -67,15 +67,16 @@ module K8s
 
     # @param resource [K8s::Resource]
     # @param namespace [String, nil] default if resource is missing namespace
-    # @raise [K8s::Error] unknown resource
+    # @raise [K8s::Error::NotFound] API Group does not exist
+    # @raise [K8s::Error::UndefinedResource]
     # @return [K8s::ResourceClient]
     def client_for_resource(resource, namespace: nil)
       unless @api_version == resource.apiVersion
-        raise K8s::Error, "Invalid apiVersion=#{resource.apiVersion} for #{@api_version} client"
+        raise K8s::Error::UndefinedResource, "Invalid apiVersion=#{resource.apiVersion} for #{@api_version} client"
       end
 
       unless api_resource = api_resources.find{ |api_resource| api_resource.kind == resource.kind }
-        raise K8s::Error, "Unknown resource kind=#{resource.kind} for #{@api_version}"
+        raise K8s::Error::UndefinedResource, "Unknown resource kind=#{resource.kind} for #{@api_version}"
       end
 
       ResourceClient.new(@transport, self, api_resource,
