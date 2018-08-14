@@ -75,7 +75,7 @@ module K8s
       end
 
       unless api_resource = api_resources.find{ |api_resource| api_resource.kind == resource.kind }
-        raise K8s::Error, "Unknown resource kind=#{api_resource.kind} for #{@api_version}"
+        raise K8s::Error, "Unknown resource kind=#{resource.kind} for #{@api_version}"
       end
 
       ResourceClient.new(@transport, self, api_resource,
