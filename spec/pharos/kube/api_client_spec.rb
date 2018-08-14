@@ -81,11 +81,39 @@ RSpec.describe K8s::APIClient do
 
     describe '#resource' do
       it "raises error for non-existing resource" do
-        expect{subject.resource('wtfs')}.to raise_error(K8s::Error)
+        expect{subject.resource('wtfs')}.to raise_error(K8s::Error::UndefinedResource, %r(Unknown resource wtfs for v1))
       end
 
       it "returns client for resource name" do
         expect(subject.resource('pods').resource).to eq 'pods'
+      end
+    end
+
+    describe '#client_for_resource' do
+      context "for an invalid resource apiVersion" do
+        let(:resource) {
+          K8s::Resource.new(
+            apiVersion: 'test/v1',
+            kind: 'Test',
+          )
+        }
+
+        it "raises error" do
+          expect{subject.client_for_resource(resource)}.to raise_error(K8s::Error::UndefinedResource, %r(Invalid apiVersion=test/v1 for v1 client))
+        end
+      end
+
+      context "for an invalid resource kind" do
+        let(:resource) {
+          K8s::Resource.new(
+            apiVersion: 'v1',
+            kind: 'Wtf',
+          )
+        }
+
+        it "raises error" do
+          expect{subject.client_for_resource(resource)}.to raise_error(K8s::Error::UndefinedResource,  %r(Unknown resource kind=Wtf for v1))
+        end
       end
     end
 
