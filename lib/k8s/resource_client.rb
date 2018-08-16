@@ -94,6 +94,11 @@ module K8s
       @resource
     end
 
+    # @return [Boolean]
+    def subresource?
+      !!@subresource
+    end
+
     # @return [String, nil]
     def subresource
       @subresource
