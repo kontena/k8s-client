@@ -12,27 +12,35 @@ RSpec.describe K8s::Client do
       '/apis' => 'api/apis.json',
     }
 
+    # jq -r '.groups[].versions[].groupVersion' spec/fixtures/api/apis.json
     API_GROUPS = (
-        # curl -v http://localhost:8001/apis | jq -r '.groups[].preferredVersion.groupVersion'
         <<-EOM
           apiregistration.k8s.io/v1
+          apiregistration.k8s.io/v1beta1
           extensions/v1beta1
           apps/v1
+          apps/v1beta2
+          apps/v1beta1
           events.k8s.io/v1beta1
           authentication.k8s.io/v1
+          authentication.k8s.io/v1beta1
           authorization.k8s.io/v1
+          authorization.k8s.io/v1beta1
           autoscaling/v1
+          autoscaling/v2beta1
           batch/v1
+          batch/v1beta1
           certificates.k8s.io/v1beta1
           networking.k8s.io/v1
           policy/v1beta1
           rbac.authorization.k8s.io/v1
+          rbac.authorization.k8s.io/v1beta1
           storage.k8s.io/v1
+          storage.k8s.io/v1beta1
           admissionregistration.k8s.io/v1beta1
           apiextensions.k8s.io/v1beta1
         EOM
     ).split
-
 
     before do
       STUB_APIS.each do |path, fixture_path|
@@ -45,6 +53,7 @@ RSpec.describe K8s::Client do
       end
 
       for api_version in API_GROUPS
+        # for api in $(jq -r '.groups[].versions[].groupVersion' spec/fixtures/api/apis.json); do curl http://localhost:8001/apis/$api > spec/fixtures/apis/${api/\//-}.json; done
         stub_request(:get, "localhost:8080/apis/#{api_version}")
           .to_return(
             status: 200,
@@ -82,26 +91,7 @@ RSpec.describe K8s::Client do
       it "returns client for each api" do
         expect(subject.apis).to match Array
         expect(subject.apis.first).to match K8s::APIClient
-        expect(subject.apis.map{|a| a.api_version}).to match(['v1'] + (
-          # curl -v http://localhost:8001/apis | jq -r '.groups[].preferredVersion.groupVersion'
-          <<-EOM
-            apiregistration.k8s.io/v1
-            extensions/v1beta1
-            apps/v1
-            events.k8s.io/v1beta1
-            authentication.k8s.io/v1
-            authorization.k8s.io/v1
-            autoscaling/v1
-            batch/v1
-            certificates.k8s.io/v1beta1
-            networking.k8s.io/v1
-            policy/v1beta1
-            rbac.authorization.k8s.io/v1
-            storage.k8s.io/v1
-            admissionregistration.k8s.io/v1beta1
-            apiextensions.k8s.io/v1beta1
-          EOM
-        ).split)
+        expect(subject.apis.map{|a| a.api_version}).to eq(['v1'] + API_GROUPS)
       end
 
       context "with partially cached api resources" do

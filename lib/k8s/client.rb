@@ -48,7 +48,7 @@ module K8s
     def api_groups!
       @api_groups = @transport.get('/apis',
         response_class: K8s::API::MetaV1::APIGroupList,
-      ).groups.map{|api_group| api_group.preferredVersion.groupVersion }
+      ).groups.map{|api_group| api_group.versions.map{|api_version| api_version.groupVersion} }.flatten
     end
 
     # Cached /apis preferred group apiVersions

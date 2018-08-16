@@ -1,13 +1,13 @@
 {
   "kind": "APIResourceList",
   "apiVersion": "v1",
-  "groupVersion": "apiregistration.k8s.io/v1",
+  "groupVersion": "storage.k8s.io/v1beta1",
   "resources": [
     {
-      "name": "apiservices",
+      "name": "storageclasses",
       "singularName": "",
       "namespaced": false,
-      "kind": "APIService",
+      "kind": "StorageClass",
       "verbs": [
         "create",
         "delete",
@@ -17,17 +17,25 @@
         "patch",
         "update",
         "watch"
+      ],
+      "shortNames": [
+        "sc"
       ]
     },
     {
-      "name": "apiservices/status",
+      "name": "volumeattachments",
       "singularName": "",
       "namespaced": false,
-      "kind": "APIService",
+      "kind": "VolumeAttachment",
       "verbs": [
+        "create",
+        "delete",
+        "deletecollection",
         "get",
+        "list",
         "patch",
-        "update"
+        "update",
+        "watch"
       ]
     }
   ]
