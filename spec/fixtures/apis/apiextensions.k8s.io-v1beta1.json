@@ -29,6 +29,8 @@
       "namespaced": false,
       "kind": "CustomResourceDefinition",
       "verbs": [
+        "get",
+        "patch",
         "update"
       ]
     }

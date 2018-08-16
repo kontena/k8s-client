@@ -10,6 +10,7 @@ Options = Struct.new(
   :server,
   :insecure_skip_tls_verify,
   :prefetch_resources,
+  :list_resource_kinds,
   :namespace,
   :all_namespaces,
   :label_selector,
@@ -75,6 +76,9 @@ parser = OptionParser.new do |parser|
   end
   parser.on('--prefetch-resources', TrueClass) do |bool|
     options.prefetch_resources = bool
+  end
+  parser.on('--list-resource-kinds', TrueClass) do |bool|
+    options.list_resource_kinds = true
   end
   parser.on('-n', '--namespace=NAMESPACE') do |namespace|
     options.namespace = namespace
@@ -169,6 +173,14 @@ logger.info "Kube server version: #{client.version.gitVersion}"
 
 if options.prefetch_resources
   client.apis(prefetch_resources: true)
+end
+
+if options.list_resource_kinds
+  client.resources.sort_by{|r| r.kind}.each do |resource_client|
+    next if resource_client.subresource?
+    
+    puts "#{resource_client.kind} => #{resource_client.api_version} #{resource_client.name}"
+  end
 end
 
 if options.all_namespaces

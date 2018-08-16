@@ -1,13 +1,13 @@
 {
   "kind": "APIResourceList",
   "apiVersion": "v1",
-  "groupVersion": "apiregistration.k8s.io/v1",
+  "groupVersion": "autoscaling/v2beta1",
   "resources": [
     {
-      "name": "apiservices",
+      "name": "horizontalpodautoscalers",
       "singularName": "",
-      "namespaced": false,
-      "kind": "APIService",
+      "namespaced": true,
+      "kind": "HorizontalPodAutoscaler",
       "verbs": [
         "create",
         "delete",
@@ -17,13 +17,19 @@
         "patch",
         "update",
         "watch"
+      ],
+      "shortNames": [
+        "hpa"
+      ],
+      "categories": [
+        "all"
       ]
     },
     {
-      "name": "apiservices/status",
+      "name": "horizontalpodautoscalers/status",
       "singularName": "",
-      "namespaced": false,
-      "kind": "APIService",
+      "namespaced": true,
+      "kind": "HorizontalPodAutoscaler",
       "verbs": [
         "get",
         "patch",

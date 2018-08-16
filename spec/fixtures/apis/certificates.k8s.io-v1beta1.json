@@ -37,6 +37,8 @@
       "namespaced": false,
       "kind": "CertificateSigningRequest",
       "verbs": [
+        "get",
+        "patch",
         "update"
       ]
     }

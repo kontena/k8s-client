@@ -1,13 +1,13 @@
 {
   "kind": "APIResourceList",
   "apiVersion": "v1",
-  "groupVersion": "apiregistration.k8s.io/v1",
+  "groupVersion": "batch/v1beta1",
   "resources": [
     {
-      "name": "apiservices",
+      "name": "cronjobs",
       "singularName": "",
-      "namespaced": false,
-      "kind": "APIService",
+      "namespaced": true,
+      "kind": "CronJob",
       "verbs": [
         "create",
         "delete",
@@ -17,13 +17,19 @@
         "patch",
         "update",
         "watch"
+      ],
+      "shortNames": [
+        "cj"
+      ],
+      "categories": [
+        "all"
       ]
     },
     {
-      "name": "apiservices/status",
+      "name": "cronjobs/status",
       "singularName": "",
-      "namespaced": false,
-      "kind": "APIService",
+      "namespaced": true,
+      "kind": "CronJob",
       "verbs": [
         "get",
         "patch",
