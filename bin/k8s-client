@@ -69,10 +69,10 @@ parser = OptionParser.new do |parser|
     options.config = K8s::Config.load_file(path)
   end
   parser.on('--server=SERVER') do |server|
-    options.server = URI(server)
+    options.server = server
   end
-  parser.on('--insecure-skip-tls-verify') do
-    options.insecure_skip_tls_verify = true
+  parser.on('--insecure-skip-tls-verify', TrueClass) do |bool|
+    options.insecure_skip_tls_verify = bool
   end
   parser.on('--prefetch-resources', TrueClass) do |bool|
     options.prefetch_resources = bool
@@ -160,11 +160,17 @@ end
 parser.parse!
 
 if options.config
-  client = K8s::Client.config(options.config)
+  overrides = {}
+  overrides[:ssl_verify_peer] = false if options.insecure_skip_tls_verify
+
+  client = K8s::Client.config(options.config,
+    server: options.server,
+    **overrides
+  )
 elsif options.in_cluster_config
   client = K8s::Client.in_cluster_config
 else
-  client = K8s.client(options.server.to_s,
+  client = K8s.client(options.server,
     ssl_verify_peer: !options.insecure_skip_tls_verify,
   )
 end
@@ -178,7 +184,7 @@ end
 if options.list_resource_kinds
   client.resources.sort_by{|r| r.kind}.each do |resource_client|
     next if resource_client.subresource?
-    
+
     puts "#{resource_client.kind} => #{resource_client.api_version} #{resource_client.name}"
   end
 end
