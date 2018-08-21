@@ -63,6 +63,12 @@ module K8s
         options[:client_key_data] = Base64.decode64(key_data)
       end
 
+      if token = config.user.token
+        logger.debug "Using config with .user.token=..."
+
+        options[:auth_token] = token
+      end
+
       logger.info "Using config with server=#{server}"
 
       new(server, **options, **overrides)

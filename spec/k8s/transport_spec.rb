@@ -49,6 +49,64 @@ RSpec.describe K8s::Transport do
         end
       end
     end
+
+    context 'for a kubeconfig using token auth' do
+      let(:config) { K8s::Config.new(
+        clusters: [
+          {
+            name: 'kubernetes',
+            cluster: {
+              server: 'http://localhost:8080',
+              certificate_authority: 'ca.pem',
+
+            }
+          }
+        ],
+        users: [
+          {
+            name: 'test',
+            user: {
+              token: 'SECRET',
+            }
+          }
+        ],
+
+        contexts: [
+          {
+            name: 'test',
+            context: {
+              cluster: 'kubernetes',
+              user: 'test'
+            }
+          }
+        ],
+        current_context: 'test'
+      ) }
+
+      subject { described_class.config(config) }
+
+      it 'uses the correct server' do
+        expect(subject.server).to eq 'http://localhost:8080'
+      end
+
+      it 'uses the correct options' do
+        expect(subject.options).to match(
+          ssl_ca_file: 'ca.pem',
+        )
+      end
+
+      describe '#request_options' do
+        it "includes the Authorization token" do
+          expect(subject.request_options(method: 'GET', path: '/')).to eq({
+            method: 'GET',
+            path: '/',
+            headers: {
+              'Authorization' => 'Bearer SECRET',
+            },
+          })
+        end
+      end
+    end
   end
 
   describe '#self.in_cluster_config' do
