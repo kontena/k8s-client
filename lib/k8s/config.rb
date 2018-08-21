@@ -83,7 +83,7 @@ module K8s
 
     attribute :kind, Types::Strict::String.optional.default(nil)
     attribute :apiVersion, Types::Strict::String.optional.default(nil)
-    attribute :preferences, Types::Strict::Hash.optional
+    attribute :preferences, Types::Strict::Hash.optional.default(nil)
     attribute :clusters, Types::Strict::Array.of(NamedCluster)
     attribute :users, Types::Strict::Array.of(NamedUser)
     attribute :contexts, Types::Strict::Array.of(NamedContext)
