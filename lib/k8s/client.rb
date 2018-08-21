@@ -93,7 +93,7 @@ module K8s
     # Returns flattened array with mixed resource kinds.
     #
     # @param resources [Array<K8s::ResourceClient>] default is all listable resources for api
-    # @param **options @see [K8s::ResourceClient#list]
+    # @param options @see [K8s::ResourceClient#list]
     # @return [Array<K8s::Resource>]
     def list_resources(resources = nil, **options)
       resources ||= self.resources.select{|resource| resource.list? }
