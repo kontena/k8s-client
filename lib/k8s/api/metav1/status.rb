@@ -3,13 +3,14 @@ module K8s
     module MetaV1
       # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#Status
       class Status < Resource
-
+        # structured cause
         class Cause < Struct
           attribute :reason, Types::Strict::String.optional.default(nil)
           attribute :message, Types::Strict::String.optional.default(nil) # human-readable
           attribute :field, Types::Strict::String.optional.default(nil) # human-readable
         end
 
+        # structured details
         class Details < Struct
           attribute :name, Types::Strict::String.optional.default(nil)
           attribute :group, Types::Strict::String.optional.default(nil)

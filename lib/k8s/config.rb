@@ -3,9 +3,11 @@ require 'dry-types'
 require 'yaml'
 
 module K8s
+  # Common struct type for kubeconfigs:
+  #
+  # * converts string keys to symbols
+  # * normalizes foo-bar to foo_bar
   class ConfigStruct < Dry::Struct
-    # convert string keys to symbols
-    # normalize foo-bar to foo_bar
     transform_keys do |key|
       case key
       when String
@@ -18,10 +20,13 @@ module K8s
 
   # @see https://godoc.org/k8s.io/client-go/tools/clientcmd/api/v1#Config
   class Config < ConfigStruct
+
+    # Common dry-types for config
     class Types
       include Dry::Types.module
     end
 
+    # structured cluster
     class Cluster < ConfigStruct
       attribute :server, Types::String
       attribute :insecure_skip_tls_verify, Types::Bool.optional.default(nil)
@@ -29,11 +34,14 @@ module K8s
       attribute :certificate_authority_data, Types::String.optional.default(nil)
       attribute :extensions, Types::Strict::Array.optional.default(nil)
     end
+
+    # structured cluster with name
     class NamedCluster < ConfigStruct
       attribute :name, Types::String
       attribute :cluster, Cluster
     end
 
+    # structured user
     class User < ConfigStruct
       attribute :client_certificate, Types::String.optional.default(nil)
       attribute :client_certificate_data, Types::String.optional.default(nil)
@@ -50,17 +58,24 @@ module K8s
       attribute :exec, Types::Strict::Hash.optional.default(nil)
       attribute :extensions, Types::Strict::Array.optional.default(nil)
     end
+
+    # structured user with name
     class NamedUser < ConfigStruct
       attribute :name, Types::String
       attribute :user, User
     end
 
+    # structured context
+    #
+    # Referrs to other named User/cluster objects within the same config.
     class Context < ConfigStruct
       attribute :cluster, Types::Strict::String
       attribute :user, Types::Strict::String
       attribute :namespace, Types::Strict::String.optional.default(nil)
       attribute :extensions, Types::Strict::Array.optional.default(nil)
     end
+
+    # named context
     class NamedContext < ConfigStruct
       attribute :name, Types::String
       attribute :context, Context

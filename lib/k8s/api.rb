@@ -2,11 +2,14 @@ require 'dry-types'
 require 'dry-struct'
 
 module K8s
+  # Kube API definitions
   module API
+    # Common Dry::Types used in the API
     module Types
       include Dry::Types.module
     end
 
+    # Common API struct type, handling JSON transforms with symbol keys
     class Struct < Dry::Struct
       # input from JSON with string keys
       transform_keys(&:to_sym)

@@ -1,4 +1,7 @@
 module K8s
+  # Per-APIGroup/version client.
+  #
+  # Offers access to {ResourceClient} instances for the APIResource types defined in this apigroup/version
   class APIClient
     # @param api_version [String] either core version (v1) or apigroup/apiversion (apps/v1)
     # @return [String]

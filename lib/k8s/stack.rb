@@ -5,8 +5,14 @@ module K8s
   class Stack
     include Logging
 
+    # Label used to identify resources belonging to this stack
     LABEL = 'k8s.kontena.io/stack'
+
+    # Annotation used to identify resource versions
     CHECKSUM_ANNOTATION = 'k8s.kontena.io/stack-checksum'
+
+    # List of apiVersion:kind combinations to skip for stack prune
+    # These would lead to stack prune misbehaving if not skipped.
     PRUNE_IGNORE = [
       'v1:ComponentStatus', # apiserver ignores GET /v1/componentstatuses?labelSelector=... and returns all resources
       'v1:Endpoints', # inherits stack label from service, but not checksum annotation

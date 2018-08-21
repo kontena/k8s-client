@@ -1,5 +1,6 @@
 module K8s
   module API
+    # GET /version
     class Version < Struct
       attribute :buildDate, Types::Strict::String # TODO: parse datetime?
       attribute :compiler, Types::Strict::String

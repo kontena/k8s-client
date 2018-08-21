@@ -7,6 +7,9 @@ module K8s
     Client.new(Transport.new(server, **options))
   end
 
+  # Top-level client wrapper.
+  # Uses a {Transport} instance to talk to the kube API.
+  # Offers access to {APIClient} and {ResourceClient} instances.
   class Client
     # @param config [Phraos::Kube::Config]
     # @return [K8s::Client]

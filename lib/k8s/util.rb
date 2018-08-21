@@ -1,4 +1,5 @@
 module K8s
+  # Miscellaneous helpers
   module Util
     # Yield with all non-nil args, returning matching array with corresponding return values or nils.
     #

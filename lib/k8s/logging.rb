@@ -1,10 +1,21 @@
 require 'logger'
 
 module K8s
+  # Logging utilities
+  #
+  # This provides a per-class Logger that uses the class name as a logging prefix.
+  # Instances can optionally also use logger! to define a per-instance Logger using a custom prefix.
   module Logging
+    # Default log target
     LOG_TARGET = STDERR
+
+    # Default log level: show warnings.
+    #
+    # Use K8s::Logging.quiet! to supress warnings.
+    # Note that the K8s::Transport defaults to quiet!
     LOG_LEVEL = Logger::WARN
 
+    # methods defined on both the global K8s::Logging module, as well as class methods on each class including K8s::Logging
     module ModuleMethods
       # global log_level shared across all including classes
       # @return Logger::*
@@ -35,6 +46,7 @@ module K8s
 
     extend ModuleMethods # global @log_level
 
+    # methods defined on each class including K8s::Logging
     module ClassMethods
       # @return [Logger]
       def logger(target: LOG_TARGET, level: nil)

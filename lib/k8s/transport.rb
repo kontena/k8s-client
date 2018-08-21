@@ -2,16 +2,19 @@ require 'excon'
 require 'json'
 
 module K8s
+  # Excon-based HTTP transport handling request/response body JSON encoding
   class Transport
     include Logging
 
     quiet! # do not log warnings by default
 
+    # Excon middlewares for requests
     EXCON_MIDDLEWARES = [
       # XXX: necessary? redirected requests omit authz headers?
       Excon::Middleware::RedirectFollower,
     ] + Excon.defaults[:middlewares]
 
+    # Default request headers
     REQUEST_HEADERS = {
       'Accept' => 'application/json',
     }
