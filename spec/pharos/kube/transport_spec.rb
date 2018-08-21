@@ -22,6 +22,32 @@ RSpec.describe K8s::Transport do
       it 'uses an ssl_cert_store that verifies the server cert' do
         expect(subject.options[:ssl_cert_store].verify(server_cert)).to eq true
       end
+
+      context "overriding the server option" do
+        subject {
+          described_class.config(K8s::Config.load_file(fixture_path('config/kubeadm-admin.conf')),
+            server: 'http://localhost:8001',
+          )
+        }
+
+        it "uses the overriden server" do
+          expect(subject.server).to eq 'http://localhost:8001'
+        end
+      end
+
+      context "overriding other options" do
+        subject {
+          described_class.config(K8s::Config.load_file(fixture_path('config/kubeadm-admin.conf')),
+            ssl_verify_peer: false,
+          )
+        }
+
+        it "uses the overriden server" do
+          expect(subject.options).to match hash_including(
+            ssl_verify_peer: false,
+          )
+        end
+      end
     end
   end
 

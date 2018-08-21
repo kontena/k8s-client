@@ -20,8 +20,10 @@ module K8s
     #
     # @param config [Phraos::Kube::Config]
     # @return [K8s::Transport]
-    def self.config(config)
+    def self.config(config, server: nil, **overrides)
       options = {}
+
+      server ||= config.cluster.server
 
       if config.cluster.insecure_skip_tls_verify
         logger.debug "Using config with .cluster.insecure_skip_tls_verify"
@@ -56,9 +58,9 @@ module K8s
         options[:client_key_data] = Base64.decode64(key_data)
       end
 
-      logger.info "Using config with server=#{config.cluster.server}"
+      logger.info "Using config with server=#{server}"
 
-      new(config.cluster.server, **options)
+      new(server, **options, **overrides)
     end
 
     # In-cluster config within a kube pod, using the kubernetes service envs and serviceaccount secrets

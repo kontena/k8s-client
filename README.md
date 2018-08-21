@@ -63,6 +63,14 @@ The keyword options are [Excon](https://github.com/excon/excon/) options.
 client = K8s::Client.config(K8s::Config.load_file('~/.kube/config'))
 ```
 
+##### With overrides
+
+```ruby
+client = K8s::Client.config(K8s::Config.load_file('~/.kube/config'),
+  server: 'http://localhost:8001',
+)
+```
+
 #### In-cluster client from pod envs/secrets
 
 ```ruby

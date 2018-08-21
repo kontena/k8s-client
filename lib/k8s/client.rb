@@ -10,8 +10,10 @@ module K8s
   class Client
     # @param config [Phraos::Kube::Config]
     # @return [K8s::Client]
-    def self.config(config)
-      new(Transport.config(config))
+    def self.config(config, namespace: nil, **options)
+      new(Transport.config(config, **options),
+        namespace: namespace,
+      )
     end
 
     # @return [K8s::Client]
