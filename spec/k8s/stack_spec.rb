@@ -51,7 +51,7 @@ RSpec.describe K8s::Stack do
 
       before do
         allow(client).to receive(:get_resources).with([K8s::Resource, K8s::Resource, K8s::Resource]).and_return([nil, nil, nil ])
-        allow(client).to receive(:list_resources).with(labelSelector: { 'k8s.kontena.io/stack' => 'whoami' }).and_return(resources)
+        allow(client).to receive(:list_resources).with(labelSelector: { 'k8s.kontena.io/stack' => 'whoami' }, skip_forbidden: true).and_return(resources)
       end
 
       it "creates the resource with the correct label" do
