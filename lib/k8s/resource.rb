@@ -25,7 +25,8 @@ module K8s
       stat = File.stat(path)
 
       if stat.directory?
-        Dir.glob("#{path}/*.{yml,yaml}").map{|path| self.load_files(path) }.flatten
+        # recurse
+        Dir.glob("#{path}/*.{yml,yaml}").sort.map{|path| self.from_files(path) }.flatten
       else
         ::YAML.load_stream(File.read(path), path).map{|doc| new(doc) }
       end

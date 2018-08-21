@@ -308,8 +308,8 @@ RSpec.describe K8s::Client do
 
       context "for custom resources" do
         let(:resources) {[
-          K8s::Resource.from_file(fixture_path('resources/crd-test.yaml')),
-          K8s::Resource.from_file(fixture_path('resources/test.yaml')),
+          K8s::Resource.from_file(fixture_path('resources/test/crd-test.yaml')),
+          K8s::Resource.from_file(fixture_path('resources/test/test.yaml')),
         ]}
 
         context "which do not yet exist" do

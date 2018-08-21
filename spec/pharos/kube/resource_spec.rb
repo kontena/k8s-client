@@ -109,4 +109,16 @@ RSpec.describe K8s::Resource do
       end
     end
   end
+
+  describe "for multiple resource files" do
+    let(:resources) { described_class.from_files(fixture_path('resources/test')) }
+
+    it "loads multiple resources in order" do
+      expect(resources).to match [K8s::Resource, K8s::Resource]
+      expect(resources.map{|r| "#{r.kind}:#{r.metadata.name}" }).to eq [
+        'CustomResourceDefinition:tests.pharos-test.k8s.io',
+        'Test:test',
+      ]
+    end
+  end
 end
