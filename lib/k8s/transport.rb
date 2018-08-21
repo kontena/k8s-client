@@ -224,10 +224,11 @@ module K8s
 
     # @param options [Array<Hash>] @see #request
     # @param skip_missing [Boolean] return nil for HTTP 404 responses
+    # @param skip_forbidden [Boolean] return nil for HTTP 403 responses
     # @param retry_errors [Boolean] retry with non-pipelined request for HTTP 503 responses
     # @param common_options [Hash] @see #request, merged with the per-request options
     # @return [Array<response_class, Hash, nil>]
-    def requests(*options, skip_missing: false, retry_errors: true, **common_options)
+    def requests(*options, skip_missing: false, skip_forbidden: false, retry_errors: true, **common_options)
       return [] if options.empty? # excon chokes
 
       start = Time.now
@@ -245,6 +246,12 @@ module K8s
           )
         rescue K8s::Error::NotFound
           if skip_missing
+            nil
+          else
+            raise
+          end
+        rescue K8s::Error::Forbidden
+          if skip_forbidden
             nil
           else
             raise
