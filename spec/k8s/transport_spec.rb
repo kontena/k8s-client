@@ -322,4 +322,33 @@ RSpec.describe K8s::Transport do
       end
     end
   end
+
+  describe 'skip_missing: true' do
+    context "with HTTP 404 responses" do
+      before do
+        stub_request(:get, 'localhost:8080/api/v1/namespaces/default/services/foo')
+          .to_return(
+            status: 200,
+            headers: { 'Content-Type' => 'application/json' },
+            body: fixture('api/services-foo.json'),
+          )
+        stub_request(:get, 'localhost:8080/api/v1/namespaces/default/configmaps/bar')
+          .to_return(
+            status: 404,
+            headers: { 'Content-Type' => 'application/json' },
+            body: fixture('api/configmaps-bar-404.json'),
+          )
+      end
+
+      it "returns mixed resources and nils" do
+        result = subject.gets(
+          '/api/v1/namespaces/default/services/foo',
+          '/api/v1/namespaces/default/configmaps/bar',
+          skip_missing: true,
+        )
+
+        expect(result).to match [Hash, nil]
+      end
+    end
+  end
 end
