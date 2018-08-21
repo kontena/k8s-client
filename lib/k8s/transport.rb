@@ -18,7 +18,9 @@ module K8s
 
     # Construct transport from kubeconfig
     #
-    # @param config [Phraos::Kube::Config]
+    # @param config [K8s::Config]
+    # @param server [String] override cluster.server from config
+    # @param **overrides @see #initialize
     # @return [K8s::Transport]
     def self.config(config, server: nil, **overrides)
       options = {}
@@ -80,6 +82,8 @@ module K8s
     attr_reader :server, :options
 
     # @param server [String] URL with protocol://host:port - any /path is ignored
+    # @param auth_token [String] optional Authorization: Bearer token
+    # @param **options [Hash] @see Excon.new
     def initialize(server, auth_token: nil, **options)
       @server = server
       @auth_token = auth_token
@@ -98,11 +102,15 @@ module K8s
       )
     end
 
+    # @param *path [Array<String>] join path parts together to build the full URL
     # @return [String]
     def path(*path)
       File.join('/', *path)
     end
 
+    # @param request_object [Object] include request body using to_json
+    # @param content_type [String] request body content-type
+    # @param **options [Hash] @see Excon#request
     # @return [Hash]
     def request_options(request_object: nil, content_type: 'application/json', **options)
       options[:headers] ||= {}
@@ -119,6 +127,7 @@ module K8s
       options
     end
 
+    # @param options [Hash] as passed to Excon#request
     def format_request(options)
       method = options[:method]
       path = options[:path]
@@ -134,6 +143,9 @@ module K8s
       [method, path, body].compact.join " "
     end
 
+    # @param response [Hash] as returned by Excon#request
+    # @param request_options [Hash] as passed to Excon#request
+    # @param response_class [Class] decode response body using #from_json
     # @raise [K8s::Error]
     # @raise [Excon::Error] TODO: wrap
     # @return [response_class, Hash]
@@ -177,6 +189,8 @@ module K8s
       end
     end
 
+    # @param response_class [Class] decode response body using #from_json
+    # @param **options [Hash] @see Excon#request
     def request(response_class: nil, **options)
       excon_options = request_options(**options)
 
@@ -199,9 +213,10 @@ module K8s
       return obj
     end
 
-    # @param options [Array<Hash>]
+    # @param options [Array<Hash>] @see #request
     # @param skip_missing [Boolean] return nil for HTTP 404 responses
     # @param retry_errors [Boolean] retry with non-pipelined request for HTTP 503 responses
+    # @param **common_options [Hash] @see #request, merged with the per-request options
     # @return [Array<response_class, Hash, nil>]
     def requests(*options, skip_missing: false, retry_errors: true, **common_options)
       return [] if options.empty? # excon chokes
@@ -244,7 +259,8 @@ module K8s
       return objects
     end
 
-    # @param *path [String]
+    # @param *path [Array<String>] @see #path
+    # @param **options [Hash] @see #request
     def get(*path, **options)
       request(
         method: 'GET',
@@ -253,7 +269,8 @@ module K8s
       )
     end
 
-    # @param *paths [String]
+    # @param *paths [Array<String>]
+    # @param **options [Hash] @see #request
     def gets(*paths, **options)
       requests(*paths.map{|path| {
           method: 'GET',
