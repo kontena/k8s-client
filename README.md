@@ -63,6 +63,21 @@ The keyword options are [Excon](https://github.com/excon/excon/) options.
 client = K8s::Client.config(K8s::Config.load_file('~/.kube/config'))
 ```
 
+#### Supported kubeconfig options
+
+Not all kubeconfig options are supported, only the following kubeconfig options work:
+
+* `current-context`
+* `context.cluster`
+* `context.user`
+* `cluster.server`
+* `cluster.insecure_skip_tls_verify`
+* `cluster.certificate_authority`
+* `cluster.certificate_authority_data`
+* `user.client_certificate` + `user.client_key`
+* `user.client_certificate_data` + `user.client_key_data`
+* `user.token`
+
 ##### With overrides
 
 ```ruby
