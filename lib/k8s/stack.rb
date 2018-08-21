@@ -48,6 +48,11 @@ module K8s
       logger! progname: name, debug: debug
     end
 
+    # Random "checksum" used to identify different stack resource versions using an annotation.
+    #
+    # NOTE: This is not actually a checksum.
+    #
+    # @return [String]
     def checksum
       @checksum ||= SecureRandom.hex(16)
     end

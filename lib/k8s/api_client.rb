@@ -1,5 +1,7 @@
 module K8s
   class APIClient
+    # @param api_version [String] either core version (v1) or apigroup/apiversion (apps/v1)
+    # @return [String]
     def self.path(api_version)
       if api_version.include? '/'
         File.join('/apis', api_version)
@@ -21,6 +23,8 @@ module K8s
       @api_version
     end
 
+    # @param path [Array<String>] join path from parts
+    # @return [String]
     def path(*path)
       @transport.path(self.class.path(@api_version), *path)
     end

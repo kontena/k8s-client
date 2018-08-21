@@ -29,6 +29,10 @@ module K8s
 
     HTTP_STATUS_ERRORS = {}
 
+    # define a new API error type on the module for the given HTTP status code
+    #
+    # @param code [Integer] HTTP status code
+    # @param name [Symbol] API error class name
     def self.define_status_error(code, name)
       HTTP_STATUS_ERRORS[code] = self.const_set(name, Class.new(API))
     end
