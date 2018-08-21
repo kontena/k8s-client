@@ -63,4 +63,29 @@ RSpec.describe K8s::Stack do
       end
     end
   end
+
+  context "with customized labels" do
+    class TestStack < described_class
+      LABEL = 'k8s-test.kontena.io/stack'
+      CHECKSUM_ANNOTATION = 'k8s-test.kontena.io/stack-checksum'
+    end
+
+    let(:resource) { K8s::Resource.from_file(fixture_path('resources/test/test.yaml')) }
+
+    subject { TestStack.new('test', [resource]) }
+
+    it "labels resources with the correct label and annotation" do
+      expect(TestStack::LABEL).to eq 'k8s-test.kontena.io/stack'
+      expect(subject.class::LABEL).to eq 'k8s-test.kontena.io/stack'
+
+      expect(subject.prepare_resource(resource).to_hash).to match hash_including(
+        metadata: hash_including(
+          namespace: 'default',
+          name: 'test',
+          labels: { :'k8s-test.kontena.io/stack' => 'test' },
+          annotations: { :'k8s-test.kontena.io/stack-checksum' => subject.checksum },
+        ),
+      )
+    end
+  end
 end
