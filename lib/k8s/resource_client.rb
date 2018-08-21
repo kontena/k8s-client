@@ -44,8 +44,9 @@ module K8s
     # @param namespace [String, nil]
     # @param labelSelector [nil, String, Hash{String => String}]
     # @param fieldSelector [nil, String, Hash{String => String}]
+    # @param skip_forbidden [Boolean] skip resources that return HTTP 403 errors
     # @return [Array<K8s::Resource>]
-    def self.list(resources, transport, namespace: nil, labelSelector: nil, fieldSelector: nil)
+    def self.list(resources, transport, namespace: nil, labelSelector: nil, fieldSelector: nil, skip_forbidden: false)
       api_paths = resources.map{|resource| resource.path(namespace: namespace) }
       api_lists = transport.gets(*api_paths,
          response_class: K8s::API::MetaV1::List,
@@ -53,9 +54,10 @@ module K8s
            'labelSelector' => selector_query(labelSelector),
            'fieldSelector' => selector_query(fieldSelector),
          ),
+         skip_forbidden: skip_forbidden,
        )
 
-      resources.zip(api_lists).map {|resource, api_list| resource.process_list(api_list) }.flatten
+      resources.zip(api_lists).map {|resource, api_list| api_list ? resource.process_list(api_list) : [] }.flatten
     end
 
     # @param transport [K8s::Transport]
