@@ -38,7 +38,7 @@ module K8s
 
     attr_reader :name, :resources
 
-    def initialize(name, resources = [], debug: false, label: LABEL, checksum_annotation: CHECKSUM_ANNOTATION)
+    def initialize(name, resources = [], debug: false, label: self.class::LABEL, checksum_annotation: self.class::CHECKSUM_ANNOTATION)
       @name = name
       @resources = resources
       @keep_resources = {}
