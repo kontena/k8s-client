@@ -340,5 +340,43 @@ RSpec.describe K8s::Client do
         end
       end
     end
+
+    describe '#list_resources' do
+      let(:service_resource) { K8s::Resource.from_file(fixture_path('resources/service-foo.yaml')) }
+
+      context "which partially have resources" do
+        before do
+          stub_request(:get, 'localhost:8080/api/v1/services')
+            .to_return(
+              status: 200,
+              headers: { 'Content-Type' => 'application/json' },
+              body: {
+                apiVersion: 'v1',
+                kind: 'ServiceList',
+                metadata: {},
+                items: [service_resource],
+              }.to_json,
+            )
+          stub_request(:get, 'localhost:8080/api/v1/configmaps')
+            .to_return(
+              status: 200,
+              headers: { 'Content-Type' => 'application/json' },
+              body: {
+                apiVersion: 'v1',
+                kind: 'ConfgiMapList',
+                metadata: {},
+                items: [],
+              }.to_json,
+            )
+        end
+
+        it "returns existing resources" do
+          expect(subject.list_resources([
+            subject.api('v1').resource('services'),
+            subject.api('v1').resource('configmaps'),
+          ])).to eq [service_resource]
+        end
+      end
+    end
   end
 end
