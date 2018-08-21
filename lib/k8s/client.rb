@@ -2,13 +2,20 @@ require 'openssl'
 require 'base64'
 
 module K8s
+  # @param server [String] http/s URL
+  # @param options [Hash] @see Transport.new
   # @return [K8s::Client]
   def self.client(server, **options)
     Client.new(Transport.new(server, **options))
   end
 
+  # Top-level client wrapper.
+  # Uses a {Transport} instance to talk to the kube API.
+  # Offers access to {APIClient} and {ResourceClient} instances.
   class Client
     # @param config [Phraos::Kube::Config]
+    # @param namespace [String] @see #initialize
+    # @param options [Hash] @see Transport.config
     # @return [K8s::Client]
     def self.config(config, namespace: nil, **options)
       new(Transport.config(config, **options),
@@ -22,6 +29,7 @@ module K8s
     end
 
     # @param transport [K8s::Transport]
+    # @param namespace [String] default namespace for all operations
     def initialize(transport, namespace: nil)
       @transport = transport
       @namespace = namespace
@@ -93,7 +101,7 @@ module K8s
     # Returns flattened array with mixed resource kinds.
     #
     # @param resources [Array<K8s::ResourceClient>] default is all listable resources for api
-    # @param **options @see [K8s::ResourceClient#list]
+    # @param options @see K8s::ResourceClient#list
     # @return [Array<K8s::Resource>]
     def list_resources(resources = nil, **options)
       resources ||= self.resources.select{|resource| resource.list? }

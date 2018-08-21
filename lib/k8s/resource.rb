@@ -19,7 +19,7 @@ module K8s
       new(YAML.load_file(filename))
     end
 
-    # @param filename [String] file path
+    # @param path [String] file path
     # @return [Array<K8s::Resource>]
     def self.from_files(path)
       stat = File.stat(path)
@@ -32,7 +32,7 @@ module K8s
       end
     end
 
-    # @param attrs [Hash]
+    # @param hash [Hash]
     def initialize(hash, recurse_over_arrays: true, **options)
       super(hash,
         recurse_over_arrays: recurse_over_arrays,

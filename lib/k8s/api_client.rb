@@ -1,5 +1,10 @@
 module K8s
+  # Per-APIGroup/version client.
+  #
+  # Offers access to {ResourceClient} instances for the APIResource types defined in this apigroup/version
   class APIClient
+    # @param api_version [String] either core version (v1) or apigroup/apiversion (apps/v1)
+    # @return [String]
     def self.path(api_version)
       if api_version.include? '/'
         File.join('/apis', api_version)
@@ -21,6 +26,8 @@ module K8s
       @api_version
     end
 
+    # @param path [Array<String>] join path from parts
+    # @return [String]
     def path(*path)
       @transport.path(self.class.path(@api_version), *path)
     end
@@ -99,7 +106,7 @@ module K8s
     # Returns flattened array with mixed resource kinds.
     #
     # @param resources [Array<K8s::ResourceClient>] default is all listable resources for api
-    # @param **options @see [K8s::ResourceClient#list]
+    # @param options @see [K8s::ResourceClient#list]
     # @return [Array<K8s::Resource>]
     def list_resources(resources = nil, **options)
       resources ||= self.resources.select{|resource| resource.list? }

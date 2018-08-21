@@ -1,6 +1,8 @@
 module K8s
   module API
     module MetaV1
+      # structured list of available APIGroup versions
+      # groupVersion provided for convenience
       class APIGroupVersion < Struct
         attribute :groupVersion, Types::Strict::String
         attribute :version, Types::Strict::String

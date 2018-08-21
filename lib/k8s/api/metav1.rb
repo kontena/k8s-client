@@ -2,6 +2,9 @@ require 'k8s/api'
 
 module K8s
   module API
+    # API types common to all apigroups/versions
+    #
+    # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1
     module MetaV1
       # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#TypeMeta
       class Resource < Struct
