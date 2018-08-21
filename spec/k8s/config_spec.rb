@@ -31,4 +31,42 @@ RSpec.describe K8s::Config do
       end
     end
   end
+
+  it 'does not require optional params' do
+    subject = described_class.new(
+      clusters: [
+        {
+          name: 'kubernetes',
+          cluster: {
+            server: 'http://localhost:8080',
+            certificate_authority: 'ca.pem',
+
+          }
+        }
+      ],
+      users: [
+        {
+          name: 'test',
+          user: {
+            token: 'SECRET',
+          }
+        }
+      ],
+
+      contexts: [
+        {
+          name: 'test',
+          context: {
+            cluster: 'kubernetes',
+            user: 'test'
+          }
+        }
+      ],
+      current_context: 'test'
+    )
+
+    expect(subject.context.cluster).to eq 'kubernetes'
+    expect(subject.cluster.server).to eq 'http://localhost:8080'
+    expect(subject.user.token).to eq 'SECRET'
+  end
 end
