@@ -116,9 +116,9 @@ module K8s
     end
 
     # Delete all stack resources that were not applied
-    def prune(client, keep_resources: )
+    def prune(client, keep_resources: , skip_forbidden: true)
       # using skip_forbidden: assume we can't create resource types that we are forbidden to list, so we don't need to prune them either
-      client.list_resources(labelSelector: {@label => name}, skip_forbidden: true).each do |resource|
+      client.list_resources(labelSelector: {@label => name}, skip_forbidden: skip_forbidden).each do |resource|
         next if PRUNE_IGNORE.include? "#{resource.apiVersion}:#{resource.kind}"
 
         resource_label = resource.metadata.labels ? resource.metadata.labels[@label] : nil
