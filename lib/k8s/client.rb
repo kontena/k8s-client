@@ -114,7 +114,7 @@ module K8s
     # @raise [K8s::Error::NotFound] API Group does not exist
     # @raise [K8s::Error::UndefinedResource]
     # @return [K8s::ResourceClient]
-    def client_for_resource(resource, namespace: nil)
+    def client_for_resource(resource, namespace: @namespace)
       api(resource.apiVersion).client_for_resource(resource, namespace: namespace)
     end
 

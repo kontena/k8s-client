@@ -143,7 +143,10 @@ RSpec.describe K8s::Client do
       context "for a service resource without a namespace" do
         let(:resource) { resource_fixture('resources/service-nonamespace.yaml') }
         let(:server_resource) { resource.merge(
-          metadata: { resourceVersion: '1'}
+          metadata: {
+            namespace: 'default',
+            resourceVersion: '1',
+          }
         ) }
 
         context "using the default namespace" do
@@ -165,6 +168,41 @@ RSpec.describe K8s::Client do
 
             expect(r).to match K8s::Resource
             expect(r.kind).to eq 'Service'
+            expect(r.metadata.namespace).to eq 'default'
+            expect(r.metadata.name).to eq 'whoami'
+            expect(r.metadata.resourceVersion).to eq '1'
+          end
+        end
+
+        context "using a custom namespace" do
+          subject { described_class.new(transport, namespace: 'test') }
+
+          let(:server_resource) { resource.merge(
+            metadata: {
+              namespace: 'test',
+              resourceVersion: '1',
+            }
+          ) }
+
+          before do
+            stub_request(:post, 'localhost:8080/api/v1/namespaces/test/services')
+              .with(
+                headers: { 'Content-Type' => 'application/json' },
+                body: resource.to_hash,
+              )
+              .to_return(
+                status: 201,
+                headers: { 'Content-Type' => 'application/json' },
+                body: server_resource.to_json,
+              )
+          end
+
+          it "returns the created resource" do
+            r = subject.create_resource(resource)
+
+            expect(r).to match K8s::Resource
+            expect(r.kind).to eq 'Service'
+            expect(r.metadata.namespace).to eq 'test'
             expect(r.metadata.name).to eq 'whoami'
             expect(r.metadata.resourceVersion).to eq '1'
           end
