@@ -18,6 +18,8 @@ module K8s
     # @param options [Hash] @see Transport.config
     # @return [K8s::Client]
     def self.config(config, namespace: nil, **options)
+      namespace ||= config.context.namespace
+
       new(Transport.config(config, **options),
         namespace: namespace,
       )

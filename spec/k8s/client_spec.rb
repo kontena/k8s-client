@@ -117,6 +117,52 @@ RSpec.describe K8s::Client do
       end
     end
 
+    describe '#config' do
+      let(:config_context) {
+        {
+          cluster: 'kubernetes',
+          user: 'test',
+          namespace: 'test',
+        }
+      }
+
+      let(:config) { K8s::Config.new(
+        clusters: [
+          {
+            name: 'kubernetes',
+            cluster: {
+              server: 'http://localhost:8080',
+            }
+          }
+        ],
+        users: [
+          {
+            name: 'test',
+            user: {
+            }
+          }
+        ],
+
+        contexts: [
+          {
+            name: 'test',
+            context: config_context,
+          }
+        ],
+        current_context: 'test'
+      ) }
+
+      subject { described_class.config(config) }
+
+      describe '#client_for_resource' do
+        let(:resource) { resource_fixture('resources/service-nonamespace.yaml') }
+
+        it "uses the configured namespace as the default" do
+          expect(subject.client_for_resource(resource).namespace).to eq 'test'
+        end
+      end
+    end
+
     describe '#version' do
       it "returns version" do
         expect(subject.version.to_hash).to match hash_including(
