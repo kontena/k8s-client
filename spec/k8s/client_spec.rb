@@ -155,7 +155,7 @@ RSpec.describe K8s::Client do
       subject { described_class.config(config) }
 
       describe '#client_for_resource' do
-        let(:resource) { resource_fixture('resources/service-nonamespace.yaml') }
+        let(:resource) { resource_fixture('resources/service-bar-nonamespace.yaml') }
 
         it "uses the configured namespace as the default" do
           expect(subject.client_for_resource(resource).namespace).to eq 'test'
@@ -241,7 +241,7 @@ RSpec.describe K8s::Client do
       end
 
       context "for a service resource without a namespace" do
-        let(:resource) { resource_fixture('resources/service-nonamespace.yaml') }
+        let(:resource) { resource_fixture('resources/service-bar-nonamespace.yaml') }
         let(:server_resource) { resource.merge(
           metadata: {
             namespace: 'default',
@@ -269,7 +269,7 @@ RSpec.describe K8s::Client do
             expect(r).to match K8s::Resource
             expect(r.kind).to eq 'Service'
             expect(r.metadata.namespace).to eq 'default'
-            expect(r.metadata.name).to eq 'whoami'
+            expect(r.metadata.name).to eq 'bar'
             expect(r.metadata.resourceVersion).to eq '1'
           end
         end
@@ -303,7 +303,7 @@ RSpec.describe K8s::Client do
             expect(r).to match K8s::Resource
             expect(r.kind).to eq 'Service'
             expect(r.metadata.namespace).to eq 'test'
-            expect(r.metadata.name).to eq 'whoami'
+            expect(r.metadata.name).to eq 'bar'
             expect(r.metadata.resourceVersion).to eq '1'
           end
         end
