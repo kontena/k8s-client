@@ -82,6 +82,8 @@ module K8s
       end
 
       fail "Resource #{api_resource.name} is not namespaced" if namespace unless api_resource.namespaced
+
+      @namespace ||= DEFAULT_NAMESPACE if namespaced?
     end
 
     # @return [String]
@@ -129,8 +131,11 @@ module K8s
       !!@api_resource.namespaced
     end
 
+    # @param name [String]
+    # @param namespace [String, nil]
+    # @param subresource [String, nil]
     # @return [String]
-    def path(name = nil, subresource: @subresource, namespace: @namespace)
+    def path(name = nil, namespace: @namespace, subresource: @subresource)
       namespace_part = namespace ? ['namespaces', namespace] : []
 
       if name && subresource
@@ -148,14 +153,12 @@ module K8s
     end
 
     # @param resource [resource_class] with metadata.namespace and metadata.name set
+    # @param namespace [String] default if resource is missing metadata.namespace
     # @return [resource_class]
-    def create_resource(resource)
-      namespace = resource.metadata.namespace
-      namespace ||= @namespace || DEFAULT_NAMESPACE if namespaced?
-
+    def create_resource(resource, namespace: @namespace)
       @transport.request(
         method: 'POST',
-        path: self.path(namespace: namespace),
+        path: self.path(namespace: resource.metadata.namespace || namespace),
         request_object: resource,
         response_class: @resource_class,
       )
@@ -166,6 +169,8 @@ module K8s
       @api_resource.verbs.include? 'get'
     end
 
+    # @param name [String]
+    # @param namespace [String]
     # @return [resource_class]
     def get(name, namespace: @namespace)
       @transport.request(
@@ -176,11 +181,12 @@ module K8s
     end
 
     # @param resource [resource_class]
+    # @param namespace [String] default if resource is missing metadata.namespace
     # @return [resource_class]
-    def get_resource(resource)
+    def get_resource(resource, namespace: @namespace)
       @transport.request(
         method: 'GET',
-        path: self.path(resource.metadata.name, namespace: resource.metadata.namespace),
+        path: self.path(resource.metadata.name, namespace: resource.metadata.namespace || namespace),
         response_class: @resource_class,
       )
     end
@@ -201,6 +207,7 @@ module K8s
 
     # @param labelSelector [nil, String, Hash{String => String}]
     # @param fieldSelector [nil, String, Hash{String => String}]
+    # @param namespace [String, nil] nil to list resources in any namespace
     # @return [Array<resource_class>]
     def list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
       list = @transport.request(
@@ -221,11 +228,12 @@ module K8s
     end
 
     # @param resource [resource_class] with metadata.resourceVersion set
+    # @param namespace [String] default if resource is missing metadata.namespace
     # @return [resource_class]
-    def update_resource(resource)
+    def update_resource(resource, namespace: @namespace)
       @transport.request(
         method: 'PUT',
-        path: self.path(resource.metadata.name, namespace: resource.metadata.namespace),
+        path: self.path(resource.metadata.name, namespace: resource.metadata.namespace || namespace),
         request_object: resource,
         response_class: @resource_class,
       )
@@ -289,9 +297,10 @@ module K8s
     end
 
     # @param resource [resource_class] with metadata
+    # @param namespace [String] default if resource.metadata.namespace is missing
     # @return [K8s::API::MetaV1::Status]
-    def delete_resource(resource, **options)
-      delete(resource.metadata.name, namespace: resource.metadata.namespace, **options)
+    def delete_resource(resource, namespace: @namespace, **options)
+      delete(resource.metadata.name, namespace: resource.metadata.namespace || namespace, **options)
     end
   end
 end
