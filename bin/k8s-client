@@ -165,6 +165,7 @@ if options.config
 
   client = K8s::Client.config(options.config,
     server: options.server,
+    namespace: options.namespace,
     **overrides
   )
 elsif options.in_cluster_config
@@ -172,6 +173,7 @@ elsif options.in_cluster_config
 else
   client = K8s.client(options.server,
     ssl_verify_peer: !options.insecure_skip_tls_verify,
+    namespace: options.namespace,
   )
 end
 
