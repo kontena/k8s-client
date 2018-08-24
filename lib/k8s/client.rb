@@ -137,7 +137,7 @@ module K8s
     #
     # @param resources [Array<K8s::Resource>]
     # @return [Array<K8s::Resource, nil>] matching resources array 1:1
-    def get_resources(resources)
+    def get_resources(resources, namespace: @namespace)
       # prefetch api resources, skip missing APIs
       resource_apis = apis(resources.map{ |resource| resource.apiVersion }, prefetch_resources: true, skip_missing: true)
 
@@ -145,11 +145,11 @@ module K8s
       requests = resources.zip(resource_apis).map{ |resource, api_client|
         next nil unless api_client.api_resources?
 
-        resource_client = api_client.client_for_resource(resource)
+        resource_client = api_client.client_for_resource(resource, namespace: namespace)
 
         {
           method: 'GET',
-          path: resource_client.path(resource.metadata.name, namespace: resource.metadata.namespace),
+          path: resource_client.path(resource.metadata.name),
           response_class: resource_client.resource_class,
         }
       }

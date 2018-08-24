@@ -507,6 +507,43 @@ RSpec.describe K8s::Client do
         end
       end
 
+      context "for mixed-namespaced resources" do
+        subject { described_class.new(transport, namespace: 'test') }
+
+        let(:resources) {[
+          K8s::Resource.from_file(fixture_path('resources/service-foo.yaml')),
+          K8s::Resource.from_file(fixture_path('resources/namespace.yaml')),
+          K8s::Resource.from_file(fixture_path('resources/service-bar-nonamespace.yaml')),
+        ]}
+
+        before do
+          stub_request(:get, 'localhost:8080/api/v1/namespaces/default/services/foo')
+            .to_return(
+              status: 200,
+              headers: { 'Content-Type' => 'application/json' },
+              body: fixture('api/services-foo.json'),
+            )
+          stub_request(:get, 'localhost:8080/api/v1/namespaces/test')
+            .to_return(
+              status: 404,
+              headers: { 'Content-Type' => 'application/json' },
+              body: fixture('api/configmaps-bar-404.json'),
+            )
+          stub_request(:get, 'localhost:8080/api/v1/namespaces/test/services/bar')
+            .to_return(
+              status: 404,
+              headers: { 'Content-Type' => 'application/json' },
+              body: fixture('api/configmaps-bar-404.json'),
+            )
+        end
+
+        it "queries the correct namespaces" do
+          r = subject.get_resources(resources)
+
+          expect(r).to match [K8s::Resource, nil, nil]
+        end
+      end
+
       context "for custom resources" do
         let(:resources) {[
           K8s::Resource.from_file(fixture_path('resources/test/crd-test.yaml')),
