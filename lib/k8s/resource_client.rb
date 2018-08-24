@@ -60,6 +60,9 @@ module K8s
       resources.zip(api_lists).map {|resource, api_list| api_list ? resource.process_list(api_list) : [] }.flatten
     end
 
+    # equivalent to an empty namespace
+    DEFAULT_NAMESPACE = 'default'
+
     # @param transport [K8s::Transport]
     # @param api_client [K8s::APIClient]
     # @param api_resource [K8s::API::MetaV1::APIResource]
@@ -147,9 +150,12 @@ module K8s
     # @param resource [resource_class] with metadata.namespace and metadata.name set
     # @return [resource_class]
     def create_resource(resource)
+      namespace = resource.metadata.namespace
+      namespace ||= @namespace || DEFAULT_NAMESPACE if namespaced?
+
       @transport.request(
         method: 'POST',
-        path: self.path(namespace: resource.metadata.namespace),
+        path: self.path(namespace: namespace),
         request_object: resource,
         response_class: @resource_class,
       )

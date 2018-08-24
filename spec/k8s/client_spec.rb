@@ -139,6 +139,67 @@ RSpec.describe K8s::Client do
           expect(r.metadata.resourceVersion).to eq '1'
         end
       end
+
+      context "for a service resource without a namespace" do
+        let(:resource) { resource_fixture('resources/service-nonamespace.yaml') }
+        let(:server_resource) { resource.merge(
+          metadata: { resourceVersion: '1'}
+        ) }
+
+        context "using the default namespace" do
+          before do
+            stub_request(:post, 'localhost:8080/api/v1/namespaces/default/services')
+              .with(
+                headers: { 'Content-Type' => 'application/json' },
+                body: resource.to_hash,
+              )
+              .to_return(
+                status: 201,
+                headers: { 'Content-Type' => 'application/json' },
+                body: server_resource.to_json,
+              )
+          end
+
+          it "returns the created resource" do
+            r = subject.create_resource(resource)
+
+            expect(r).to match K8s::Resource
+            expect(r.kind).to eq 'Service'
+            expect(r.metadata.name).to eq 'whoami'
+            expect(r.metadata.resourceVersion).to eq '1'
+          end
+        end
+      end
+
+      context "for a namespace resource" do
+        let(:resource) { resource_fixture('resources/namespace.yaml') }
+        let(:server_resource) { resource.merge(
+          metadata: { resourceVersion: '1'}
+        ) }
+
+        before do
+          # not namespaced, no 'default' namespace!
+          stub_request(:post, 'localhost:8080/api/v1/namespaces')
+            .with(
+              headers: { 'Content-Type' => 'application/json' },
+              body: resource.to_hash,
+            )
+            .to_return(
+              status: 201,
+              headers: { 'Content-Type' => 'application/json' },
+              body: server_resource.to_json,
+            )
+        end
+
+        it "returns the created resource" do
+          r = subject.create_resource(resource)
+
+          expect(r).to match K8s::Resource
+          expect(r.kind).to eq 'Namespace'
+          expect(r.metadata.name).to eq 'test'
+          expect(r.metadata.resourceVersion).to eq '1'
+        end
+      end
     end
 
     describe '#get_resource' do
