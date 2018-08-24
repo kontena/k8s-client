@@ -1,6 +1,60 @@
 RSpec.describe K8s::Client do
   include FixtureHelpers
 
+  describe '#config' do
+    let(:config_context) {
+      {
+        cluster: 'kubernetes',
+        user: 'test',
+      }
+    }
+
+    let(:config) { K8s::Config.new(
+      clusters: [
+        {
+          name: 'kubernetes',
+          cluster: {
+            server: 'http://localhost:8080',
+          }
+        }
+      ],
+      users: [
+        {
+          name: 'test',
+          user: {
+            token: 'SECRET',
+          }
+        }
+      ],
+
+      contexts: [
+        {
+          name: 'test',
+          context: config_context,
+        }
+      ],
+      current_context: 'test'
+    ) }
+
+    subject { described_class.config(config) }
+
+    it "queries the correct server and options" do
+      stub_request(:get, "localhost:8080/version")
+        .with(
+          headers: { 'Authorization' => 'Bearer SECRET' },
+        )
+        .to_return(
+          status: 200,
+          body: fixture('api/version.json'),
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      expect(subject.version.to_hash).to match hash_including(
+        gitVersion: 'v1.10.5',
+      )
+    end
+  end
+
   context "for a mocked API" do
     let(:transport) { K8s::Transport.new('http://localhost:8080') }
 
