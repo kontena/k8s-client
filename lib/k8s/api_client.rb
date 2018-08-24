@@ -11,7 +11,6 @@ module K8s
       else
         File.join('/api', api_version)
       end
-
     end
 
     # @param transport [K8s::Transport]
@@ -73,7 +72,7 @@ module K8s
     end
 
     # @param resource [K8s::Resource]
-    # @param namespace [String, nil] default if resource is missing namespace
+    # @param namespace [String, nil] default if resource is missing namespace, ignored for non-namespaced resources
     # @raise [K8s::Error::NotFound] API Group does not exist
     # @raise [K8s::Error::UndefinedResource]
     # @return [K8s::ResourceClient]
@@ -86,8 +85,11 @@ module K8s
         raise K8s::Error::UndefinedResource, "Unknown resource kind=#{resource.kind} for #{@api_version}"
       end
 
+      resource_namespace = resource.metadata.namespace
+      resource_namespace ||= namespace if api_resource.namespaced
+
       ResourceClient.new(@transport, self, api_resource,
-        namespace: resource.metadata.namespace || namespace,
+        namespace: resource_namespace,
       )
     end
 
