@@ -310,6 +310,8 @@ RSpec.describe K8s::Client do
       end
 
       context "for a namespace resource" do
+        subject { described_class.new(transport, namespace: 'test') }
+
         let(:resource) { resource_fixture('resources/namespace.yaml') }
         let(:server_resource) { resource.merge(
           metadata: { resourceVersion: '1'}
