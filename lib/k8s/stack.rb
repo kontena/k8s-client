@@ -54,19 +54,14 @@ module K8s
       logger! progname: name, debug: debug
     end
 
-    # Random "checksum" used to identify different stack resource versions using an annotation.
-    #
-    # NOTE: This is not actually a checksum.
-    #
-    # @return [String]
-    def checksum
-      @checksum ||= SecureRandom.hex(16)
-    end
-
     # @param resource [K8s::Resource] to apply
     # @param base_resource [K8s::Resource] preserve existing attributes from base resource
     # @return [K8s::Resource]
     def prepare_resource(resource, base_resource: nil)
+      # Calculate the resource checksum before merging with existing server resource
+      # so that the checksum is calculated only from the "local" source
+      checksum = resource.checksum
+
       if base_resource
         resource = base_resource.merge(resource)
       end
@@ -83,24 +78,15 @@ module K8s
       server_resources = client.get_resources(resources)
 
       resources.zip(server_resources).map do |resource, server_resource|
-        if server_resource
-          # keep server checksum for comparison
-          # NOTE: this will not compare equal for resources with arrays containing hashes with default values applied by the server
-          #       however, that will just cause extra PUTs, so it doesn't have any functional effects
-          compare_resource = server_resource.merge(resource).merge(metadata: {
-            labels: { @label => name },
-          })
-        end
-
         if !server_resource
-          logger.info "Create resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{checksum}"
+          logger.info "Create resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource.checksum}"
           keep_resource! client.create_resource(prepare_resource(resource))
-        elsif server_resource != compare_resource
-          logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{checksum}"
+        elsif server_resource.metadata.annotations[@checksum_annotation] != resource.checksum
+          logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource.checksum}"
           keep_resource! client.update_resource(prepare_resource(resource, base_resource: server_resource))
         else
-          logger.info "Keep resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{compare_resource.metadata.annotations[@checksum_annotation]}"
-          keep_resource! compare_resource
+          logger.info "Keep resource #{server_resource.apiVersion}:#{server_resource.kind}/#{server_resource.metadata.name} in namespace #{server_resource.metadata.namespace} with checksum=#{server_resource.metadata.annotations[@checksum_annotation]}"
+          keep_resource! server_resource
         end
       end
 
