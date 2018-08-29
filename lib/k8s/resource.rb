@@ -64,5 +64,9 @@ module K8s
 
       self.class.new(h)
     end
+
+    def checksum
+      @checksum ||= Digest::MD5.hexdigest(Marshal::dump(to_hash))
+    end
   end
 end
