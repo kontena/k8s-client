@@ -169,5 +169,11 @@ module K8s
     def delete_resource(resource)
       client_for_resource(resource).delete_resource(resource)
     end
+
+    def patch_resource(resource)
+      puts "PATCHING resource: #{resource}"
+      client_for_resource(resource).merge_patch(resource.metadata.name, resource, strategic_merge: true)
+      #kube_client.api(resource.apiVersion).resource(resource.kind, namespace: resource.metadata.namespace)
+    end
   end
 end

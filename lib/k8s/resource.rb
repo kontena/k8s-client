@@ -60,7 +60,7 @@ module K8s
       h = to_hash
 
       # merge in-place
-      h.deep_merge!(attrs.to_hash, overwrite_arrays: true)
+      h.deep_merge!(attrs.to_hash, overwrite_arrays: true, merge_nil_values: true)
 
       self.class.new(h)
     end

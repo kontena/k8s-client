@@ -62,14 +62,17 @@ module K8s
       # so that the checksum is calculated only from the "local" source
       checksum = resource.checksum
 
-      if base_resource
-        resource = base_resource.merge(resource)
-      end
+      # if base_resource
+      #   resource = base_resource.merge(resource)
+      # end
 
       # add stack metadata
       resource.merge(metadata: {
         labels: { @label => name },
-        annotations: { @checksum_annotation => checksum },
+        annotations: {
+          @checksum_annotation => checksum,
+          'kubectl.kubernetes.io/last-applied-configuration' => resource.to_json
+        },
       })
     end
 
@@ -83,7 +86,8 @@ module K8s
           keep_resource! client.create_resource(prepare_resource(resource))
         elsif server_resource.metadata.annotations[@checksum_annotation] != resource.checksum
           logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource.checksum}"
-          keep_resource! client.update_resource(prepare_resource(resource, base_resource: server_resource))
+          r = prepare_resource(resource, base_resource: server_resource)
+          keep_resource! client.patch_resource(r)
         else
           logger.info "Keep resource #{server_resource.apiVersion}:#{server_resource.kind}/#{server_resource.metadata.name} in namespace #{server_resource.metadata.namespace} with checksum=#{server_resource.metadata.annotations[@checksum_annotation]}"
           keep_resource! server_resource
