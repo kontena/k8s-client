@@ -11,6 +11,9 @@ module K8s
     # Annotation used to identify resource versions
     CHECKSUM_ANNOTATION = 'k8s.kontena.io/stack-checksum'
 
+    # Annotation used to identify last applied configuration
+    LAST_CONFIG_ANNOTATION = 'kubectl.kubernetes.io/last-applied-configuration'
+
     # List of apiVersion:kind combinations to skip for stack prune
     # These would lead to stack prune misbehaving if not skipped.
     PRUNE_IGNORE = [
@@ -44,12 +47,13 @@ module K8s
 
     attr_reader :name, :resources
 
-    def initialize(name, resources = [], debug: false, label: self.class::LABEL, checksum_annotation: self.class::CHECKSUM_ANNOTATION)
+    def initialize(name, resources = [], debug: false, label: self.class::LABEL, checksum_annotation: self.class::CHECKSUM_ANNOTATION, last_configuration_annotation: self.class::LAST_CONFIG_ANNOTATION)
       @name = name
       @resources = resources
       @keep_resources = {}
       @label = label
       @checksum_annotation = checksum_annotation
+      @last_config_annotation = last_configuration_annotation
 
       logger! progname: name, debug: debug
     end
@@ -58,20 +62,17 @@ module K8s
     # @param base_resource [K8s::Resource] preserve existing attributes from base resource
     # @return [K8s::Resource]
     def prepare_resource(resource, base_resource: nil)
-      # Calculate the resource checksum before merging with existing server resource
-      # so that the checksum is calculated only from the "local" source
-      checksum = resource.checksum
+      # XXX: base_resource is not really used anymore, kept for backwards compatibility for a while
 
-      # if base_resource
-      #   resource = base_resource.merge(resource)
-      # end
+      # calculate checksum  only from the "local" source
+      checksum = resource.checksum
 
       # add stack metadata
       resource.merge(metadata: {
         labels: { @label => name },
         annotations: {
           @checksum_annotation => checksum,
-          'kubectl.kubernetes.io/last-applied-configuration' => resource.to_json
+          @last_config_annotation => resource.to_json
         },
       })
     end
@@ -87,7 +88,12 @@ module K8s
         elsif server_resource.metadata.annotations[@checksum_annotation] != resource.checksum
           logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource.checksum}"
           r = prepare_resource(resource)
-          keep_resource! client.patch_resource(server_resource, server_resource.merge_patch_ops(r.to_hash))
+          if server_resource.can_patch?
+            keep_resource! client.patch_resource(server_resource, server_resource.merge_patch_ops(r.to_hash))
+          else
+            # try to update with PUT
+            keep_resource! client.update_resource(server_resource.merge(prepare_resource(resource)))
+          end
         else
           logger.info "Keep resource #{server_resource.apiVersion}:#{server_resource.kind}/#{server_resource.metadata.name} in namespace #{server_resource.metadata.namespace} with checksum=#{server_resource.metadata.annotations[@checksum_annotation]}"
           keep_resource! server_resource

@@ -236,7 +236,6 @@ module K8s
     # @param strategic_merge [Boolean] use kube Strategic Merge Patch instead of standard Merge Patch (arrays of objects are merged by name)
     # @return [resource_class]
     def merge_patch(name, obj, namespace: @namespace, strategic_merge: true)
-      puts "**** Patching with data: #{obj}"
       @transport.request(
         method: 'PATCH',
         path: self.path(name, namespace: namespace),
@@ -247,11 +246,10 @@ module K8s
     end
 
     # @param name [String]
-    # @param ops [Object] supporting to_json
+    # @param ops [Hash] json-patch operations
     # @param namespace [String]
     # @return [resource_class]
     def json_patch(name, ops, namespace: @namespace)
-      puts "********** Sending json-patch:\n#{ops.to_json}"
       @transport.request(
         method: 'PATCH',
         path: self.path(name, namespace: namespace),

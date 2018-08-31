@@ -172,7 +172,6 @@ module K8s
 
     def patch_resource(resource, attrs)
       client_for_resource(resource).json_patch(resource.metadata.name, attrs)
-      #kube_client.api(resource.apiVersion).resource(resource.kind, namespace: resource.metadata.namespace)
     end
   end
 end

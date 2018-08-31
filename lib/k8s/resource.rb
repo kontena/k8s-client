@@ -71,53 +71,22 @@ module K8s
     end
 
     def merge_patch_ops(attrs)
-      ops = []
-      curr = current_config
-      diffs = HashDiff.diff(curr, stringify_hash(attrs), array_path: true)
-
-      # Each diff is like ["+", "spec.selector.aziz", "kebab"]
-      # or ["-", "spec.selector.aziz", "kebab"]
-      diffs.each do |diff|
-        puts "*** processing diff: #{diff}"
-        operator, path, value = nil
-        operator = diff[0]
-        path = diff[1].map {|p| p.to_s.gsub('/', '~1')}
-        if operator == '-'
-          ops << {
-            op: "remove",
-            path: "/" + path.join('/')
-          }
-        elsif operator == '+'
-          ops << {
-            op: "add",
-            path: "/" + path.join('/'),
-            value: diff[2]
-          }
-        elsif operator == '~'
-          ops << {
-            op: "replace",
-            path: "/" + path.join('/'),
-            value: diff[3]
-          }
-        else
-          raise "WTF, unknown diff operator: #{operator}!"
-        end
-
-      end
-      puts "********** calculated patch ops***********"
-      puts ops
-      puts "********** /calculated patch ops***********"
-
-      ops
+      Util.json_patch(current_config, stringify_hash(attrs))
     end
 
-    # @return current configuration of the resource (if exists on annotation)
+    # Gets the existing resources (on kube api) configuration, an empty hash if not present
+    #
+    # @return [Hash]
     def current_config
       current_cfg = self.metadata.annotations&.dig('kubectl.kubernetes.io/last-applied-configuration')
 
       return JSON.parse(current_cfg) if current_cfg
 
       {}
+    end
+
+    def can_patch?
+      !!self.metadata.annotations&.dig('kubectl.kubernetes.io/last-applied-configuration')
     end
 
     def stringify_hash(hash)
