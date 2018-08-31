@@ -1,5 +1,6 @@
 require 'deep_merge'
 require 'recursive-open-struct'
+require 'hashdiff'
 
 module K8s
   # generic untyped resource
@@ -67,6 +68,60 @@ module K8s
 
     def checksum
       @checksum ||= Digest::MD5.hexdigest(Marshal::dump(to_hash))
+    end
+
+    def merge_patch_ops(attrs)
+      ops = []
+      curr = current_config
+      diffs = HashDiff.diff(curr, stringify_hash(attrs), array_path: true)
+
+      # Each diff is like ["+", "spec.selector.aziz", "kebab"]
+      # or ["-", "spec.selector.aziz", "kebab"]
+      diffs.each do |diff|
+        puts "*** processing diff: #{diff}"
+        operator, path, value = nil
+        operator = diff[0]
+        path = diff[1].map {|p| p.to_s.gsub('/', '~1')}
+        if operator == '-'
+          ops << {
+            op: "remove",
+            path: "/" + path.join('/')
+          }
+        elsif operator == '+'
+          ops << {
+            op: "add",
+            path: "/" + path.join('/'),
+            value: diff[2]
+          }
+        elsif operator == '~'
+          ops << {
+            op: "replace",
+            path: "/" + path.join('/'),
+            value: diff[3]
+          }
+        else
+          raise "WTF, unknown diff operator: #{operator}!"
+        end
+
+      end
+      puts "********** calculated patch ops***********"
+      puts ops
+      puts "********** /calculated patch ops***********"
+
+      ops
+    end
+
+    # @return current configuration of the resource (if exists on annotation)
+    def current_config
+      current_cfg = self.metadata.annotations&.dig('kubectl.kubernetes.io/last-applied-configuration')
+
+      return JSON.parse(current_cfg) if current_cfg
+
+      {}
+    end
+
+    def stringify_hash(hash)
+      JSON.load(JSON.dump(hash))
     end
   end
 end

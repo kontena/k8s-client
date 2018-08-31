@@ -86,8 +86,8 @@ module K8s
           keep_resource! client.create_resource(prepare_resource(resource))
         elsif server_resource.metadata.annotations[@checksum_annotation] != resource.checksum
           logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource.checksum}"
-          r = prepare_resource(resource, base_resource: server_resource)
-          keep_resource! client.patch_resource(r)
+          r = prepare_resource(resource)
+          keep_resource! client.patch_resource(server_resource, server_resource.merge_patch_ops(r.to_hash))
         else
           logger.info "Keep resource #{server_resource.apiVersion}:#{server_resource.kind}/#{server_resource.metadata.name} in namespace #{server_resource.metadata.namespace} with checksum=#{server_resource.metadata.annotations[@checksum_annotation]}"
           keep_resource! server_resource
