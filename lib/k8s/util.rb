@@ -32,7 +32,6 @@ module K8s
       # Each diff is like ["+", "spec.selector.aziz", "kebab"]
       # or ["-", "spec.selector.aziz", "kebab"]
       diffs.each do |diff|
-        operator, path, value = nil
         operator = diff[0]
         # substitute '/' with '~1' and '~' with '~0'
         # according to RFC 6901
@@ -55,7 +54,7 @@ module K8s
             value: diff[3]
           }
         else
-          raise "WTF, unknown diff operator: #{operator}!"
+          raise "Unknown diff operator: #{operator}!"
         end
 
       end
