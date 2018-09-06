@@ -39,30 +39,91 @@ RSpec.describe K8s::Stack do
       ]
     end
 
-    # XXX: Need to still fix the stack specs
-    #
+    context "which is not yet installed" do
+      let(:resources) {
+        subject.resources
+      }
 
-    # context "which is not yet installed" do
-    #   let(:resources) {
-    #     subject.resources
-    #     # subject.resources.map{ |r|
-    #     #   allow(r).to receive(:checksum).and_return('123')
-    #     # }
-    #   }
+      before do
+        allow(client).to receive(:get_resources).with([K8s::Resource, K8s::Resource, K8s::Resource]).and_return([nil, nil, nil ])
+        allow(client).to receive(:list_resources).with(labelSelector: { 'k8s.kontena.io/stack' => 'whoami' }, skip_forbidden: true).and_return(resources)
+      end
 
-    #   before do
-    #     allow(client).to receive(:get_resources).with([K8s::Resource, K8s::Resource, K8s::Resource]).and_return([nil, nil, nil ])
-    #     allow(client).to receive(:list_resources).with(labelSelector: { 'k8s.kontena.io/stack' => 'whoami' }, skip_forbidden: true).and_return(resources)
-    #   end
+      it "creates the resource with the correct label" do
+        resources.each do |r|
+          expect(client).to receive(:create_resource) { |r| r }
+        end
 
-    #   it "creates the resource with the correct label" do
-    #     resources.each do |r|
-    #       expect(client).to receive(:create_resource)
-    #     end
+        subject.apply(client)
+      end
+    end
 
-    #     subject.apply(client)
-    #   end
-    # end
+    context "which is partially installed" do
+      let(:resources) {
+        subject.resources
+      }
+
+      before do
+        returned_resources = resources.dup
+        returned_resources[-1] = nil
+        returned_resources = returned_resources.map { |r| subject.prepare_resource(r) unless r.nil? }
+        allow(client).to receive(:get_resources).with([K8s::Resource, K8s::Resource, K8s::Resource]).and_return(returned_resources)
+        allow(client).to receive(:list_resources).with(labelSelector: { 'k8s.kontena.io/stack' => 'whoami' }, skip_forbidden: true).and_return(returned_resources)
+      end
+
+      it "creates the missing resource" do
+        expect(client).to receive(:create_resource) { |r|
+          expect(r.kind).to eq(resources[-1].kind)
+          r
+        }
+        subject.apply(client, prune: false)
+      end
+    end
+
+    context "which has extra resources on server" do
+      let(:resources) {
+        subject.resources
+      }
+
+      before do
+        extra_resource = subject.prepare_resource(subject.resources.pop)
+        returned_resources = resources.dup
+        returned_resources = returned_resources.map { |r| subject.prepare_resource(r) unless r.nil? }
+        allow(client).to receive(:get_resources).with([K8s::Resource, K8s::Resource]).and_return(returned_resources)
+        allow(client).to receive(:list_resources).with(labelSelector: { 'k8s.kontena.io/stack' => 'whoami' }, skip_forbidden: true).and_return(returned_resources + [extra_resource])
+
+      end
+
+      it "deletes the extra resource" do
+        expect(client).to receive(:delete_resource) { |r|
+          expect(r.kind).to eq('Ingress')
+          expect(r.metadata.name).to eq('whoami')
+          r
+        }
+        subject.apply(client, prune: true)
+      end
+    end
+
+    context "which needs updating" do
+      let(:resources) {
+        subject.resources
+      }
+
+      before do
+        returned_resources = resources.dup
+        returned_resources = returned_resources.map { |r| subject.prepare_resource(r) unless r.nil? }
+        allow(client).to receive(:get_resources).with([K8s::Resource, K8s::Resource, K8s::Resource]).and_return(returned_resources)
+      end
+
+      it "patches the needed resource" do
+        subject.resources[0] = subject.resources[0].merge(metadata: { labels: {'foo' => 'bar'}})
+        expect(client).to receive(:patch_resource) { |resource, ops|
+          expect(ops).to include({op:'add',  path: '/metadata/labels/foo', value: 'bar'})
+          resource
+        }
+        subject.apply(client, prune: false)
+      end
+    end
   end
 
   context "with customized labels" do
