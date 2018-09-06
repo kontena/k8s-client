@@ -133,7 +133,7 @@ module K8s
         else
           logger.info "Delete resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
           begin
-            client.delete_resource(resource)
+            client.delete_resource(resource, propagationPolicy: 'Foreground')
           rescue K8s::Error::NotFound
             # assume aliased objects in multiple API groups, like for Deployments
             # alternatively, a custom resource whose definition was already deleted earlier

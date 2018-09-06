@@ -166,8 +166,8 @@ module K8s
 
     # @param resource [K8s::Resource]
     # @return [K8s::Resource]
-    def delete_resource(resource)
-      client_for_resource(resource).delete_resource(resource)
+    def delete_resource(resource, **options)
+      client_for_resource(resource).delete_resource(resource, **options)
     end
   end
 end
