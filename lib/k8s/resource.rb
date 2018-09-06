@@ -70,23 +70,23 @@ module K8s
       @checksum ||= Digest::MD5.hexdigest(Marshal::dump(to_hash))
     end
 
-    def merge_patch_ops(attrs)
-      Util.json_patch(current_config, stringify_hash(attrs))
+    def merge_patch_ops(attrs, config_annotation)
+      Util.json_patch(current_config(config_annotation), stringify_hash(attrs))
     end
 
     # Gets the existing resources (on kube api) configuration, an empty hash if not present
     #
     # @return [Hash]
-    def current_config
-      current_cfg = self.metadata.annotations&.dig('kubectl.kubernetes.io/last-applied-configuration')
+    def current_config(config_annotation)
+      current_cfg = self.metadata.annotations&.dig(config_annotation)
 
       return JSON.parse(current_cfg) if current_cfg
 
       {}
     end
 
-    def can_patch?
-      !!self.metadata.annotations&.dig('kubectl.kubernetes.io/last-applied-configuration')
+    def can_patch?(config_annotation)
+      !!self.metadata.annotations&.dig(config_annotation)
     end
 
     def stringify_hash(hash)
