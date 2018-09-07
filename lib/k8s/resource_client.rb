@@ -253,12 +253,13 @@ module K8s
     # @param name [String]
     # @param namespace [String]
     # @return [K8s::API::MetaV1::Status]
-    def delete(name, namespace: @namespace, propagationPolicy: nil)
+    def delete(name, namespace: @namespace, propagationPolicy: nil, orphanDependents: nil)
       @transport.request(
         method: 'DELETE',
         path: self.path(name, namespace: namespace),
         query: make_query(
           'propagationPolicy' => propagationPolicy,
+          'orphanDependents' => orphanDependents
         ),
         response_class: @resource_class, # XXX: documented as returning Status
       )
