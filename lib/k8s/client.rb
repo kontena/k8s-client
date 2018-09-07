@@ -165,6 +165,8 @@ module K8s
     end
 
     # @param resource [K8s::Resource]
+    # @param options [Hash]
+    # @see ResourceClient#delete for options
     # @return [K8s::Resource]
     def delete_resource(resource, **options)
       client_for_resource(resource).delete_resource(resource, **options)
