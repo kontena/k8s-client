@@ -137,4 +137,29 @@ RSpec.describe K8s::Resource do
       expect(before).not_to eq(after)
     end
   end
+
+  describe "#current_config" do
+    subject { described_class.from_file(fixture_path('resources/service.yaml')) }
+
+    it 'returns empty hash by default' do
+      expect(subject.current_config('foo')).to eq({})
+    end
+
+    it 'returns config object' do
+      config = JSON.parse(JSON.dump(subject.to_hash))
+      subject.metadata['annotations'] = {
+        'foo' => JSON.dump(config)
+      }
+      expect(subject.current_config('foo')).to eq(config)
+    end
+
+    it 'removes kubectl set empty metadata.namespace' do
+      config = JSON.parse(JSON.dump(subject.to_hash))
+      config['metadata']['namespace'] = ''
+      subject.metadata['annotations'] = {
+        'foo' => JSON.dump(config)
+      }
+      expect(subject.current_config('foo')['metadata'].has_key?('namespace')).to be_falsey
+    end
+  end
 end
