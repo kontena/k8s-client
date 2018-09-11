@@ -266,13 +266,14 @@ module K8s
 
     # @param name [String]
     # @param namespace [String]
+    # @param propagationPolicy [String] The propagationPolicy to use for the API call. Possible values include “Orphan”, “Foreground”, or “Background”
     # @return [K8s::API::MetaV1::Status]
     def delete(name, namespace: @namespace, propagationPolicy: nil)
       @transport.request(
         method: 'DELETE',
         path: self.path(name, namespace: namespace),
         query: make_query(
-          'propagationPolicy' => propagationPolicy,
+          'propagationPolicy' => propagationPolicy
         ),
         response_class: @resource_class, # XXX: documented as returning Status
       )
@@ -297,6 +298,8 @@ module K8s
     end
 
     # @param resource [resource_class] with metadata
+    # @param options [Hash]
+    # @see #delete for possible options
     # @return [K8s::API::MetaV1::Status]
     def delete_resource(resource, **options)
       delete(resource.metadata.name, namespace: resource.metadata.namespace, **options)
