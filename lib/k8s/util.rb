@@ -1,6 +1,9 @@
 module K8s
   # Miscellaneous helpers
   module Util
+    PATH_TR_MAP={ '~' => '~0', '/' => '~1' }.freeze
+    PATH_REGEX=%r{(/|~(?!1))}.freeze
+
     # Yield with all non-nil args, returning matching array with corresponding return values or nils.
     #
     # Args must be usable as hash keys. Duplicate args will all map to the same return value.
@@ -35,7 +38,7 @@ module K8s
         operator = diff[0]
         # substitute '/' with '~1' and '~' with '~0'
         # according to RFC 6901
-        path = diff[1].map {|p| p.to_s.gsub('/', '~1')}.map {|p| p.to_s.gsub('~', '~0')}
+        path = diff[1].map {|p| p.to_s.gsub(PATH_REGEX, PATH_TR_MAP) }
         if operator == '-'
           ops << {
             op: "remove",
