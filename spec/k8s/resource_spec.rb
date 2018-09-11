@@ -121,4 +121,20 @@ RSpec.describe K8s::Resource do
       ]
     end
   end
+
+  describe "#checksum" do
+    subject { described_class.from_file(fixture_path('resources/service.yaml')) }
+
+    it 'has a checksum' do
+      expect(subject.checksum).not_to be_nil
+    end
+
+    it 'changes checksum when attributes change' do
+      before = subject.checksum
+      merged = subject.merge(metadata: { labels: {'foo' => 'bar'}})
+      after = merged.checksum
+
+      expect(before).not_to eq(after)
+    end
+  end
 end

@@ -245,6 +245,20 @@ module K8s
       )
     end
 
+    # @param name [String]
+    # @param ops [Hash] json-patch operations
+    # @param namespace [String]
+    # @return [resource_class]
+    def json_patch(name, ops, namespace: @namespace)
+      @transport.request(
+        method: 'PATCH',
+        path: self.path(name, namespace: namespace),
+        content_type: 'application/json-patch+json',
+        request_object: ops,
+        response_class: @resource_class,
+      )
+    end
+
     # @return [Bool]
     def delete?
       @api_resource.verbs.include? 'delete'

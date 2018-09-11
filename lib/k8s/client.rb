@@ -169,5 +169,9 @@ module K8s
     def delete_resource(resource)
       client_for_resource(resource).delete_resource(resource)
     end
+
+    def patch_resource(resource, attrs)
+      client_for_resource(resource).json_patch(resource.metadata.name, attrs)
+    end
   end
 end

@@ -11,6 +11,9 @@ module K8s
     # Annotation used to identify resource versions
     CHECKSUM_ANNOTATION = 'k8s.kontena.io/stack-checksum'
 
+    # Annotation used to identify last applied configuration
+    LAST_CONFIG_ANNOTATION = 'kubectl.kubernetes.io/last-applied-configuration'
+
     # List of apiVersion:kind combinations to skip for stack prune
     # These would lead to stack prune misbehaving if not skipped.
     PRUNE_IGNORE = [
@@ -44,37 +47,33 @@ module K8s
 
     attr_reader :name, :resources
 
-    def initialize(name, resources = [], debug: false, label: self.class::LABEL, checksum_annotation: self.class::CHECKSUM_ANNOTATION)
+    def initialize(name, resources = [], debug: false, label: self.class::LABEL, checksum_annotation: self.class::CHECKSUM_ANNOTATION, last_configuration_annotation: self.class::LAST_CONFIG_ANNOTATION)
       @name = name
       @resources = resources
       @keep_resources = {}
       @label = label
       @checksum_annotation = checksum_annotation
+      @last_config_annotation = last_configuration_annotation
 
       logger! progname: name, debug: debug
-    end
-
-    # Random "checksum" used to identify different stack resource versions using an annotation.
-    #
-    # NOTE: This is not actually a checksum.
-    #
-    # @return [String]
-    def checksum
-      @checksum ||= SecureRandom.hex(16)
     end
 
     # @param resource [K8s::Resource] to apply
     # @param base_resource [K8s::Resource] preserve existing attributes from base resource
     # @return [K8s::Resource]
     def prepare_resource(resource, base_resource: nil)
-      if base_resource
-        resource = base_resource.merge(resource)
-      end
+      # XXX: base_resource is not really used anymore, kept for backwards compatibility for a while
+
+      # calculate checksum  only from the "local" source
+      checksum = resource.checksum
 
       # add stack metadata
       resource.merge(metadata: {
         labels: { @label => name },
-        annotations: { @checksum_annotation => checksum },
+        annotations: {
+          @checksum_annotation => checksum,
+          @last_config_annotation => resource.to_json
+        },
       })
     end
 
@@ -83,24 +82,21 @@ module K8s
       server_resources = client.get_resources(resources)
 
       resources.zip(server_resources).map do |resource, server_resource|
-        if server_resource
-          # keep server checksum for comparison
-          # NOTE: this will not compare equal for resources with arrays containing hashes with default values applied by the server
-          #       however, that will just cause extra PUTs, so it doesn't have any functional effects
-          compare_resource = server_resource.merge(resource).merge(metadata: {
-            labels: { @label => name },
-          })
-        end
-
         if !server_resource
-          logger.info "Create resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{checksum}"
+          logger.info "Create resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource.checksum}"
           keep_resource! client.create_resource(prepare_resource(resource))
-        elsif server_resource != compare_resource
-          logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{checksum}"
-          keep_resource! client.update_resource(prepare_resource(resource, base_resource: server_resource))
+        elsif server_resource.metadata.annotations[@checksum_annotation] != resource.checksum
+          logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource.checksum}"
+          r = prepare_resource(resource)
+          if server_resource.can_patch?(@last_config_annotation)
+            keep_resource! client.patch_resource(server_resource, server_resource.merge_patch_ops(r.to_hash, @last_config_annotation))
+          else
+            # try to update with PUT
+            keep_resource! client.update_resource(server_resource.merge(prepare_resource(resource)))
+          end
         else
-          logger.info "Keep resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{compare_resource.metadata.annotations[@checksum_annotation]}"
-          keep_resource! compare_resource
+          logger.info "Keep resource #{server_resource.apiVersion}:#{server_resource.kind}/#{server_resource.metadata.name} in namespace #{server_resource.metadata.namespace} with checksum=#{server_resource.metadata.annotations[@checksum_annotation]}"
+          keep_resource! server_resource
         end
       end
 
