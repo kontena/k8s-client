@@ -124,8 +124,27 @@ RSpec.describe K8s::Util do
       expect(described_class.json_patch(a, b)).to eq([{op:'add', path:'/ports/1', value:{name: 'bar', port: 90, targetPort: 90}}])
     end
 
-    it 'handles array removal' do
+    it 'handles keys with /' do
+      a = {
+        annotations: {
+          'kubectl.kubernetes.io/last-applied-configuration' => 'a'
+        }
+      }
+      b = {
+        annotations: {
+          'kubectl.kubernetes.io/last-applied-configuration' => 'b'
+        }
+      }
+      expect(described_class.json_patch(a, b)).to eq([
+        {
+          op:'replace', 
+          path:'/annotations/kubectl.kubernetes.io~1last-applied-configuration',
+          value: 'b'
+        }
+      ])
+    end
 
+    it 'handles array removal' do
       a = {
         ports: [
           {
