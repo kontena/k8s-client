@@ -32,8 +32,12 @@ module K8s
     def self.json_patch(a, b)
       diffs = HashDiff.diff(a, b, array_path: true)
       ops = []
-      # Each diff is like ["+", "spec.selector.aziz", "kebab"]
-      # or ["-", "spec.selector.aziz", "kebab"]
+      # Each diff is like:
+      # ["+", ["spec", "selector", "food"], "kebab"]
+      # ["-", ["spec", "selector", "drink"], "pepsi"]
+      # or
+      # ["~", ["spec", "selector", "drink"], "old value", "new value"]
+      # the path elements can be symbols too, depending on the input hashes
       diffs.each do |diff|
         operator = diff[0]
         # substitute '/' with '~1' and '~' with '~0'
