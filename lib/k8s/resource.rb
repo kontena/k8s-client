@@ -27,7 +27,7 @@ module K8s
 
       if stat.directory?
         # recurse
-        Dir.glob("#{path}/*.{yml,yaml}").sort.map{|path| self.from_files(path) }.flatten
+        Dir.glob("#{path}/*.{yml,yaml}").sort.map { |dir| self.from_files(dir) }.flatten
       else
         ::YAML.load_stream(File.read(path), path).map{|doc| new(doc) }
       end
@@ -79,10 +79,13 @@ module K8s
     # @return [Hash]
     def current_config(config_annotation)
       current_cfg = self.metadata.annotations&.dig(config_annotation)
+      return {} unless current_cfg
 
-      return JSON.parse(current_cfg) if current_cfg
+      current_hash = JSON.parse(current_cfg)
+      # kubectl adds empty metadata.namespace, let's fix it
+      current_hash['metadata'].delete('namespace') if current_hash.dig('metadata', 'namespace').to_s.empty?
 
-      {}
+      current_hash
     end
 
     def can_patch?(config_annotation)
