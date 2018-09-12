@@ -82,6 +82,7 @@ module K8s
       return {} unless current_cfg
 
       current_hash = JSON.parse(current_cfg)
+      # kubectl adds empty metadata.namespace, let's fix it
       current_hash['metadata'].delete('namespace') if current_hash.dig('metadata', 'namespace').to_s.empty?
 
       current_hash
