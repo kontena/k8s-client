@@ -124,6 +124,52 @@ RSpec.describe K8s::Stack do
         subject.apply(client, prune: false)
       end
     end
+
+    context "prunes namespaced objects first" do
+      let(:resources) {
+        subject.resources
+      }
+
+      before do
+        returned_resources = resources.dup
+        # Make sure "server" returns namespace as first
+        returned_resources.unshift(resource_fixture('resources/namespace.yml'))
+        returned_resources = returned_resources.map { |r| subject.prepare_resource(r) unless r.nil? }
+        allow(client).to receive(:get_resources).and_return(returned_resources)
+        allow(client).to receive(:list_resources).with(labelSelector: { 'k8s.kontena.io/stack' => 'whoami' }, skip_forbidden: true).and_return(returned_resources)
+      end
+
+      it "deletes the extra resource" do
+        # "empty" stack, just to remove everything from server
+        test_stack = K8s::Stack.new('whoami', [])
+        # Add expectations in order
+        expect(client).to receive(:delete_resource) { |r|
+          expect(r.kind).to eq('Deployment')
+          expect(r.metadata.name).to eq('whoami')
+          expect(r.metadata.namespace).to eq('default')
+          r
+        }
+        expect(client).to receive(:delete_resource) { |r|
+          expect(r.kind).to eq('Service')
+          expect(r.metadata.name).to eq('whoami')
+          expect(r.metadata.namespace).to eq('default')
+          r
+        }
+        expect(client).to receive(:delete_resource) { |r|
+          expect(r.kind).to eq('Ingress')
+          expect(r.metadata.name).to eq('whoami')
+          expect(r.metadata.namespace).to eq('default')
+          r
+        }
+        expect(client).to receive(:delete_resource) { |r|
+          expect(r.kind).to eq('Namespace')
+          expect(r.metadata.name).to eq('test-namespace')
+          r
+        }
+
+        test_stack.apply(client, prune: true)
+      end
+    end
   end
 
   context "with customized labels" do
