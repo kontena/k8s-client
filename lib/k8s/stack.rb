@@ -73,11 +73,11 @@ module K8s
       # add stack metadata
       resource.merge(
         metadata: {
-         labels: { @label => name },
-         annotations: {
-           @checksum_annotation => checksum,
-           @last_config_annotation => resource.to_json
-         }
+          labels: { @label => name },
+          annotations: {
+            @checksum_annotation => checksum,
+            @last_config_annotation => resource.to_json
+          }
         }
       )
     end
