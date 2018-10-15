@@ -20,8 +20,10 @@ module K8s
     # @param options [Hash] @see Transport.config
     # @return [K8s::Client]
     def self.config(config, namespace: nil, **options)
-      new(Transport.config(config, **options),
-          namespace: namespace)
+      new(
+        Transport.config(config, **options),
+        namespace: namespace
+      )
     end
 
     # @return [K8s::Client]
@@ -41,8 +43,10 @@ module K8s
     # @raise [K8s::Error]
     # @return [K8s::API::Version]
     def version
-      @transport.get('/version',
-                     response_class: K8s::API::Version)
+      @transport.get(
+        '/version',
+        response_class: K8s::API::Version
+      )
     end
 
     # @param api_version [String] "group/version" or "version" (core)
@@ -56,8 +60,10 @@ module K8s
     #
     # @return [Array<String>]
     def api_groups!
-      @api_groups = @transport.get('/apis',
-                                   response_class: K8s::API::MetaV1::APIGroupList).groups.map{ |api_group| api_group.versions.map(&:groupVersion) }.flatten
+      @api_groups = @transport.get(
+        '/apis',
+        response_class: K8s::API::MetaV1::APIGroupList
+      ).groups.map{ |api_group| api_group.versions.map(&:groupVersion) }.flatten
     end
 
     # Cached /apis preferred group apiVersions

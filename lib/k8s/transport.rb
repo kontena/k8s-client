@@ -83,10 +83,12 @@ module K8s
       host = ENV['KUBERNETES_SERVICE_HOST']
       port = ENV['KUBERNETES_SERVICE_PORT_HTTPS']
 
-      new("https://#{host}:#{port}",
-          ssl_verify_peer: true,
-          ssl_ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
-          auth_token: File.read('/var/run/secrets/kubernetes.io/serviceaccount/token'))
+      new(
+        "https://#{host}:#{port}",
+        ssl_verify_peer: true,
+        ssl_ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
+        auth_token: File.read('/var/run/secrets/kubernetes.io/serviceaccount/token')
+      )
     end
 
     attr_reader :server, :options
@@ -104,11 +106,13 @@ module K8s
 
     # @return [Excon::Connection]
     def excon
-      @excon ||= Excon.new(@server,
-                           persistent: true,
-                           middlewares: EXCON_MIDDLEWARES,
-                           headers: REQUEST_HEADERS,
-                           **@options)
+      @excon ||= Excon.new(
+        @server,
+        persistent: true,
+        middlewares: EXCON_MIDDLEWARES,
+        headers: REQUEST_HEADERS,
+        **@options
+      )
     end
 
     # @param path [Array<String>] join path parts together to build the full URL
@@ -145,6 +149,7 @@ module K8s
       if options[:query]
         path += Excon::Utils.query_string(options)
       end
+
       if obj = options[:request_object]
         body = "<#{obj.class.name}>"
       end
@@ -278,12 +283,15 @@ module K8s
     # @param paths [Array<String>]
     # @param options [Hash] @see #request
     def gets(*paths, **options)
-      requests(*paths.map{ |path|
-                  {
-                    method: 'GET',
-                    path: self.path(path)
-                  } },
-               **options)
+      requests(
+        *paths.map do |path|
+          {
+            method: 'GET',
+            path: self.path(path)
+          }
+        end,
+        **options
+      )
     end
   end
 end

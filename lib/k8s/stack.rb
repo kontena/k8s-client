@@ -71,13 +71,15 @@ module K8s
       checksum = resource.checksum
 
       # add stack metadata
-      resource.merge(metadata: {
-                       labels: { @label => name },
-                       annotations: {
-                         @checksum_annotation => checksum,
-                         @last_config_annotation => resource.to_json
-                       }
-                     })
+      resource.merge(
+        metadata: {
+         labels: { @label => name },
+         annotations: {
+           @checksum_annotation => checksum,
+           @last_config_annotation => resource.to_json
+         }
+        }
+      )
     end
     # rubocop:enable Lint/UnusedMethodArgument
 
@@ -119,7 +121,7 @@ module K8s
     # Delete all stack resources that were not applied
     def prune(client, keep_resources:, skip_forbidden: true)
       # using skip_forbidden: assume we can't create resource types that we are forbidden to list, so we don't need to prune them either
-      client.list_resources(labelSelector: { @label => name }, skip_forbidden: skip_forbidden).sort{ |a, b|
+      client.list_resources(labelSelector: { @label => name }, skip_forbidden: skip_forbidden).sort do |a, b|
         # Sort resources so that namespaced objects are deleted first
         if a.metadata.namespace == b.metadata.namespace
           0
@@ -128,7 +130,7 @@ module K8s
         else
           -1
         end
-      }.each do |resource|
+      end.each do |resource|
         next if PRUNE_IGNORE.include? "#{resource.apiVersion}:#{resource.kind}"
 
         resource_label = resource.metadata.labels ? resource.metadata.labels[@label] : nil
