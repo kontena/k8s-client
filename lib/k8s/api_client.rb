@@ -80,7 +80,10 @@ module K8s
         raise K8s::Error::UndefinedResource, "Invalid apiVersion=#{resource.apiVersion} for #{@api_version} client"
       end
 
-      ResourceClient.new(@transport, self, find_api_resource(api_resource),
+      found_resource = api_resources.find{ |api_resource| api_resource.kind == resource.kind }
+      raise K8s::Error::UndefinedResource, "Unknown resource kind=#{resource.kind} for #{@api_version}" unless found_resource
+
+      ResourceClient.new(@transport, self, found_resource,
                          namespace: resource.metadata.namespace || namespace)
     end
 
