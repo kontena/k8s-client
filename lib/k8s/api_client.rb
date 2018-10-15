@@ -55,16 +55,19 @@ module K8s
     end
 
     # @param resource_name [String]
+    def find_api_resource(resource_name)
+      found_resource = api_resources.find{ |api_resource| api_resource.name == resource_name }
+      raise K8s::Error::UndefinedResource, "Unknown resource #{resource_name} for #{@api_version}" unless found_resource
+
+      found_resource
+    end
+
+    # @param resource_name [String]
     # @param namespace [String, nil]
     # @raise [K8s::Error] unknown resource
     # @return [K8s::ResourceClient]
     def resource(resource_name, namespace: nil)
-      unless api_resource = api_resources.find{ |api_resource| api_resource.name == resource_name }
-        raise K8s::Error::UndefinedResource, "Unknown resource #{resource_name} for #{@api_version}"
-      end
-
-      ResourceClient.new(@transport, self, api_resource,
-                         namespace: namespace)
+      ResourceClient.new(@transport, self, find_api_resource(resource_name), namespace: namespace)
     end
 
     # @param resource [K8s::Resource]
@@ -77,11 +80,7 @@ module K8s
         raise K8s::Error::UndefinedResource, "Invalid apiVersion=#{resource.apiVersion} for #{@api_version} client"
       end
 
-      unless api_resource = api_resources.find{ |api_resource| api_resource.kind == resource.kind }
-        raise K8s::Error::UndefinedResource, "Unknown resource kind=#{resource.kind} for #{@api_version}"
-      end
-
-      ResourceClient.new(@transport, self, api_resource,
+      ResourceClient.new(@transport, self, find_api_resource(api_resource),
                          namespace: resource.metadata.namespace || namespace)
     end
 
@@ -106,7 +105,7 @@ module K8s
     def list_resources(resources = nil, **options)
       resources ||= self.resources.select(&:list?)
 
-      ResourceClient.list(resource, @transport, **options)
+      ResourceClient.list(resources, @transport, **options)
     end
   end
 end

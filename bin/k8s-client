@@ -46,7 +46,7 @@ options.delete_resources = []
 
 logger = Logger.new(STDERR)
 
-parser = OptionParser.new do |parser|
+opt_parser = OptionParser.new do |parser|
   parser.on('--debug-api') do
     K8s::Logging.debug!
     K8s::Transport.debug!
@@ -158,7 +158,7 @@ parser = OptionParser.new do |parser|
   end
 end
 
-parser.parse!
+opt_parser.parse!
 
 if options.config
   overrides = {}
@@ -259,8 +259,8 @@ if options.delete_pods
 
   pods = client.api('v1').resource('pods', namespace: namespace).delete_collection(labelSelector: options.label_selector)
 
-  pods.each do |pod|
-    logger.info "Deleted pod=#{pod.metadata.name} in namespace=#{pod.metadata.namespace} on node=#{pod.spec.nodeName}"
+  pods.each do |pod_instance|
+    logger.info "Deleted pod=#{pod_instance.metadata.name} in namespace=#{pod_instance.metadata.namespace} on node=#{pod_instance.spec.nodeName}"
   end
 end
 

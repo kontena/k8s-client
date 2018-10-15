@@ -61,10 +61,11 @@ module K8s
     end
 
     # @param resource [K8s::Resource] to apply
-    # @param base_resource [K8s::Resource] preserve existing attributes from base resource
+    # @param base_resource [K8s::Resource] DEPRECATED
     # @return [K8s::Resource]
+    # rubocop:disable Lint/UnusedMethodArgument
     def prepare_resource(resource, base_resource: nil)
-      # XXX: base_resource is not really used anymore, kept for backwards compatibility for a while
+      # TODO: base_resource is not used anymore, kept for backwards compatibility for a while
 
       # calculate checksum  only from the "local" source
       checksum = resource.checksum
@@ -78,6 +79,7 @@ module K8s
                        }
                      })
     end
+    # rubocop:enable Lint/UnusedMethodArgument
 
     # @return [Array<K8s::Resource>]
     def apply(client, prune: true)
@@ -142,9 +144,10 @@ module K8s
           logger.info "Delete resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
           begin
             client.delete_resource(resource, propagationPolicy: 'Background')
-          rescue K8s::Error::NotFound
+          rescue K8s::Error::NotFound => ex
             # assume aliased objects in multiple API groups, like for Deployments
             # alternatively, a custom resource whose definition was already deleted earlier
+            logger.debug { "Ignoring #{ex} : #{ex.message}" }
           end
         end
       end

@@ -178,11 +178,9 @@ module K8s
           raise K8s::Error::API.new(method, path, response.status, "Invalid JSON response: #{response_data.inspect}")
         end
 
-        if response_class
-          return response_class.from_json(response_data)
-        else
-          return response_data # Hash
-        end
+        return response_data unless response_class
+
+        response_class.from_json(response_data)
       else
         error_class = K8s::Error::HTTP_STATUS_ERRORS[response.status] || K8s::Error::API
 
@@ -232,7 +230,7 @@ module K8s
 
       start = Time.now
       responses = excon.requests(
-        options.map{ |options| request_options(**common_options.merge(options)) }
+        options.map{ |opts| request_options(**common_options.merge(opts)) }
       )
       t = Time.now - start
 
@@ -243,26 +241,20 @@ module K8s
           parse_response(response, request_options,
                          response_class: response_class)
         rescue K8s::Error::NotFound
-          if skip_missing
-            nil
-          else
-            raise
-          end
-        rescue K8s::Error::Forbidden
-          if skip_forbidden
-            nil
-          else
-            raise
-          end
-        rescue K8s::Error::ServiceUnavailable => exc
-          if retry_errors
-            logger.warn { "Retry #{format_request(request_options)} => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s" }
+          raise unless skip_missing
 
-            # only retry the failed request, not the entire pipeline
-            request(response_class: response_class, **common_options.merge(request_options))
-          else
-            raise
-          end
+          nil
+        rescue K8s::Error::Forbidden
+          raise unless skip_forbidden
+
+          nil
+        rescue K8s::Error::ServiceUnavailable => exc
+          raise unless retry_errors
+
+          logger.warn { "Retry #{format_request(request_options)} => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s" }
+
+          # only retry the failed request, not the entire pipeline
+          request(response_class: response_class, **common_options.merge(request_options))
         end
       }
     rescue K8s::Error => exc

@@ -29,10 +29,10 @@ module K8s
     # the operations on a, gives you the results of b
     # Used in correctly patching the Kube resources on stack updates
     #
-    # @param a [Hash] Hash to compute patches against
-    # @param a [Hash] New Hash to compute patches "from"
-    def self.json_patch(a, b)
-      diffs = HashDiff.diff(a, b, array_path: true)
+    # @param patch_to [Hash] Hash to compute patches against
+    # @param patch_from [Hash] New Hash to compute patches "from"
+    def self.json_patch(patch_to, patch_from)
+      diffs = HashDiff.diff(patch_to, patch_from, array_path: true)
       ops = []
       # Each diff is like:
       # ["+", ["spec", "selector", "food"], "kebab"]

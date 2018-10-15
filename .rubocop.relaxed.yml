@@ -164,3 +164,11 @@ Metrics/ParameterLists:
 Metrics/PerceivedComplexity:
   Enabled: false
 
+Naming/VariableName: # disabled because camelCased params are used in kube api/yamls
+  Enabled: false
+
+Naming/UncommunicativeMethodParamName: # disabled because camelCased params are used in kube api/yamls
+  Enabled: false
+
+Naming/FileName: # disabled because it's stupid. lib/k8s-client.rb is fine for "require k8s-client" which is the gem name.
+  Enabled: false
