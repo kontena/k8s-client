@@ -318,11 +318,12 @@ if stack = options.delete_stack
 elsif options.stack
   logger.info "Apply stack #{options.stack.name}..."
 
-  options.stack.apply(client,
-                      prune: options.prune_stack)
+  options.stack.apply(client, prune: options.prune_stack)
 end
 
 if name = options.patch_deployment
-  client.api('apps/v1').resource('deployments', namespace: namespace).merge_patch(name,
-                                                                                  spec: { replicas: options.replicas })
+  client.api('apps/v1').resource('deployments', namespace: namespace).merge_patch(
+    name,
+    spec: { replicas: options.replicas }
+  )
 end
