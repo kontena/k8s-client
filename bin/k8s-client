@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 require 'optparse'
 require 'uri'
@@ -35,10 +36,10 @@ Options = Struct.new(
   :api,
   :list_api_resources,
   :patch_deployment,
-  :replicas,
+  :replicas
 )
 
-options = Options.new()
+options = Options.new
 options.create_resources = []
 options.update_resources = []
 options.delete_resources = []
@@ -77,7 +78,7 @@ parser = OptionParser.new do |parser|
   parser.on('--prefetch-resources', TrueClass) do |bool|
     options.prefetch_resources = bool
   end
-  parser.on('--list-resource-kinds', TrueClass) do |bool|
+  parser.on('--list-resource-kinds', TrueClass) do |_bool|
     options.list_resource_kinds = true
   end
   parser.on('-n', '--namespace=NAMESPACE') do |namespace|
@@ -164,15 +165,13 @@ if options.config
   overrides[:ssl_verify_peer] = false if options.insecure_skip_tls_verify
 
   client = K8s::Client.config(options.config,
-    server: options.server,
-    **overrides
-  )
+                              server: options.server,
+                              **overrides)
 elsif options.in_cluster_config
   client = K8s::Client.in_cluster_config
 else
   client = K8s.client(options.server,
-    ssl_verify_peer: !options.insecure_skip_tls_verify,
-  )
+                      ssl_verify_peer: !options.insecure_skip_tls_verify)
 end
 
 logger.info "Kube server version: #{client.version.gitVersion}"
@@ -182,22 +181,20 @@ if options.prefetch_resources
 end
 
 if options.list_resource_kinds
-  client.resources.sort_by{|r| r.kind}.each do |resource_client|
+  client.resources.sort_by(&:kind).each do |resource_client|
     next if resource_client.subresource?
 
     puts "#{resource_client.kind} => #{resource_client.api_version} #{resource_client.name}"
   end
 end
 
-if options.all_namespaces
-  namespace = nil # all
-elsif options.namespace
-  namespace = options.namespace
-elsif options.config && ns = options.config.context.namespace
-  namespace = ns
-else
-  namespace = nil # all
-end
+namespace = if options.all_namespaces
+              nil # all
+            elsif options.namespace
+              options.namespace
+            elsif options.config && ns = options.config.context.namespace
+              ns
+            end
 
 if options.list_api_resources
   logger.info "List resource types for api=#{options.list_api_resources}..."
@@ -216,7 +213,7 @@ elsif options.list_resources
   client.apis(prefetch_resources: true).each do |api|
     logger.info "api=#{api.api_version}"
 
-    resources = api.resources.select{|resource| resource.list? }
+    resources = api.resources.select(&:list?)
 
     resources.each do |resource|
       logger.info "api=#{api.api_version} resource=#{resource.name}"
@@ -273,15 +270,15 @@ if options.create_service
     kind: 'Service',
     metadata: {
       namespace: namespace,
-      name: options.create_service,
+      name: options.create_service
     },
     spec: {
       type: options.service_type,
       ports: [
-        { port: options.service_port },
+        { port: options.service_port }
       ],
-      selector: Hash[options.label_selector.split('=', 2)],
-    },
+      selector: Hash[options.label_selector.split('=', 2)]
+    }
   )
 
   logger.info "Create service=#{service.metadata.name} in namespace=#{service.metadata.namespace}"
@@ -291,19 +288,19 @@ if options.create_service
   logger.debug { service }
 end
 
-for resource in options.create_resources
+options.create_resources.each do |resource|
   resource = client.create_resource(resource)
 
   logger.info "Created #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}:\n#{JSON.pretty_generate(resource)}"
 end
 
-for resource in options.update_resources
+options.update_resources.each do |resource|
   resource = client.update_resource(resource)
 
   logger.info "Updated #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}:\n#{JSON.pretty_generate(resource)}"
 end
 
-for resource in options.delete_resources
+options.delete_resources.each do |resource|
   begin
     resource = client.delete_resource(resource)
 
@@ -322,12 +319,10 @@ elsif options.stack
   logger.info "Apply stack #{options.stack.name}..."
 
   options.stack.apply(client,
-    prune: options.prune_stack,
-  )
+                      prune: options.prune_stack)
 end
 
 if name = options.patch_deployment
-  client.api('apps/v1').resource('deployments', namespace: namespace).merge_patch(name, {
-      spec: { replicas: options.replicas },
-  })
+  client.api('apps/v1').resource('deployments', namespace: namespace).merge_patch(name,
+                                                                                  spec: { replicas: options.replicas })
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Kubernetes client library
 module K8s
   require 'k8s/api/metav1'

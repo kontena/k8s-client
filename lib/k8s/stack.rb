@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'securerandom'
 
 module K8s
@@ -19,7 +21,7 @@ module K8s
     PRUNE_IGNORE = [
       'v1:ComponentStatus', # apiserver ignores GET /v1/componentstatuses?labelSelector=... and returns all resources
       'v1:Endpoints', # inherits stack label from service, but not checksum annotation
-    ]
+    ].freeze
 
     # @param name [String] unique name for stack
     # @param path [String] load resources from YAML files
@@ -69,12 +71,12 @@ module K8s
 
       # add stack metadata
       resource.merge(metadata: {
-        labels: { @label => name },
-        annotations: {
-          @checksum_annotation => checksum,
-          @last_config_annotation => resource.to_json
-        },
-      })
+                       labels: { @label => name },
+                       annotations: {
+                         @checksum_annotation => checksum,
+                         @last_config_annotation => resource.to_json
+                       }
+                     })
     end
 
     # @return [Array<K8s::Resource>]
@@ -107,14 +109,15 @@ module K8s
     def keep_resource!(resource)
       @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] = resource.metadata.annotations[@checksum_annotation]
     end
+
     def keep_resource?(resource)
       @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] == resource.metadata.annotations[@checksum_annotation]
     end
 
     # Delete all stack resources that were not applied
-    def prune(client, keep_resources: , skip_forbidden: true)
+    def prune(client, keep_resources:, skip_forbidden: true)
       # using skip_forbidden: assume we can't create resource types that we are forbidden to list, so we don't need to prune them either
-      client.list_resources(labelSelector: {@label => name}, skip_forbidden: skip_forbidden).sort{ |a,b|
+      client.list_resources(labelSelector: { @label => name }, skip_forbidden: skip_forbidden).sort{ |a, b|
         # Sort resources so that namespaced objects are deleted first
         if a.metadata.namespace == b.metadata.namespace
           0

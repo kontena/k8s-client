@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'logger'
 
 module K8s
@@ -51,8 +53,8 @@ module K8s
       # @return [Logger]
       def logger(target: LOG_TARGET, level: nil)
         @logger ||= Logger.new(target).tap do |logger|
-          logger.progname = self.name
-          logger.level = level || self.log_level || K8s::Logging.log_level || LOG_LEVEL
+          logger.progname = name
+          logger.level = level || log_level || K8s::Logging.log_level || LOG_LEVEL
         end
       end
     end

@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 module K8s
   # Miscellaneous helpers
   module Util
-    PATH_TR_MAP={ '~' => '~0', '/' => '~1' }.freeze
-    PATH_REGEX=%r{(/|~(?!1))}.freeze
+    PATH_TR_MAP = { '~' => '~0', '/' => '~1' }.freeze
+    PATH_REGEX = %r{(/|~(?!1))}
 
     # Yield with all non-nil args, returning matching array with corresponding return values or nils.
     #
@@ -20,7 +22,7 @@ module K8s
       # Hash{arg => value}
       value_map = Hash[func_args.zip(values)]
 
-      args.map{|arg| value_map[arg] }
+      args.map{ |arg| value_map[arg] }
     end
 
     # Produces a set of json-patch operations so that applying
@@ -42,7 +44,7 @@ module K8s
         operator = diff[0]
         # substitute '/' with '~1' and '~' with '~0'
         # according to RFC 6901
-        path = diff[1].map {|p| p.to_s.gsub(PATH_REGEX, PATH_TR_MAP) }
+        path = diff[1].map { |p| p.to_s.gsub(PATH_REGEX, PATH_TR_MAP) }
         if operator == '-'
           ops << {
             op: "remove",
@@ -63,7 +65,6 @@ module K8s
         else
           raise "Unknown diff operator: #{operator}!"
         end
-
       end
 
       ops

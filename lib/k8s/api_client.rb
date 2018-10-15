@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module K8s
   # Per-APIGroup/version client.
   #
@@ -11,7 +13,6 @@ module K8s
       else
         File.join('/api', api_version)
       end
-
     end
 
     # @param transport [K8s::Transport]
@@ -22,9 +23,7 @@ module K8s
     end
 
     # @return [String]
-    def api_version
-      @api_version
-    end
+    attr_reader :api_version
 
     # @param path [Array<String>] join path from parts
     # @return [String]
@@ -38,17 +37,14 @@ module K8s
     end
 
     # @param api_resources [Array<K8s::API::MetaV1::APIResource>]
-    def api_resources=(api_resources)
-      @api_resources = api_resources
-    end
+    attr_writer :api_resources
 
     # Force-update APIResources
     #
     # @return [Array<K8s::API::MetaV1::APIResource>]
     def api_resources!
-      @api_resources = @transport.get(self.path,
-        response_class: K8s::API::MetaV1::APIResourceList,
-      ).resources
+      @api_resources = @transport.get(path,
+                                      response_class: K8s::API::MetaV1::APIResourceList).resources
     end
 
     # Cached APIResources
@@ -68,8 +64,7 @@ module K8s
       end
 
       ResourceClient.new(@transport, self, api_resource,
-        namespace: namespace,
-      )
+                         namespace: namespace)
     end
 
     # @param resource [K8s::Resource]
@@ -87,8 +82,7 @@ module K8s
       end
 
       ResourceClient.new(@transport, self, api_resource,
-        namespace: resource.metadata.namespace || namespace,
-      )
+                         namespace: resource.metadata.namespace || namespace)
     end
 
     # TODO: skip non-namespaced resources if namespace is given, or ignore namespace?
@@ -96,9 +90,10 @@ module K8s
     # @param namespace [String, nil]
     # @return [Array<K8s::ResourceClient>]
     def resources(namespace: nil)
-      api_resources.map{ |api_resource| ResourceClient.new(@transport, self, api_resource,
-        namespace: namespace,
-      ) }
+      api_resources.map{ |api_resource|
+        ResourceClient.new(@transport, self, api_resource,
+                           namespace: namespace)
+      }
     end
 
     # Pipeline list requests for multiple resource types.
@@ -109,7 +104,7 @@ module K8s
     # @param options @see [K8s::ResourceClient#list]
     # @return [Array<K8s::Resource>]
     def list_resources(resources = nil, **options)
-      resources ||= self.resources.select{|resource| resource.list? }
+      resources ||= self.resources.select(&:list?)
 
       ResourceClient.list(resource, @transport, **options)
     end

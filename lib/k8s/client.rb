@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'openssl'
 require 'base64'
 
@@ -19,8 +21,7 @@ module K8s
     # @return [K8s::Client]
     def self.config(config, namespace: nil, **options)
       new(Transport.config(config, **options),
-        namespace: namespace,
-      )
+          namespace: namespace)
     end
 
     # @return [K8s::Client]
@@ -41,8 +42,7 @@ module K8s
     # @return [K8s::API::Version]
     def version
       @transport.get('/version',
-        response_class: K8s::API::Version,
-      )
+                     response_class: K8s::API::Version)
     end
 
     # @param api_version [String] "group/version" or "version" (core)
@@ -57,8 +57,7 @@ module K8s
     # @return [Array<String>]
     def api_groups!
       @api_groups = @transport.get('/apis',
-        response_class: K8s::API::MetaV1::APIGroupList,
-      ).groups.map{|api_group| api_group.versions.map{|api_version| api_version.groupVersion} }.flatten
+                                   response_class: K8s::API::MetaV1::APIGroupList).groups.map{ |api_group| api_group.versions.map(&:groupVersion) }.flatten
     end
 
     # Cached /apis preferred group apiVersions
@@ -72,14 +71,14 @@ module K8s
     # @param skip_missing [Boolean] return APIClient without api_resources? if 404
     # @return [Array<APIClient>]
     def apis(api_versions = nil, prefetch_resources: false, skip_missing: false)
-      api_versions ||= ['v1'] + self.api_groups
+      api_versions ||= ['v1'] + api_groups
 
       if prefetch_resources
         # api groups that are missing their api_resources
         api_paths = api_versions
-          .uniq
-          .select{|api_version| !api(api_version).api_resources? }
-          .map{|api_version| APIClient.path(api_version) }
+                    .uniq
+                    .reject{ |api_version| api(api_version).api_resources? }
+                    .map{ |api_version| APIClient.path(api_version) }
 
         # load into APIClient.api_resources=
         @transport.gets(*api_paths, response_class: K8s::API::MetaV1::APIResourceList, skip_missing: skip_missing).each do |api_resource_list|
@@ -87,7 +86,7 @@ module K8s
         end
       end
 
-      api_versions.map{|api_version| api(api_version) }
+      api_versions.map{ |api_version| api(api_version) }
     end
 
     # @param namespace [String, nil]
@@ -104,7 +103,7 @@ module K8s
     # @param options @see K8s::ResourceClient#list
     # @return [Array<K8s::Resource>]
     def list_resources(resources = nil, **options)
-      resources ||= self.resources.select{|resource| resource.list? }
+      resources ||= self.resources.select(&:list?)
 
       ResourceClient.list(resources, @transport, **options)
     end
@@ -137,7 +136,7 @@ module K8s
     # @return [Array<K8s::Resource, nil>] matching resources array 1:1
     def get_resources(resources)
       # prefetch api resources, skip missing APIs
-      resource_apis = apis(resources.map{ |resource| resource.apiVersion }, prefetch_resources: true, skip_missing: true)
+      resource_apis = apis(resources.map(&:apiVersion), prefetch_resources: true, skip_missing: true)
 
       # map each resource to excon request options, or nil if resource is not (yet) defined
       requests = resources.zip(resource_apis).map{ |resource, api_client|
@@ -148,7 +147,7 @@ module K8s
         {
           method: 'GET',
           path: resource_client.path(resource.metadata.name, namespace: resource.metadata.namespace),
-          response_class: resource_client.resource_class,
+          response_class: resource_client.resource_class
         }
       }
 

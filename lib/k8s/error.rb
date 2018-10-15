@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 require 'forwardable'
 
 module K8s
   # Top-level class for all errors raised by this gem.
   class Error < StandardError
-
     # Kube API error, related to a HTTP response with a non-2xx code
     class API < Error
       extend Forwardable
@@ -32,14 +33,14 @@ module K8s
 
     # specific API error subtypes for HTTP status codes
     # Hash{Integer => Class<API>}
-    HTTP_STATUS_ERRORS = {}
+    HTTP_STATUS_ERRORS = {}.freeze
 
     # define a new API error type on the module for the given HTTP status code
     #
     # @param code [Integer] HTTP status code
     # @param name [Symbol] API error class name
     def self.define_status_error(code, name)
-      HTTP_STATUS_ERRORS[code] = self.const_set(name, Class.new(API))
+      HTTP_STATUS_ERRORS[code] = const_set(name, Class.new(API))
     end
 
     define_status_error 400, :BadRequest
@@ -57,7 +58,6 @@ module K8s
     # Attempt to create a ResourceClient for an unknown resource type.
     # The client cannot construct the correct API URL without having the APIResource definition.
     class UndefinedResource < Error
-
     end
   end
 end
