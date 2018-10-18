@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'securerandom'
 
 module K8s
@@ -19,7 +21,7 @@ module K8s
     PRUNE_IGNORE = [
       'v1:ComponentStatus', # apiserver ignores GET /v1/componentstatuses?labelSelector=... and returns all resources
       'v1:Endpoints', # inherits stack label from service, but not checksum annotation
-    ]
+    ].freeze
 
     # @param name [String] unique name for stack
     # @param path [String] load resources from YAML files
@@ -59,23 +61,27 @@ module K8s
     end
 
     # @param resource [K8s::Resource] to apply
-    # @param base_resource [K8s::Resource] preserve existing attributes from base resource
+    # @param base_resource [K8s::Resource] DEPRECATED
     # @return [K8s::Resource]
+    # rubocop:disable Lint/UnusedMethodArgument
     def prepare_resource(resource, base_resource: nil)
-      # XXX: base_resource is not really used anymore, kept for backwards compatibility for a while
+      # TODO: base_resource is not used anymore, kept for backwards compatibility for a while
 
       # calculate checksum  only from the "local" source
       checksum = resource.checksum
 
       # add stack metadata
-      resource.merge(metadata: {
-        labels: { @label => name },
-        annotations: {
-          @checksum_annotation => checksum,
-          @last_config_annotation => resource.to_json
-        },
-      })
+      resource.merge(
+        metadata: {
+          labels: { @label => name },
+          annotations: {
+            @checksum_annotation => checksum,
+            @last_config_annotation => resource.to_json
+          }
+        }
+      )
     end
+    # rubocop:enable Lint/UnusedMethodArgument
 
     # @return [Array<K8s::Resource>]
     def apply(client, prune: true)
@@ -107,14 +113,15 @@ module K8s
     def keep_resource!(resource)
       @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] = resource.metadata.annotations[@checksum_annotation]
     end
+
     def keep_resource?(resource)
       @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] == resource.metadata.annotations[@checksum_annotation]
     end
 
     # Delete all stack resources that were not applied
-    def prune(client, keep_resources: , skip_forbidden: true)
+    def prune(client, keep_resources:, skip_forbidden: true)
       # using skip_forbidden: assume we can't create resource types that we are forbidden to list, so we don't need to prune them either
-      client.list_resources(labelSelector: {@label => name}, skip_forbidden: skip_forbidden).sort{ |a,b|
+      client.list_resources(labelSelector: { @label => name }, skip_forbidden: skip_forbidden).sort do |a, b|
         # Sort resources so that namespaced objects are deleted first
         if a.metadata.namespace == b.metadata.namespace
           0
@@ -123,7 +130,7 @@ module K8s
         else
           -1
         end
-      }.each do |resource|
+      end.each do |resource|
         next if PRUNE_IGNORE.include? "#{resource.apiVersion}:#{resource.kind}"
 
         resource_label = resource.metadata.labels ? resource.metadata.labels[@label] : nil
@@ -139,9 +146,10 @@ module K8s
           logger.info "Delete resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
           begin
             client.delete_resource(resource, propagationPolicy: 'Background')
-          rescue K8s::Error::NotFound
+          rescue K8s::Error::NotFound => ex
             # assume aliased objects in multiple API groups, like for Deployments
             # alternatively, a custom resource whose definition was already deleted earlier
+            logger.debug { "Ignoring #{ex} : #{ex.message}" }
           end
         end
       end

@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 module K8s
   # Per-APIResource type client.
   #
   # Used to get/list/update/patch/delete specific types of resources, optionally in some specific namespace.
   class ResourceClient
-
     # Common helpers used in both class/instance methods
     module Utils
       # @param selector [nil, String, Hash{String => String}]
@@ -15,7 +16,7 @@ module K8s
         when String
           selector
         when Hash
-          selector.map{|k, v| "#{k}=#{v}"}.join ','
+          selector.map{ |k, v| "#{k}=#{v}" }.join ','
         else
           fail "Invalid selector type. #{selector.inspect}"
         end
@@ -47,17 +48,18 @@ module K8s
     # @param skip_forbidden [Boolean] skip resources that return HTTP 403 errors
     # @return [Array<K8s::Resource>]
     def self.list(resources, transport, namespace: nil, labelSelector: nil, fieldSelector: nil, skip_forbidden: false)
-      api_paths = resources.map{|resource| resource.path(namespace: namespace) }
-      api_lists = transport.gets(*api_paths,
-         response_class: K8s::API::MetaV1::List,
-         query: make_query(
-           'labelSelector' => selector_query(labelSelector),
-           'fieldSelector' => selector_query(fieldSelector),
-         ),
-         skip_forbidden: skip_forbidden,
-       )
+      api_paths = resources.map{ |resource| resource.path(namespace: namespace) }
+      api_lists = transport.gets(
+        *api_paths,
+        response_class: K8s::API::MetaV1::List,
+        query: make_query(
+          'labelSelector' => selector_query(labelSelector),
+          'fieldSelector' => selector_query(fieldSelector)
+        ),
+        skip_forbidden: skip_forbidden
+      )
 
-      resources.zip(api_lists).map {|resource, api_list| api_list ? resource.process_list(api_list) : [] }.flatten
+      resources.zip(api_lists).map { |resource, api_list| api_list ? resource.process_list(api_list) : [] }.flatten
     end
 
     # @param transport [K8s::Transport]
@@ -78,7 +80,7 @@ module K8s
         @subresource = nil
       end
 
-      fail "Resource #{api_resource.name} is not namespaced" if namespace unless api_resource.namespaced
+      fail "Resource #{api_resource.name} is not namespaced" unless api_resource.namespaced || !namespace
     end
 
     # @return [String]
@@ -92,14 +94,10 @@ module K8s
     end
 
     # @return [String, nil]
-    def namespace
-      @namespace
-    end
+    attr_reader :namespace
 
     # @return [String]
-    def resource
-      @resource
-    end
+    attr_reader :resource
 
     # @return [Boolean]
     def subresource?
@@ -107,9 +105,7 @@ module K8s
     end
 
     # @return [String, nil]
-    def subresource
-      @subresource
-    end
+    attr_reader :subresource
 
     # @return [String]
     def kind
@@ -117,9 +113,7 @@ module K8s
     end
 
     # @return [class] K8s::Resource
-    def resource_class
-      @resource_class
-    end
+    attr_reader :resource_class
 
     # @return [Bool]
     def namespaced?
@@ -149,9 +143,9 @@ module K8s
     def create_resource(resource)
       @transport.request(
         method: 'POST',
-        path: self.path(namespace: resource.metadata.namespace),
+        path: path(namespace: resource.metadata.namespace),
         request_object: resource,
-        response_class: @resource_class,
+        response_class: @resource_class
       )
     end
 
@@ -164,8 +158,8 @@ module K8s
     def get(name, namespace: @namespace)
       @transport.request(
         method: 'GET',
-        path: self.path(name, namespace: namespace),
-        response_class: @resource_class,
+        path: path(name, namespace: namespace),
+        response_class: @resource_class
       )
     end
 
@@ -174,8 +168,8 @@ module K8s
     def get_resource(resource)
       @transport.request(
         method: 'GET',
-        path: self.path(resource.metadata.name, namespace: resource.metadata.namespace),
-        response_class: @resource_class,
+        path: path(resource.metadata.name, namespace: resource.metadata.namespace),
+        response_class: @resource_class
       )
     end
 
@@ -187,7 +181,7 @@ module K8s
     # @param list [K8s::API::MetaV1::List]
     # @return [Array<resource_class>]
     def process_list(list)
-      list.items.map {|item|
+      list.items.map { |item|
         # list items omit kind/apiVersion
         @resource_class.new(item.merge('apiVersion' => list.apiVersion, 'kind' => @api_resource.kind))
       }
@@ -199,12 +193,12 @@ module K8s
     def list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
       list = @transport.request(
         method: 'GET',
-        path: self.path(namespace: namespace),
+        path: path(namespace: namespace),
         response_class: K8s::API::MetaV1::List,
         query: make_query(
           'labelSelector' => selector_query(labelSelector),
-          'fieldSelector' => selector_query(fieldSelector),
-        ),
+          'fieldSelector' => selector_query(fieldSelector)
+        )
       )
       process_list(list)
     end
@@ -219,9 +213,9 @@ module K8s
     def update_resource(resource)
       @transport.request(
         method: 'PUT',
-        path: self.path(resource.metadata.name, namespace: resource.metadata.namespace),
+        path: path(resource.metadata.name, namespace: resource.metadata.namespace),
         request_object: resource,
-        response_class: @resource_class,
+        response_class: @resource_class
       )
     end
 
@@ -238,10 +232,10 @@ module K8s
     def merge_patch(name, obj, namespace: @namespace, strategic_merge: true)
       @transport.request(
         method: 'PATCH',
-        path: self.path(name, namespace: namespace),
+        path: path(name, namespace: namespace),
         content_type: strategic_merge ? 'application/strategic-merge-patch+json' : 'application/merge-patch+json',
         request_object: obj,
-        response_class: @resource_class,
+        response_class: @resource_class
       )
     end
 
@@ -252,10 +246,10 @@ module K8s
     def json_patch(name, ops, namespace: @namespace)
       @transport.request(
         method: 'PATCH',
-        path: self.path(name, namespace: namespace),
+        path: path(name, namespace: namespace),
         content_type: 'application/json-patch+json',
         request_object: ops,
-        response_class: @resource_class,
+        response_class: @resource_class
       )
     end
 
@@ -271,7 +265,7 @@ module K8s
     def delete(name, namespace: @namespace, propagationPolicy: nil)
       @transport.request(
         method: 'DELETE',
-        path: self.path(name, namespace: namespace),
+        path: path(name, namespace: namespace),
         query: make_query(
           'propagationPolicy' => propagationPolicy
         ),
@@ -286,11 +280,11 @@ module K8s
     def delete_collection(namespace: @namespace, labelSelector: nil, fieldSelector: nil, propagationPolicy: nil)
       list = @transport.request(
         method: 'DELETE',
-        path: self.path(namespace: namespace),
+        path: path(namespace: namespace),
         query: make_query(
           'labelSelector' => selector_query(labelSelector),
           'fieldSelector' => selector_query(fieldSelector),
-          'propagationPolicy' => propagationPolicy,
+          'propagationPolicy' => propagationPolicy
         ),
         response_class: K8s::API::MetaV1::List, # XXX: documented as returning Status
       )

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'deep_merge'
 require 'recursive-open-struct'
 require 'hashdiff'
@@ -11,7 +13,7 @@ module K8s
     # @param data [Hash]
     # @return [self]
     def self.from_json(data)
-      return new(data)
+      new(data)
     end
 
     # @param filename [String] file path
@@ -27,9 +29,9 @@ module K8s
 
       if stat.directory?
         # recurse
-        Dir.glob("#{path}/*.{yml,yaml}").sort.map { |dir| self.from_files(dir) }.flatten
+        Dir.glob("#{path}/*.{yml,yaml}").sort.map { |dir| from_files(dir) }.flatten
       else
-        ::YAML.load_stream(File.read(path), path).map{|doc| new(doc) }
+        ::YAML.load_stream(File.read(path), path).map{ |doc| new(doc) }
       end
     end
 
@@ -67,7 +69,7 @@ module K8s
     end
 
     def checksum
-      @checksum ||= Digest::MD5.hexdigest(Marshal::dump(to_hash))
+      @checksum ||= Digest::MD5.hexdigest(Marshal.dump(to_hash))
     end
 
     def merge_patch_ops(attrs, config_annotation)
@@ -78,7 +80,7 @@ module K8s
     #
     # @return [Hash]
     def current_config(config_annotation)
-      current_cfg = self.metadata.annotations&.dig(config_annotation)
+      current_cfg = metadata.annotations&.dig(config_annotation)
       return {} unless current_cfg
 
       current_hash = JSON.parse(current_cfg)
@@ -89,11 +91,11 @@ module K8s
     end
 
     def can_patch?(config_annotation)
-      !!self.metadata.annotations&.dig(config_annotation)
+      !!metadata.annotations&.dig(config_annotation)
     end
 
     def stringify_hash(hash)
-      JSON.load(JSON.dump(hash))
+      JSON.parse(JSON.dump(hash))
     end
   end
 end

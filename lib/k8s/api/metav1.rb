@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'k8s/api'
 
 module K8s

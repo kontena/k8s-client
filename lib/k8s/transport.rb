@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'excon'
 require 'json'
 
@@ -11,13 +13,13 @@ module K8s
     # Excon middlewares for requests
     EXCON_MIDDLEWARES = [
       # XXX: necessary? redirected requests omit authz headers?
-      Excon::Middleware::RedirectFollower,
+      Excon::Middleware::RedirectFollower
     ] + Excon.defaults[:middlewares]
 
     # Default request headers
     REQUEST_HEADERS = {
-      'Accept' => 'application/json',
-    }
+      'Accept' => 'application/json'
+    }.freeze
 
     # Construct transport from kubeconfig
     #
@@ -81,10 +83,11 @@ module K8s
       host = ENV['KUBERNETES_SERVICE_HOST']
       port = ENV['KUBERNETES_SERVICE_PORT_HTTPS']
 
-      new("https://#{host}:#{port}",
+      new(
+        "https://#{host}:#{port}",
         ssl_verify_peer: true,
         ssl_ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
-        auth_token: File.read('/var/run/secrets/kubernetes.io/serviceaccount/token'),
+        auth_token: File.read('/var/run/secrets/kubernetes.io/serviceaccount/token')
       )
     end
 
@@ -103,7 +106,8 @@ module K8s
 
     # @return [Excon::Connection]
     def excon
-      @excon ||= Excon.new(@server,
+      @excon ||= Excon.new(
+        @server,
         persistent: true,
         middlewares: EXCON_MIDDLEWARES,
         headers: REQUEST_HEADERS,
@@ -145,6 +149,7 @@ module K8s
       if options[:query]
         path += Excon::Utils.query_string(options)
       end
+
       if obj = options[:request_object]
         body = "<#{obj.class.name}>"
       end
@@ -178,11 +183,9 @@ module K8s
           raise K8s::Error::API.new(method, path, response.status, "Invalid JSON response: #{response_data.inspect}")
         end
 
-        if response_class
-          return response_class.from_json(response_data)
-        else
-          return response_data # Hash
-        end
+        return response_data unless response_class
+
+        response_class.from_json(response_data)
       else
         error_class = K8s::Error::HTTP_STATUS_ERRORS[response.status] || K8s::Error::API
 
@@ -208,18 +211,17 @@ module K8s
       t = Time.now - start
 
       obj = parse_response(response, options,
-        response_class: response_class,
-      )
+                           response_class: response_class)
     rescue K8s::Error::API => exc
-      logger.warn { "#{format_request(options)} => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s"}
-      logger.debug { "Request: #{excon_options[:body]}"} if excon_options[:body]
-      logger.debug { "Response: #{response.body}"}
+      logger.warn { "#{format_request(options)} => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s" }
+      logger.debug { "Request: #{excon_options[:body]}" } if excon_options[:body]
+      logger.debug { "Response: #{response.body}" }
       raise
     else
-      logger.info { "#{format_request(options)} => HTTP #{response.status}: <#{obj.class}> in #{'%.3f' % t}s"}
-      logger.debug { "Request: #{excon_options[:body]}"} if excon_options[:body]
-      logger.debug { "Response: #{response.body}"}
-      return obj
+      logger.info { "#{format_request(options)} => HTTP #{response.status}: <#{obj.class}> in #{'%.3f' % t}s" }
+      logger.debug { "Request: #{excon_options[:body]}" } if excon_options[:body]
+      logger.debug { "Response: #{response.body}" }
+      obj
     end
 
     # @param options [Array<Hash>] @see #request
@@ -233,46 +235,39 @@ module K8s
 
       start = Time.now
       responses = excon.requests(
-        options.map{|options| request_options(**common_options.merge(options))}
+        options.map{ |opts| request_options(**common_options.merge(opts)) }
       )
       t = Time.now - start
 
-      objects = responses.zip(options).map{|response, request_options|
+      objects = responses.zip(options).map{ |response, request_options|
         response_class = request_options[:response_class] || common_options[:response_class]
 
         begin
           parse_response(response, request_options,
-            response_class: response_class,
-          )
+                         response_class: response_class)
         rescue K8s::Error::NotFound
-          if skip_missing
-            nil
-          else
-            raise
-          end
-        rescue K8s::Error::Forbidden
-          if skip_forbidden
-            nil
-          else
-            raise
-          end
-        rescue K8s::Error::ServiceUnavailable => exc
-          if retry_errors
-            logger.warn { "Retry #{format_request(request_options)} => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s" }
+          raise unless skip_missing
 
-            # only retry the failed request, not the entire pipeline
-            request(response_class: response_class, **common_options.merge(request_options))
-          else
-            raise
-          end
+          nil
+        rescue K8s::Error::Forbidden
+          raise unless skip_forbidden
+
+          nil
+        rescue K8s::Error::ServiceUnavailable => exc
+          raise unless retry_errors
+
+          logger.warn { "Retry #{format_request(request_options)} => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s" }
+
+          # only retry the failed request, not the entire pipeline
+          request(response_class: response_class, **common_options.merge(request_options))
         end
       }
     rescue K8s::Error => exc
-      logger.warn { "[#{options.map{|o| format_request(o)}.join ', '}] => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s"}
+      logger.warn { "[#{options.map{ |o| format_request(o) }.join ', '}] => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s" }
       raise
     else
-      logger.info { "[#{options.map{|o| format_request(o)}.join ', '}] => HTTP [#{responses.map{|r| r.status}.join ', '}] in #{'%.3f' % t}s" }
-      return objects
+      logger.info { "[#{options.map{ |o| format_request(o) }.join ', '}] => HTTP [#{responses.map(&:status).join ', '}] in #{'%.3f' % t}s" }
+      objects
     end
 
     # @param path [Array<String>] @see #path
@@ -281,17 +276,20 @@ module K8s
       request(
         method: 'GET',
         path: self.path(*path),
-        **options,
+        **options
       )
     end
 
     # @param paths [Array<String>]
     # @param options [Hash] @see #request
     def gets(*paths, **options)
-      requests(*paths.map{|path| {
-          method: 'GET',
-          path: self.path(path),
-        } },
+      requests(
+        *paths.map do |path|
+          {
+            method: 'GET',
+            path: self.path(path)
+          }
+        end,
         **options
       )
     end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module K8s
   module API
     # GET /version

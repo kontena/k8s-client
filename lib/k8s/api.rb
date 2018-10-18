@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'dry-types'
 require 'dry-struct'
 
@@ -17,7 +19,7 @@ module K8s
       # @param data [Hash]
       # @return [self]
       def self.from_json(data)
-        return new(data)
+        new(data)
       end
 
       # @return [String]

@@ -6,6 +6,10 @@
 /pkg/
 /spec/reports/
 /tmp/
+Gemfile.lock
+.ruby-version
 
 # rspec failure tracking
 .rspec_status
+.rspec-local
+

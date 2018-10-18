@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 require 'forwardable'
 
 module K8s
   # Top-level class for all errors raised by this gem.
   class Error < StandardError
-
     # Kube API error, related to a HTTP response with a non-2xx code
     class API < Error
       extend Forwardable
@@ -30,34 +31,34 @@ module K8s
       end
     end
 
-    # specific API error subtypes for HTTP status codes
-    # Hash{Integer => Class<API>}
-    HTTP_STATUS_ERRORS = {}
+    BadRequest = Class.new(API).freeze
+    Unauthorized = Class.new(API).freeze
+    Forbidden = Class.new(API).freeze
+    NotFound = Class.new(API).freeze
+    MethodNotAllowed = Class.new(API).freeze
+    Conflict = Class.new(API).freeze # XXX: also AlreadyExists?
+    Invalid = Class.new(API).freeze
+    Timeout = Class.new(API).freeze
+    InternalError = Class.new(API).freeze
+    ServiceUnavailable = Class.new(API).freeze
+    ServerTimeout = Class.new(API).freeze
 
-    # define a new API error type on the module for the given HTTP status code
-    #
-    # @param code [Integer] HTTP status code
-    # @param name [Symbol] API error class name
-    def self.define_status_error(code, name)
-      HTTP_STATUS_ERRORS[code] = self.const_set(name, Class.new(API))
-    end
-
-    define_status_error 400, :BadRequest
-    define_status_error 401, :Unauthorized
-    define_status_error 403, :Forbidden
-    define_status_error 404, :NotFound
-    define_status_error 405, :MethodNotAllowed
-    define_status_error 409, :Conflict # XXX: also AlreadyExists?
-    define_status_error 422, :Invalid
-    define_status_error 429, :Timeout
-    define_status_error 500, :InternalError
-    define_status_error 503, :ServiceUnavailable
-    define_status_error 504, :ServerTimeout
+    HTTP_STATUS_ERRORS = {
+      400 => BadRequest,
+      401 => Unauthorized,
+      403 => Forbidden,
+      404 => NotFound,
+      405 => MethodNotAllowed,
+      409 => Conflict,
+      422 => Invalid,
+      429 => Timeout,
+      500 => InternalError,
+      503 => ServiceUnavailable,
+      504 => ServerTimeout
+    }.freeze
 
     # Attempt to create a ResourceClient for an unknown resource type.
     # The client cannot construct the correct API URL without having the APIResource definition.
-    class UndefinedResource < Error
-
-    end
+    UndefinedResource = Class.new(Error)
   end
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'dry-struct'
 require 'dry-types'
 require 'yaml'
@@ -11,7 +13,7 @@ module K8s
     transform_keys do |key|
       case key
       when String
-        key.gsub('-', '_').to_sym
+        key.tr('-', '_').to_sym
       else
         key
       end
@@ -20,7 +22,6 @@ module K8s
 
   # @see https://godoc.org/k8s.io/client-go/tools/clientcmd/api/v1#Config
   class Config < ConfigStruct
-
     # Common dry-types for config
     class Types
       include Dry::Types.module
@@ -93,23 +94,23 @@ module K8s
     # @param path [String]
     # @return [K8s::Config]
     def self.load_file(path)
-      return new(YAML.load_file(path))
+      new(YAML.load_file(path))
     end
 
     # TODO: raise error if not found
     # @return [K8s::Config::Context]
     def context(name = current_context)
-      contexts.find{|context| context.name == name}.context
+      contexts.find{ |context| context.name == name }.context
     end
 
     # @return [K8s::Config::Cluster]
     def cluster(name = context.cluster)
-      clusters.find{|cluster| cluster.name == name}.cluster
+      clusters.find{ |cluster| cluster.name == name }.cluster
     end
 
     # @return [K8s::Config::User]
     def user(name = context.user)
-      users.find{|user| user.name == name}.user
+      users.find{ |user| user.name == name }.user
     end
   end
 end
