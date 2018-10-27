@@ -73,9 +73,9 @@ module K8s
       elsif config.user.auth_provider && auth_provider = config.user.auth_provider.config
         logger.debug "Using config with .user.auth-provider.name=#{config.user.auth_provider.name}"
 
-        auth_data = `#{auth_provider['cmd_path']} #{auth_provider['cmd_args']}`.strip
-        if auth_provider['token_key']
-          json_path = JsonPath.new(auth_provider['token_key'][1...-1])
+        auth_data = `#{auth_provider['cmd-path']} #{auth_provider['cmd-args']}`.strip
+        if auth_provider['token-key']
+          json_path = JsonPath.new(auth_provider['token-key'][1...-1])
           options[:auth_token] = json_path.first(auth_data)
         else
           options[:auth_token] = auth_data

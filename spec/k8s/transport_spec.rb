@@ -127,9 +127,9 @@ RSpec.describe K8s::Transport do
               auth_provider: {
                 name: 'fake',
                 config: {
-                  'cmd_path' => 'cat',
-                  'cmd_args' => "#{fixture_path}/config/kubeconfig_auth_provider_data.json",
-                  'token_key' => '{.credential.access_token}'
+                  'cmd-path' => 'cat',
+                  'cmd-args' => "#{fixture_path}/config/kubeconfig_auth_provider_data.json",
+                  'token-key' => '{.credential.access_token}'
                 }
               }
             }
