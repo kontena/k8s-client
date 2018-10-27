@@ -4,7 +4,7 @@ module K8s
   # Miscellaneous helpers
   module Util
     PATH_TR_MAP = { '~' => '~0', '/' => '~1' }.freeze
-    PATH_REGEX = %r{(/|~(?!1))}
+    PATH_REGEX = %r{(/|~(?!1))}.freeze
 
     # Yield with all non-nil args, returning matching array with corresponding return values or nils.
     #
