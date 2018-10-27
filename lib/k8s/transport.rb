@@ -2,6 +2,7 @@
 
 require 'excon'
 require 'json'
+require 'jsonpath'
 
 module K8s
   # Excon-based HTTP transport handling request/response body JSON encoding
@@ -69,6 +70,16 @@ module K8s
         logger.debug "Using config with .user.token=..."
 
         options[:auth_token] = token
+      elsif config.user.auth_provider && auth_provider = config.user.auth_provider.config
+        logger.debug "Using config with .user.auth-provider.name=#{config.user.auth_provider.name}"
+
+        auth_data = `#{auth_provider['cmd-path']} #{auth_provider['cmd-args']}`.strip
+        if auth_provider['token-key']
+          json_path = JsonPath.new(auth_provider['token-key'][1...-1])
+          options[:auth_token] = json_path.first(auth_data)
+        else
+          options[:auth_token] = auth_data
+        end
       end
 
       logger.info "Using config with server=#{server}"

@@ -42,6 +42,12 @@ module K8s
       attribute :cluster, Cluster
     end
 
+    # structured user auth provider
+    class UserAuthProvider < ConfigStruct
+      attribute :name, Types::String
+      attribute :config, Types::Strict::Hash
+    end
+
     # structured user
     class User < ConfigStruct
       attribute :client_certificate, Types::String.optional.default(nil)
@@ -55,7 +61,7 @@ module K8s
       attribute :as_user_extra, Types::Hash.optional.default(nil)
       attribute :username, Types::String.optional.default(nil)
       attribute :password, Types::String.optional.default(nil)
-      attribute :auth_provider, Types::Strict::Hash.optional.default(nil)
+      attribute :auth_provider, UserAuthProvider.optional.default(nil)
       attribute :exec, Types::Strict::Hash.optional.default(nil)
       attribute :extensions, Types::Strict::Array.optional.default(nil)
     end
