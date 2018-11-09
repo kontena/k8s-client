@@ -189,9 +189,19 @@ module K8s
 
     # @param labelSelector [nil, String, Hash{String => String}]
     # @param fieldSelector [nil, String, Hash{String => String}]
+    # @param namespace [nil, String]
     # @return [Array<resource_class>]
     def list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
-      list = @transport.request(
+      list = meta_list(labelSelector: labelSelector, fieldSelector: fieldSelector, namespace: namespace)
+      process_list(list)
+    end
+
+    # @param labelSelector [nil, String, Hash{String => String}]
+    # @param fieldSelector [nil, String, Hash{String => String}]
+    # @param namespace [nil, String]
+    # @return [K8s::API::MetaV1::List]
+    def meta_list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
+      @transport.request(
         method: 'GET',
         path: path(namespace: namespace),
         response_class: K8s::API::MetaV1::List,
@@ -200,7 +210,31 @@ module K8s
           'fieldSelector' => selector_query(fieldSelector)
         )
       )
-      process_list(list)
+    end
+
+    # @param labelSelector [nil, String, Hash{String => String}]
+    # @param fieldSelector [nil, String, Hash{String => String}]
+    # @param resourceVersion [nil, String]
+    # @return [Array<resource_class>]
+    def watch(labelSelector: nil, fieldSelector: nil, resourceVersion: nil, namespace: @namespace)
+      streamer = lambda do |chunk, remaining_bytes, total_bytes|
+        data = JSON.parse(chunk)
+        yield data['type'], K8s::Resource.new(data['object'])
+      end
+
+      @transport.request(
+        method: 'GET',
+        path: path(namespace: namespace),
+        response_class: K8s::API::MetaV1::List,
+        query: make_query(
+          'labelSelector' => selector_query(labelSelector),
+          'fieldSelector' => selector_query(fieldSelector),
+          'resourceVersion' => resourceVersion,
+          'watch' => '1'
+        ),
+        response_block: streamer,
+        read_timeout: nil
+      )
     end
 
     # @return [Bool]
