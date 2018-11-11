@@ -36,11 +36,6 @@ module K8s
     include Utils
     extend Utils
 
-    STREAMER = lambda do |chunk, _, _|
-      data = JSON.parse(chunk)
-      yield data['type'], K8s::Resource.new(data['object'])
-    end
-
     # Pipeline list requests for multiple resource types.
     #
     # Returns flattened array with mixed resource kinds.
@@ -220,8 +215,9 @@ module K8s
     # @param labelSelector [nil, String, Hash{String => String}]
     # @param fieldSelector [nil, String, Hash{String => String}]
     # @param resourceVersion [nil, String]
-    # @return [Array<resource_class>]
-    def watch(labelSelector: nil, fieldSelector: nil, resourceVersion: nil, namespace: @namespace)
+    # @param timeout [nil, Integer]
+    # @raise [Excon::Error]
+    def watch(labelSelector: nil, fieldSelector: nil, resourceVersion: nil, timeout: nil, namespace: @namespace)
       @transport.request(
         method: 'GET',
         path: path(namespace: namespace),
@@ -232,8 +228,11 @@ module K8s
           'resourceVersion' => resourceVersion,
           'watch' => '1'
         ),
-        response_block: STREAMER,
-        read_timeout: nil
+        response_block: lambda do |chunk, _, _|
+          data = JSON.parse(chunk)
+          yield K8s::API::MetaV1::WatchEvent.new(data)
+        end,
+        read_timeout: timeout
       )
     end
 
