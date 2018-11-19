@@ -216,6 +216,7 @@ module K8s
     # @param fieldSelector [nil, String, Hash{String => String}]
     # @param resourceVersion [nil, String]
     # @param timeout [nil, Integer]
+    # @yield [K8S::API::MetaV1::WatchEvent]
     # @raise [Excon::Error]
     def watch(labelSelector: nil, fieldSelector: nil, resourceVersion: nil, timeout: nil, namespace: @namespace)
       method = 'GET'
