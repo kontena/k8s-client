@@ -45,6 +45,8 @@ module K8s
       new(Transport.in_cluster_config)
     end
 
+    attr_reader :transport
+
     # @param transport [K8s::Transport]
     # @param namespace [String] default namespace for all operations
     def initialize(transport, namespace: nil)
