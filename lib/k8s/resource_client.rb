@@ -189,9 +189,19 @@ module K8s
 
     # @param labelSelector [nil, String, Hash{String => String}]
     # @param fieldSelector [nil, String, Hash{String => String}]
+    # @param namespace [nil, String]
     # @return [Array<resource_class>]
     def list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
-      list = @transport.request(
+      list = meta_list(labelSelector: labelSelector, fieldSelector: fieldSelector, namespace: namespace)
+      process_list(list)
+    end
+
+    # @param labelSelector [nil, String, Hash{String => String}]
+    # @param fieldSelector [nil, String, Hash{String => String}]
+    # @param namespace [nil, String]
+    # @return [K8s::API::MetaV1::List]
+    def meta_list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
+      @transport.request(
         method: 'GET',
         path: path(namespace: namespace),
         response_class: K8s::API::MetaV1::List,
@@ -200,7 +210,41 @@ module K8s
           'fieldSelector' => selector_query(fieldSelector)
         )
       )
-      process_list(list)
+    end
+
+    # @param labelSelector [nil, String, Hash{String => String}]
+    # @param fieldSelector [nil, String, Hash{String => String}]
+    # @param resourceVersion [nil, String]
+    # @param timeout [nil, Integer]
+    # @yield [K8S::API::MetaV1::WatchEvent]
+    # @raise [Excon::Error]
+    def watch(labelSelector: nil, fieldSelector: nil, resourceVersion: nil, timeout: nil, namespace: @namespace)
+      method = 'GET'
+      path = path(namespace: namespace)
+      @transport.request(
+        method: method,
+        path: path,
+        response_class: K8s::API::MetaV1::List,
+        query: make_query(
+          'labelSelector' => selector_query(labelSelector),
+          'fieldSelector' => selector_query(fieldSelector),
+          'resourceVersion' => resourceVersion,
+          'watch' => '1'
+        ),
+        response_block: lambda do |chunk, _, _|
+          data = JSON.parse(chunk)
+          event = K8s::API::MetaV1::WatchEvent.new(data)
+          resourceVersion = event.resource&.metadata&.resourceVersion
+          yield event
+        end,
+        read_timeout: timeout
+      )
+    rescue Excon::Error::Timeout
+      if timeout.nil?
+        retry # continues from the last event (just in case that something unexpected happens)
+      else
+        raise K8s::Error::Timeout.new(method, path, 408, 'timeout')
+      end
     end
 
     # @return [Bool]
