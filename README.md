@@ -204,6 +204,14 @@ client.api('apps/v1').resource('deployments', namespace: 'default').merge_patch(
 })
 ```
 
+### Watching resources
+
+```ruby
+client.api('v1').resource('pods', namespace: 'default').watch(labelSelector: {'role' => 'test'}) do |watch_event|
+  puts "type=#{watch_event.type} pod=#{watch_event.resource.metadata.name}"
+end
+```
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/kontena/k8s-client.
