@@ -240,11 +240,9 @@ module K8s
         read_timeout: timeout
       )
     rescue Excon::Error::Timeout
-      if timeout.nil?
-        retry # continues from the last event (just in case that something unexpected happens)
-      else
-        raise K8s::Error::Timeout.new(method, path, 408, 'timeout')
-      end
+      retry if timeout.nil?
+
+      raise K8s::Error::Timeout.new(method, path, 408, 'timeout')
     end
 
     # @return [Bool]

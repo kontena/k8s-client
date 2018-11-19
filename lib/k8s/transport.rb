@@ -190,6 +190,8 @@ module K8s
       end
 
       if response.status.between? 200, 299
+        return response_data if content_type == 'text/plain'
+
         unless response_data.is_a? Hash
           raise K8s::Error::API.new(method, path, response.status, "Invalid JSON response: #{response_data.inspect}")
         end
