@@ -218,9 +218,11 @@ module K8s
     # @param timeout [nil, Integer]
     # @raise [Excon::Error]
     def watch(labelSelector: nil, fieldSelector: nil, resourceVersion: nil, timeout: nil, namespace: @namespace)
+      method = 'GET'
+      path = path(namespace: namespace)
       @transport.request(
-        method: 'GET',
-        path: path(namespace: namespace),
+        method: method,
+        path: path,
         response_class: K8s::API::MetaV1::List,
         query: make_query(
           'labelSelector' => selector_query(labelSelector),
@@ -230,10 +232,18 @@ module K8s
         ),
         response_block: lambda do |chunk, _, _|
           data = JSON.parse(chunk)
-          yield K8s::API::MetaV1::WatchEvent.new(data)
+          event = K8s::API::MetaV1::WatchEvent.new(data)
+          resourceVersion = event.resource&.metadata&.resourceVersion
+          yield event
         end,
         read_timeout: timeout
       )
+    rescue Excon::Error::Timeout
+      if timeout.nil?
+        retry # continues from the last event (just in case that something unexpected happens)
+      else
+        raise K8s::Error::Timeout.new(method, path, 408, 'timeout')
+      end
     end
 
     # @return [Bool]
