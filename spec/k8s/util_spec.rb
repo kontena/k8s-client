@@ -21,6 +21,27 @@ RSpec.describe K8s::Util do
     end
   end
 
+  describe '#recursive_compact' do
+    it 'compacts hashes recursively' do
+      expect(described_class.recursive_compact({
+        a: "a",
+        b: nil,
+        c: {
+          ca: "ca",
+          cb: nil
+        },
+        d: [1],
+        e: []
+      })).to eq({
+        a: "a",
+        c: {
+          ca: "ca",
+        },
+        d: [1]
+      })
+    end
+  end
+
   describe '#json_patch' do
     it 'handles inner hash addition' do
       a = {
@@ -137,7 +158,7 @@ RSpec.describe K8s::Util do
       }
       expect(described_class.json_patch(a, b)).to eq([
         {
-          op:'replace', 
+          op:'replace',
           path:'/annotations/kubectl.kubernetes.io~1last-applied-configuration',
           value: 'b'
         }

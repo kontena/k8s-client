@@ -25,6 +25,20 @@ module K8s
       args.map{ |arg| value_map[arg] }
     end
 
+    # Recursive compact for Hash/Array
+    #
+    # @param hash_or_array [Hash,Array]
+    # @return [Hash,Array]
+    def self.recursive_compact(hash_or_array)
+      p = proc do |*args|
+        v = args.last
+        v.delete_if(&p) if v.respond_to?(:delete_if)
+        v.nil? || v.respond_to?(:"empty?") && v.empty?
+      end
+
+      hash_or_array.delete_if(&p)
+    end
+
     # Produces a set of json-patch operations so that applying
     # the operations on a, gives you the results of b
     # Used in correctly patching the Kube resources on stack updates
