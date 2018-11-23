@@ -21,6 +21,42 @@ RSpec.describe K8s::Util do
     end
   end
 
+  describe '#recursive_compact' do
+    it 'compacts hashes recursively with k8s style' do
+      hash = YAML::load('
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: web-allow-external
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+      foo: ""
+      bar: {}
+      baz: []
+  ingress:
+  - from: []
+')
+      expect(described_class.recursive_compact(hash)).to eq({
+        "apiVersion"=>"networking.k8s.io/v1",
+        "kind"=>"NetworkPolicy",
+        "metadata"=>{"name"=>"web-allow-external"},
+        "spec"=>{
+          "podSelector"=>{
+            "matchLabels"=>{
+              "app"=>"web",
+              "foo"=>""
+            }
+          },
+          "ingress"=>[{
+            "from"=>[]
+          }]
+        }
+      })
+    end
+  end
+
   describe '#json_patch' do
     it 'handles inner hash addition' do
       a = {
@@ -137,7 +173,7 @@ RSpec.describe K8s::Util do
       }
       expect(described_class.json_patch(a, b)).to eq([
         {
-          op:'replace', 
+          op:'replace',
           path:'/annotations/kubectl.kubernetes.io~1last-applied-configuration',
           value: 'b'
         }

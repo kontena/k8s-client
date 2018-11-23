@@ -76,7 +76,7 @@ module K8s
           labels: { @label => name },
           annotations: {
             @checksum_annotation => checksum,
-            @last_config_annotation => resource.to_json
+            @last_config_annotation => Util.recursive_compact(resource.to_h).to_json
           }
         }
       )
