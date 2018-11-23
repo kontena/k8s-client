@@ -3,6 +3,7 @@
 require 'deep_merge'
 require 'recursive-open-struct'
 require 'hashdiff'
+require 'forwardable'
 
 module K8s
   # generic untyped resource
