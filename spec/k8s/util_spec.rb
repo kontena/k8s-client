@@ -22,22 +22,37 @@ RSpec.describe K8s::Util do
   end
 
   describe '#recursive_compact' do
-    it 'compacts hashes recursively' do
-      expect(described_class.recursive_compact({
-        a: "a",
-        b: nil,
-        c: {
-          ca: "ca",
-          cb: nil
-        },
-        d: [1],
-        e: []
-      })).to eq({
-        a: "a",
-        c: {
-          ca: "ca",
-        },
-        d: [1]
+    it 'compacts hashes recursively with k8s style' do
+      hash = YAML::load('
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: web-allow-external
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+      foo: ""
+      bar: {}
+      baz: []
+  ingress:
+  - from: []
+')
+      expect(described_class.recursive_compact(hash)).to eq({
+        "apiVersion"=>"networking.k8s.io/v1",
+        "kind"=>"NetworkPolicy",
+        "metadata"=>{"name"=>"web-allow-external"},
+        "spec"=>{
+          "podSelector"=>{
+            "matchLabels"=>{
+              "app"=>"web",
+              "foo"=>""
+            }
+          },
+          "ingress"=>[{
+            "from"=>[]
+          }]
+        }
       })
     end
   end

@@ -32,8 +32,8 @@ module K8s
     def self.recursive_compact(hash_or_array)
       p = proc do |*args|
         v = args.last
-        v.delete_if(&p) if v.respond_to?(:delete_if)
-        v.nil? || v.respond_to?(:"empty?") && v.empty?
+        v.delete_if(&p) if v.respond_to?(:delete_if) && !v.is_a?(Array)
+        v.nil? || v.respond_to?(:empty?) && (v.empty? && (v.is_a?(Hash) || v.is_a?(Array)))
       end
 
       hash_or_array.delete_if(&p)
