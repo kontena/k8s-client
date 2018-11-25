@@ -224,12 +224,12 @@ module K8s
       @transport.request(
         method: method,
         path: path,
-        response_class: K8s::API::MetaV1::List,
         query: make_query(
           'labelSelector' => selector_query(labelSelector),
           'fieldSelector' => selector_query(fieldSelector),
           'resourceVersion' => resourceVersion,
-          'watch' => '1'
+          'watch' => '1',
+          'timeoutSeconds' => timeout
         ),
         response_block: lambda do |chunk, _, _|
           data = JSON.parse(chunk)
@@ -237,7 +237,7 @@ module K8s
           resourceVersion = event.resource&.metadata&.resourceVersion
           yield event
         end,
-        read_timeout: timeout
+        timeout: nil
       )
     rescue Excon::Error::Timeout
       retry if timeout.nil?
