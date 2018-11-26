@@ -237,7 +237,7 @@ module K8s
           resourceVersion = event.resource&.metadata&.resourceVersion
           yield event
         end,
-        timeout: nil
+        read_timeout: nil
       )
     rescue Excon::Error::Timeout
       retry if timeout.nil?
