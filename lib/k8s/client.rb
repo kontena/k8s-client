@@ -2,6 +2,7 @@
 
 require 'openssl'
 require 'base64'
+require 'yajl'
 
 require 'k8s/api/metav1'
 require 'k8s/api/version'

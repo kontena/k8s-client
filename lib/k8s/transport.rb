@@ -181,7 +181,7 @@ module K8s
 
       case content_type
       when 'application/json'
-        response_data = JSON.parse(response.body)
+        response_data = Yajl::Parser.parse(response.body)
 
       when 'text/plain'
         response_data = response.body # XXX: broken if status 2xx

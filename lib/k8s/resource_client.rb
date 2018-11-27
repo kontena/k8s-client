@@ -221,9 +221,15 @@ module K8s
     def watch(labelSelector: nil, fieldSelector: nil, resourceVersion: nil, timeout: nil, namespace: @namespace)
       method = 'GET'
       path = path(namespace: namespace)
+      parser = Yajl::Parser.new
+      parser.on_parse_complete = lambda do |data|
+        event = K8s::API::MetaV1::WatchEvent.new(data)
+        yield event
+      end
       @transport.request(
         method: method,
         path: path,
+        read_timeout: nil,
         query: make_query(
           'labelSelector' => selector_query(labelSelector),
           'fieldSelector' => selector_query(fieldSelector),
@@ -232,17 +238,12 @@ module K8s
           'timeoutSeconds' => timeout
         ),
         response_block: lambda do |chunk, _, _|
-          data = JSON.parse(chunk)
-          event = K8s::API::MetaV1::WatchEvent.new(data)
-          resourceVersion = event.resource&.metadata&.resourceVersion
-          yield event
-        end,
-        read_timeout: nil
+          begin
+            parser << chunk
+          rescue
+          end
+        end
       )
-    rescue Excon::Error::Timeout
-      retry if timeout.nil?
-
-      raise K8s::Error::Timeout.new(method, path, 408, 'timeout')
     end
 
     # @return [Bool]
