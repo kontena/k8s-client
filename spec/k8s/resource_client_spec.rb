@@ -354,5 +354,35 @@ RSpec.describe K8s::ResourceClient do
         end
       end
     end
+
+    context 'GET /api/v1/pods/*' do
+      describe '#watch' do
+        it 'configures transport for streaming request' do
+          expect(transport).to receive(:request).with(
+            hash_including(
+              method: 'GET',
+              read_timeout: nil,
+              query: hash_including(
+                'watch' => '1'
+              ),
+              response_block: kind_of(Proc)
+            )
+          )
+          subject.watch
+        end
+
+        it 'sets timeout if given' do
+          expect(transport).to receive(:request).with(
+            hash_including(
+              query: hash_including(
+                'watch' => '1',
+                'timeoutSeconds' => 60
+              )
+            )
+          )
+          subject.watch(timeout: 60)
+        end
+      end
+    end
   end
 end
