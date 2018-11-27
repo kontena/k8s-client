@@ -238,10 +238,7 @@ module K8s
           'timeoutSeconds' => timeout
         ),
         response_block: lambda do |chunk, _, _|
-          begin
-            parser << chunk
-          rescue
-          end
+          parser << chunk
         end
       )
     end
