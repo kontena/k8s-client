@@ -217,6 +217,10 @@ module K8s
     # @param response_class [Class] decode response body using #from_json
     # @param options [Hash] @see Excon#request
     def request(response_class: nil, **options)
+      if options[:method] == 'DELETE' && need_delete_body?
+        options[:request_object] = options.delete(:query)
+      end
+
       excon_options = request_options(**options)
 
       start = Time.now
@@ -280,6 +284,19 @@ module K8s
     else
       logger.info { "[#{options.map{ |o| format_request(o) }.join ', '}] => HTTP [#{responses.map(&:status).join ', '}] in #{'%.3f' % t}s" }
       objects
+    end
+
+    def version
+      @version ||= get(
+        '/version',
+        response_class: K8s::API::Version
+      )
+    end
+
+    DELETE_OPTS_BODY_VERSION_MIN = Gem::Version.new('1.11')
+
+    def need_delete_body?
+      @need_delete_body ||= Gem::Version.new(version.gitVersion.match(/v*(.*)/)[1]) < DELETE_OPTS_BODY_VERSION_MIN
     end
 
     # @param path [Array<String>] @see #path

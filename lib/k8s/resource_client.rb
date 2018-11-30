@@ -303,21 +303,15 @@ module K8s
     # @param propagationPolicy [String] The propagationPolicy to use for the API call. Possible values include “Orphan”, “Foreground”, or “Background”
     # @return [K8s::API::MetaV1::Status]
     def delete(name, namespace: @namespace, propagationPolicy: nil)
-      opts = {
+      @transport.request(
         method: 'DELETE',
         path: path(name, namespace: namespace),
-        response_class: @resource_class, # XXX: documented as returning Status
-      }
-      if ENV['KUBE_DELETE_OPTS_BODY'] && propagationPolicy
-        opts[:request_object] = {
-          propagationPolicy: propagationPolicy
-        }
-      else
-        opts[:query] = make_query(
+        query: make_query(
           'propagationPolicy' => propagationPolicy
-        )
-      end
-      @transport.request(**opts)
+        ),
+        response_class: @resource_class, # XXX: documented as returning Status
+      )
+
     end
 
     # @param namespace [String]
