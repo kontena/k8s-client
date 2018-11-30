@@ -311,7 +311,6 @@ module K8s
         ),
         response_class: @resource_class, # XXX: documented as returning Status
       )
-
     end
 
     # @param namespace [String]

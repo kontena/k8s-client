@@ -60,7 +60,7 @@ module K8s
     # @raise [K8s::Error]
     # @return [K8s::API::Version]
     def version
-      @api_version ||= @transport.version
+      @version ||= @transport.version
     end
 
     # @param api_version [String] "group/version" or "version" (core)
