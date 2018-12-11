@@ -22,6 +22,9 @@ module K8s
       'Accept' => 'application/json'
     }.freeze
 
+    # Min version of Kube API for which delete options need to be sent as request body
+    DELETE_OPTS_BODY_VERSION_MIN = Gem::Version.new('1.11')
+
     # Construct transport from kubeconfig
     #
     # @param config [K8s::Config]
@@ -286,6 +289,7 @@ module K8s
       objects
     end
 
+    # @return [K8s::API::Version]
     def version
       @version ||= get(
         '/version',
@@ -293,8 +297,7 @@ module K8s
       )
     end
 
-    DELETE_OPTS_BODY_VERSION_MIN = Gem::Version.new('1.11')
-
+    # @return [true, false] true if delete options should be sent as bode of the DELETE request
     def need_delete_body?
       @need_delete_body ||= Gem::Version.new(version.gitVersion.match(/v*(.*)/)[1]) < DELETE_OPTS_BODY_VERSION_MIN
     end
