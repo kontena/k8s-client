@@ -36,7 +36,8 @@ Options = Struct.new(
   :api,
   :list_api_resources,
   :patch_deployment,
-  :replicas
+  :replicas,
+  :version
 )
 
 options = Options.new
@@ -62,6 +63,9 @@ opt_parser = OptionParser.new do |parser|
   parser.on('--quiet') do
     K8s::Logging.quiet!
     K8s::Transport.quiet!
+  end
+  parser.on('--version') do
+    options.version = true
   end
   parser.on('--in-cluster-config') do
     options.in_cluster_config = true
@@ -174,7 +178,11 @@ else
                       ssl_verify_peer: !options.insecure_skip_tls_verify)
 end
 
-logger.info "Kube server version: #{client.version.gitVersion}"
+if options.version
+  logger.info client.version
+else
+  logger.info "Kube server version: #{client.version.gitVersion}"
+end
 
 if options.prefetch_resources
   client.apis(prefetch_resources: true)

@@ -310,6 +310,7 @@ RSpec.describe K8s::ResourceClient do
 
     context "DELETE /api/v1/pods/*" do
       before do
+        allow(transport).to receive(:need_delete_body?).and_return(false)
         stub_request(:delete, 'localhost:8080/api/v1/namespaces/default/pods/test')
           .to_return(
             status: 200,
