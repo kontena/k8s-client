@@ -168,8 +168,8 @@ module K8s
           when Array
             (old_value + new_value).uniq
           when Hash
-            old_value.merge(new_value) do |_key, old_value, new_value|
-              old_value.nil? ? new_value : old_value
+            old_value.merge(new_value) do |_key, inner_old_value, inner_new_value|
+              inner_old_value.nil? ? inner_new_value : inner_old_value
             end
           when NilClass
             new_value
