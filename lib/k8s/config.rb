@@ -91,12 +91,12 @@ module K8s
 
     attribute :kind, Types::Strict::String.optional.default(nil)
     attribute :apiVersion, Types::Strict::String.optional.default(nil)
-    attribute :preferences, Types::Strict::Hash.optional.default(proc { Hash.new })
-    attribute :clusters, Types::Strict::Array.of(NamedCluster).optional.default(proc { Array.new })
-    attribute :users, Types::Strict::Array.of(NamedUser).optional.default(proc { Array.new })
-    attribute :contexts, Types::Strict::Array.of(NamedContext).optional.default(proc { Array.new})
+    attribute :preferences, Types::Strict::Hash.optional.default(proc { {} })
+    attribute :clusters, Types::Strict::Array.of(NamedCluster).optional.default(proc { [] })
+    attribute :users, Types::Strict::Array.of(NamedUser).optional.default(proc { [] })
+    attribute :contexts, Types::Strict::Array.of(NamedContext).optional.default(proc { [] })
     attribute :current_context, Types::Strict::String.optional.default(nil)
-    attribute :extensions, Types::Strict::Array.optional.default(proc { Array.new })
+    attribute :extensions, Types::Strict::Array.optional.default(proc { [] })
 
     # Loads a configuration from a YAML file
     #
@@ -140,9 +140,9 @@ module K8s
 
       new(
         {
-          clusters: [ { name: cluster_name, cluster: { server: server, certificate_authority_data: ca } } ],
-          users: [ { name: user, user: { token: decoded_token || token } } ],
-          contexts: [ { name: context, context: { cluster: cluster_name, user: user } } ],
+          clusters: [{ name: cluster_name, cluster: { server: server, certificate_authority_data: ca } }],
+          users: [{ name: user, user: { token: decoded_token || token } }],
+          contexts: [{ name: context, context: { cluster: cluster_name, user: user } }],
           current_context: context
         }.merge(options)
       )
@@ -168,7 +168,7 @@ module K8s
           when Array
             (old_value + new_value).uniq
           when Hash
-            old_value.merge(new_value) do |key, old_value, new_value|
+            old_value.merge(new_value) do |_key, old_value, new_value|
               old_value.nil? ? new_value : old_value
             end
           when NilClass
