@@ -32,6 +32,116 @@ RSpec.describe K8s::Config do
     end
   end
 
+  describe '#self.from_kubeconfig_env' do
+    context 'KUBECONFIG points to a single file' do
+      it 'reads the file' do
+        expect(YAML).to receive(:load_file).with('kubeconfig_path').and_return(current_context: 'foo')
+        described_class.from_kubeconfig_env('kubeconfig_path')
+      end
+    end
+
+    context 'KUBECONFIG points to two files' do
+      it 'reads all of the files' do
+        expect(YAML).to receive(:load_file).with('kubeconfig_path').and_return(current_context: 'foo')
+        expect(YAML).to receive(:load_file).with('kubeconfig2_path').and_return(current_context: 'should not overwrite 1')
+        expect(described_class.from_kubeconfig_env('kubeconfig_path:kubeconfig2_path').current_context).to eq 'foo'
+      end
+    end
+  end
+
+  describe '#merge' do
+    subject { base.merge(other) }
+
+    context 'clusters' do
+      context 'base config and other config define a cluster with the same name' do
+        let(:base) { described_class.new(clusters: [ { name: 'kubernetes', cluster: { server: 'http://first.example.com:8080' } } ]) }
+        let(:other) { described_class.new(clusters: [ { name: 'kubernetes', cluster: { server: 'http://second.example.com:8080' } } ]) }
+
+        it 'does not overwrite the existing one' do
+          expect(subject.cluster('kubernetes').server).to eq 'http://first.example.com:8080'
+          expect(subject.clusters.size).to eq 1
+        end
+      end
+
+      context 'base config and other config define two clusters with differents names' do
+        let(:base) { described_class.new(clusters: [ { name: 'first', cluster: { server: 'http://first.example.com:8080' } } ]) }
+        let(:other) { described_class.new(clusters: [ { name: 'second', cluster: { server: 'http://second.example.com:8080' } } ]) }
+
+        it 'includes both clusters in the outcome' do
+          expect(subject.cluster('first').server).to eq 'http://first.example.com:8080'
+          expect(subject.cluster('second').server).to eq 'http://second.example.com:8080'
+          expect(subject.clusters.size).to eq 2
+        end
+      end
+    end
+
+    context 'contexts' do
+      context 'base config and other config define a context with the same name' do
+        let(:base) { described_class.new(contexts: [ { name: 'kubernetes', context: { cluster: 'first', user: 'user' } } ]) }
+        let(:other) { described_class.new(contexts: [ { name: 'kubernetes', context: { cluster: 'second', user: 'user' } } ]) }
+
+        it 'does not overwrite the existing one' do
+          expect(subject.context('kubernetes').cluster).to eq 'first'
+          expect(subject.contexts.size).to eq 1
+        end
+      end
+
+      context 'base config and other config define two contexts with differents names' do
+        let(:base) { described_class.new(contexts: [ { name: 'first', context: { cluster: 'first', user: 'user' } } ]) }
+        let(:other) { described_class.new(contexts: [ { name: 'second', context: { cluster: 'second', user: 'user' } } ]) }
+
+        it 'includes both contexts in the outcome' do
+          expect(subject.context('first').cluster).to eq 'first'
+          expect(subject.context('second').cluster).to eq 'second'
+          expect(subject.contexts.size).to eq 2
+        end
+      end
+    end
+
+    context 'users' do
+      context 'base config and other config define a user with the same name' do
+        let(:base) { described_class.new(users: [ { name: 'first', user: { token: 'first' } } ]) }
+        let(:other) { described_class.new(users: [ { name: 'first', user: { token: 'second' } } ]) }
+
+        it 'does not overwrite the existing one' do
+          expect(subject.user('first').token).to eq 'first'
+          expect(subject.users.size).to eq 1
+        end
+      end
+
+      context 'base config and other config define two users with differents names' do
+        let(:base) { described_class.new(users: [ { name: 'first', user: { token: 'first' } } ]) }
+        let(:other) { described_class.new(users: [ { name: 'second', user: { token: 'second' } } ]) }
+
+        it 'includes both users in the outcome' do
+          expect(subject.user('first').token).to eq 'first'
+          expect(subject.user('second').token).to eq 'second'
+          expect(subject.users.size).to eq 2
+        end
+      end
+    end
+
+    context 'current context' do
+      context 'base config specifies a current context' do
+        let(:base) { described_class.new(current_context: 'first') }
+        let(:other) { described_class.new(current_context: 'second') }
+
+        it 'config with a current context does not overwrite it' do
+          expect(subject.current_context).to eq 'first'
+        end
+      end
+
+      context 'base config has no current context' do
+        let(:base) { described_class.new }
+        let(:other) { described_class.new(current_context: 'second') }
+
+        it 'config with a current context sets it' do
+          expect(subject.current_context).to eq 'second'
+        end
+      end
+    end
+  end
+
   it 'does not require optional params' do
     subject = described_class.new(
       clusters: [
