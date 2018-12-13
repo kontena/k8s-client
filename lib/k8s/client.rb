@@ -60,7 +60,6 @@ module K8s
     #   - $HOME/.kube/config file
     #   - In cluster configuration
     #
-    #
     # Will raise when no means of configuration is available
     #
     # @param namespace [String] default namespace for all operations
