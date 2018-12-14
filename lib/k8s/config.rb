@@ -100,7 +100,7 @@ module K8s
     # @param path [String]
     # @return [K8s::Config]
     def self.load_file(path)
-      new(YAML.load_file(path))
+      new(YAML.safe_load(File.read(path)))
     end
 
     # TODO: raise error if not found
