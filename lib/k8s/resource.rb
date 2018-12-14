@@ -14,7 +14,7 @@ module K8s
     # @param data [Hash]
     # @return [self]
     def self.from_json(data)
-      new(data)
+      new(Yajl::Parser.parse(data))
     end
 
     # @param filename [String] file path
@@ -84,7 +84,7 @@ module K8s
       current_cfg = metadata.annotations&.dig(config_annotation)
       return {} unless current_cfg
 
-      current_hash = JSON.parse(current_cfg)
+      current_hash = Yajl::Parser.parse(current_cfg)
       # kubectl adds empty metadata.namespace, let's fix it
       current_hash['metadata'].delete('namespace') if current_hash.dig('metadata', 'namespace').to_s.empty?
 
@@ -96,7 +96,7 @@ module K8s
     end
 
     def stringify_hash(hash)
-      JSON.parse(JSON.dump(hash))
+      Yajl::Parser.parse(JSON.dump(hash))
     end
   end
 end

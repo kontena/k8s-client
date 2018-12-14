@@ -19,7 +19,7 @@ module K8s
       # @param data [Hash]
       # @return [self]
       def self.from_json(data)
-        new(data)
+        new(Yajl::Parser.parse(data))
       end
 
       # @return [String]
