@@ -5,7 +5,7 @@
 [![Yard Docs](http://img.shields.io/badge/yard-docs-blue.svg)](http://www.rubydoc.info/github/kontena/k8s-client/master)
 
 
-Ruby client library for the Kubernetes (1.11) API
+Ruby client library for the Kubernetes (1.9+) API
 
 ## Highlights
 
