@@ -131,9 +131,9 @@ module K8s
     # @param user [String] user name
     # @param context [String] context name
     # @param options [Hash] (see #initialize)
-    def self.build(server:, ca:, token:, cluster_name: 'kubernetes', user: 'k8s-client', context: 'k8s-client', **options)
+    def self.build(server:, ca:, auth_token:, cluster_name: 'kubernetes', user: 'k8s-client', context: 'k8s-client', **options)
       begin
-        decoded_token = Base64.strict_decode64(token)
+        decoded_token = Base64.strict_decode64(auth_token)
       rescue ArgumentError
         decoded_token = nil
       end
@@ -141,7 +141,7 @@ module K8s
       new(
         {
           clusters: [{ name: cluster_name, cluster: { server: server, certificate_authority_data: ca } }],
-          users: [{ name: user, user: { token: decoded_token || token } }],
+          users: [{ name: user, user: { token: decoded_token || auth_token } }],
           contexts: [{ name: context, context: { cluster: cluster_name, user: user } }],
           current_context: context
         }.merge(options)

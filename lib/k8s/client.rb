@@ -62,14 +62,14 @@ module K8s
     #
     # Will raise when no means of configuration is available
     #
-    # @param namespace [String] default namespace for all operations
+    # @param options [Hash] default namespace for all operations
     # @raise [K8s::Error::Config,Errno::ENOENT,Errno::EACCES]
     # @return [K8s::Client]
     def self.autoconfig(namespace: nil, **options)
       if ENV.values_at('KUBE_TOKEN', 'KUBE_CA', 'KUBE_SERVER').none? { |v| v.nil? || v.empty? }
-        configuration = K8s::Config.build(server: ENV['KUBE_SERVER'], ca: ENV['KUBE_CA'], token: ENV['KUBE_TOKEN'])
+        configuration = K8s::Config.build(server: ENV['KUBE_SERVER'], ca: ENV['KUBE_CA'], auth_token: options[:auth_token] || ENV['KUBE_TOKEN'])
       elsif !ENV['KUBECONFIG'].to_s.empty?
-        configuration = K8s::Config.from_kubeconfig_env(ENV['KUBECONFIG'])
+        configuration = K8s::Config.from_kubeconfig_env(ENV['KUBECONFIG'], auth_token: options[:auth_token])
       elsif File.exist?(File.join(Dir.home, '.kube', 'config'))
         configuration = K8s::Config.load_file(File.join(Dir.home, '.kube', 'config'))
       end
@@ -77,7 +77,7 @@ module K8s
       if configuration
         config(configuration, namespace: namespace, **options)
       else
-        in_cluster_config(namespace: namespace)
+        in_cluster_config(namespace: namespace, **options)
       end
     end
 

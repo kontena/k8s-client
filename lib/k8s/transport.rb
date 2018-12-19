@@ -92,10 +92,11 @@ module K8s
 
     # In-cluster config within a kube pod, using the kubernetes service envs and serviceaccount secrets
     #
+    # @param options [Hash] see #new
     # @return [K8s::Transport]
     # @raise [K8s::Error::Config] when the environment variables KUBERNETES_SEVICE_HOST and KUBERNETES_SERVICE_PORT_HTTPS are not set
     # @raise [Errno::ENOENT,Errno::EACCES] when /var/run/secrets/kubernetes.io/serviceaccount/ca.crt or /var/run/secrets/kubernetes.io/serviceaccount/token can not be read
-    def self.in_cluster_config
+    def self.in_cluster_config(**options)
       host = ENV['KUBERNETES_SERVICE_HOST'].to_s
       raise(K8s::Error::Config, "in_cluster_config failed: KUBERNETES_SERVICE_HOST environment not set") if host.empty?
 
@@ -104,9 +105,10 @@ module K8s
 
       new(
         "https://#{host}:#{port}",
-        ssl_verify_peer: true,
-        ssl_ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
-        auth_token: File.read('/var/run/secrets/kubernetes.io/serviceaccount/token')
+        ssl_verify_peer: options.key?(:ssl_verify_peer) ? options.delete(:ssl_verify_peer) : true,
+        ssl_ca_file: options.delete(:ssl_ca_file) || '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
+        auth_token: options.delete(:auth_token) || File.read('/var/run/secrets/kubernetes.io/serviceaccount/token'),
+        **options
       )
     end
 
