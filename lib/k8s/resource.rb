@@ -12,7 +12,7 @@ module K8s
     include Comparable
 
     # @param data [Hash]
-    # @return [self]
+    # @return [K8s::Resource]
     def self.from_json(data)
       new(data)
     end
@@ -37,6 +37,8 @@ module K8s
     end
 
     # @param hash [Hash]
+    # @param recurse_over_arrays [Boolean]
+    # @param options [Hash] see RecursiveOpenStruct#initialize
     def initialize(hash, recurse_over_arrays: true, **options)
       super(hash,
         recurse_over_arrays: recurse_over_arrays,
@@ -44,6 +46,7 @@ module K8s
       )
     end
 
+    # @param options [Hash] see Hash#to_json
     # @return [String]
     def to_json(**options)
       to_hash.to_json(**options)
@@ -69,16 +72,21 @@ module K8s
       self.class.new(h)
     end
 
+    # @return [String]
     def checksum
       @checksum ||= Digest::MD5.hexdigest(Marshal.dump(to_hash))
     end
 
+    # @param attrs [Hash]
+    # @param config_annotation [String]
+    # @return [Hash]
     def merge_patch_ops(attrs, config_annotation)
       Util.json_patch(current_config(config_annotation), stringify_hash(attrs))
     end
 
     # Gets the existing resources (on kube api) configuration, an empty hash if not present
     #
+    # @param config_annotation [String]
     # @return [Hash]
     def current_config(config_annotation)
       current_cfg = metadata.annotations&.dig(config_annotation)
@@ -91,10 +99,14 @@ module K8s
       current_hash
     end
 
+    # @param config_annotation [String]
+    # @return [Boolean]
     def can_patch?(config_annotation)
       !!metadata.annotations&.dig(config_annotation)
     end
 
+    # @param hash [Hash]
+    # @return [Hash]
     def stringify_hash(hash)
       JSON.parse(JSON.dump(hash))
     end

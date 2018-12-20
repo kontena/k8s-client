@@ -7,8 +7,8 @@ module K8s
   class ResourceClient
     # Common helpers used in both class/instance methods
     module Utils
-      # @param selector [nil, String, Hash{String => String}]
-      # @return [nil, String]
+      # @param selector [NilClass, String, Hash{String => String}]
+      # @return [NilClass, String]
       def selector_query(selector)
         case selector
         when nil
@@ -23,7 +23,7 @@ module K8s
       end
 
       # @param options [Hash]
-      # @return [Hash, nil]
+      # @return [Hash, NilClass]
       def make_query(options)
         query = options.compact
 
@@ -66,6 +66,7 @@ module K8s
     # @param api_client [K8s::APIClient]
     # @param api_resource [K8s::API::MetaV1::APIResource]
     # @param namespace [String]
+    # @param resource_class [Class]
     def initialize(transport, api_client, api_resource, namespace: nil, resource_class: K8s::Resource)
       @transport = transport
       @api_client = api_client
@@ -115,11 +116,14 @@ module K8s
     # @return [class] K8s::Resource
     attr_reader :resource_class
 
-    # @return [Bool]
+    # @return [Boolean]
     def namespaced?
       !!@api_resource.namespaced
     end
 
+    # @param name [NilClass, String]
+    # @param subresource [String, NilClass]
+    # @param namespace [String, NilClass]
     # @return [String]
     def path(name = nil, subresource: @subresource, namespace: @namespace)
       namespace_part = namespace ? ['namespaces', namespace] : []
@@ -138,8 +142,8 @@ module K8s
       @api_resource.verbs.include? 'create'
     end
 
-    # @param resource [resource_class] with metadata.namespace and metadata.name set
-    # @return [resource_class]
+    # @param resource [#metadata] with metadata.namespace and metadata.name set
+    # @return [Object] instance of resource_class
     def create_resource(resource)
       @transport.request(
         method: 'POST',
@@ -154,7 +158,9 @@ module K8s
       @api_resource.verbs.include? 'get'
     end
 
-    # @return [resource_class]
+    # @param name [String]
+    # @param namespace [String, NilClass]
+    # @return [Object] instance of resource_class
     def get(name, namespace: @namespace)
       @transport.request(
         method: 'GET',
@@ -164,7 +170,7 @@ module K8s
     end
 
     # @param resource [resource_class]
-    # @return [resource_class]
+    # @return [Object] instance of resource_class
     def get_resource(resource)
       @transport.request(
         method: 'GET',
@@ -179,7 +185,7 @@ module K8s
     end
 
     # @param list [K8s::API::MetaV1::List]
-    # @return [Array<resource_class>]
+    # @return [Array<Object>] array of instances of resource_class
     def process_list(list)
       list.items.map { |item|
         # list items omit kind/apiVersion
@@ -190,7 +196,7 @@ module K8s
     # @param labelSelector [nil, String, Hash{String => String}]
     # @param fieldSelector [nil, String, Hash{String => String}]
     # @param namespace [nil, String]
-    # @return [Array<resource_class>]
+    # @return [Array<Object>] array of instances of resource_class
     def list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
       list = meta_list(labelSelector: labelSelector, fieldSelector: fieldSelector, namespace: namespace)
       process_list(list)
@@ -243,13 +249,13 @@ module K8s
       )
     end
 
-    # @return [Bool]
+    # @return [Boolean]
     def update?
       @api_resource.verbs.include? 'update'
     end
 
-    # @param resource [resource_class] with metadata.resourceVersion set
-    # @return [resource_class]
+    # @param resource [#metadata] with metadata.resourceVersion set
+    # @return [Object] instance of resource_class
     def update_resource(resource)
       @transport.request(
         method: 'PUT',
@@ -259,16 +265,16 @@ module K8s
       )
     end
 
-    # @return [Bool]
+    # @return [Boolean]
     def patch?
       @api_resource.verbs.include? 'patch'
     end
 
     # @param name [String]
-    # @param obj [Object] supporting to_json
-    # @param namespace [String]
+    # @param obj [#to_json]
+    # @param namespace [String, nil]
     # @param strategic_merge [Boolean] use kube Strategic Merge Patch instead of standard Merge Patch (arrays of objects are merged by name)
-    # @return [resource_class]
+    # @return [Object] instance of resource_class
     def merge_patch(name, obj, namespace: @namespace, strategic_merge: true)
       @transport.request(
         method: 'PATCH',
@@ -281,8 +287,8 @@ module K8s
 
     # @param name [String]
     # @param ops [Hash] json-patch operations
-    # @param namespace [String]
-    # @return [resource_class]
+    # @param namespace [String, nil]
+    # @return [Object] instance of resource_class
     def json_patch(name, ops, namespace: @namespace)
       @transport.request(
         method: 'PATCH',
@@ -293,14 +299,14 @@ module K8s
       )
     end
 
-    # @return [Bool]
+    # @return [Boolean]
     def delete?
       @api_resource.verbs.include? 'delete'
     end
 
     # @param name [String]
-    # @param namespace [String]
-    # @param propagationPolicy [String] The propagationPolicy to use for the API call. Possible values include “Orphan”, “Foreground”, or “Background”
+    # @param namespace [String, nil]
+    # @param propagationPolicy [String, nil] The propagationPolicy to use for the API call. Possible values include “Orphan”, “Foreground”, or “Background”
     # @return [K8s::API::MetaV1::Status]
     def delete(name, namespace: @namespace, propagationPolicy: nil)
       @transport.request(
@@ -313,10 +319,11 @@ module K8s
       )
     end
 
-    # @param namespace [String]
+    # @param namespace [String, nil]
     # @param labelSelector [nil, String, Hash{String => String}]
     # @param fieldSelector [nil, String, Hash{String => String}]
-    # @return [K8s::API::MetaV1::Status]
+    # @param propagationPolicy [String, nil]
+    # @return [Array<Object>] array of instances of resource_class
     def delete_collection(namespace: @namespace, labelSelector: nil, fieldSelector: nil, propagationPolicy: nil)
       list = @transport.request(
         method: 'DELETE',

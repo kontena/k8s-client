@@ -25,6 +25,7 @@ module K8s
 
     # @param name [String] unique name for stack
     # @param path [String] load resources from YAML files
+    # @param options [Hash] see Stack#initialize
     # @return [K8s::Stack]
     def self.load(name, path, **options)
       resources = K8s::Resource.from_files(path)
@@ -35,6 +36,8 @@ module K8s
     # @param path [String] load resources from YAML files
     # @param client [K8s::Client] apply using client
     # @param prune [Boolean] delete old resources
+    # @param options [Hash] see Stack#initialize
+    # @return [K8s::Stack]
     def self.apply(name, path, client, prune: true, **options)
       load(name, path, **options).apply(client, prune: prune)
     end
@@ -49,6 +52,12 @@ module K8s
 
     attr_reader :name, :resources
 
+    # @param name [String]
+    # @param resources [Array<K8s::Resource>]
+    # @param debug [Boolean]
+    # @param label [String]
+    # @param checksum_annotation [String]
+    # @param last_config_annotation [String]
     def initialize(name, resources = [], debug: false, label: self.class::LABEL, checksum_annotation: self.class::CHECKSUM_ANNOTATION, last_configuration_annotation: self.class::LAST_CONFIG_ANNOTATION)
       @name = name
       @resources = resources
@@ -83,6 +92,7 @@ module K8s
     end
     # rubocop:enable Lint/UnusedMethodArgument
 
+    # @param client [K8s::Client]
     # @return [Array<K8s::Resource>]
     def apply(client, prune: true)
       server_resources = client.get_resources(resources)
@@ -110,15 +120,22 @@ module K8s
     end
 
     # key MUST NOT include resource.apiVersion: the same kind can be aliased in different APIs
+    # @param resource [K8s::Resource]
+    # @return [K8s::Resource]
     def keep_resource!(resource)
       @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] = resource.metadata.annotations[@checksum_annotation]
     end
 
+    # @param resource [K8s::Resource]
+    # @return [Boolean]
     def keep_resource?(resource)
       @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] == resource.metadata.annotations[@checksum_annotation]
     end
 
     # Delete all stack resources that were not applied
+    # @param client [K8s::Client]
+    # @param keep_resources [NilClass, Boolean]
+    # @param skip_forbidden [Boolean]
     def prune(client, keep_resources:, skip_forbidden: true)
       # using skip_forbidden: assume we can't create resource types that we are forbidden to list, so we don't need to prune them either
       client.list_resources(labelSelector: { @label => name }, skip_forbidden: skip_forbidden).sort do |a, b|
@@ -156,6 +173,7 @@ module K8s
     end
 
     # Delete all stack resources
+    # @param client [K8s::Client]
     def delete(client)
       prune(client, keep_resources: false)
     end

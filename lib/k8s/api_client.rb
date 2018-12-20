@@ -55,6 +55,8 @@ module K8s
     end
 
     # @param resource_name [String]
+    # @raise [K8s::Error::UndefinedResource]
+    # @return [K8s::API::MetaV1::APIResource]
     def find_api_resource(resource_name)
       found_resource = api_resources.find{ |api_resource| api_resource.name == resource_name }
       raise K8s::Error::UndefinedResource, "Unknown resource #{resource_name} for #{@api_version}" unless found_resource
