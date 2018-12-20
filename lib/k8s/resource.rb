@@ -4,7 +4,7 @@ require 'deep_merge'
 require 'recursive-open-struct'
 require 'hashdiff'
 require 'forwardable'
-require 'k8s/core_ext/yaml/safe_load_stream'
+require 'yaml/safe_load_stream'
 
 module K8s
   # generic untyped resource
@@ -12,7 +12,7 @@ module K8s
     extend Forwardable
     include Comparable
 
-    using K8s::YAMLSafeLoadStream
+    using YAMLSafeLoadStream
 
     # @param data [String]
     # @return [self]
