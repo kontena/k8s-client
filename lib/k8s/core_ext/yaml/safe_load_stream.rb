@@ -5,6 +5,14 @@ require 'yaml'
 module K8s
   module YAMLSafeLoadStream
     refine YAML.singleton_class do
+      # A safe version of YAML.load_stream.
+      # Parses a multi document stream and raises if it tries to instantiate any
+      # non-standard classes
+      #
+      # @param yaml [String] yaml content
+      # @param filename [String] filename to be used in exception messages
+      # @yield [document] each document in the stream is yielded if a block is given
+      # @return [Array] when a block is not given, returns an Array of documents
       def safe_load_stream(yaml, filename = nil)
         streams = []
         parse_stream(yaml, filename) do |stream|
