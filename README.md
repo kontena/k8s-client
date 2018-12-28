@@ -60,7 +60,11 @@ The keyword options are [Excon](https://github.com/excon/excon/) options.
 #### Client from kubeconfig
 
 ```ruby
-client = K8s::Client.config(K8s::Config.load_file('~/.kube/config'))
+client = K8s::Client.config(
+  K8s::Config.load_file(
+    File.expand_path '~/.kube/config'
+  )
+)
 ```
 
 #### Supported kubeconfig options
