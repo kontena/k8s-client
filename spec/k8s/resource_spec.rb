@@ -96,7 +96,7 @@ RSpec.describe K8s::Resource do
       end
 
       it "compares equal to a JSON-roundtripped copy of the same resource" do
-        expect(subject == described_class.from_json(JSON.parse(subject.to_json))).to be_truthy
+        expect(subject == described_class.from_json(subject.to_json)).to be_truthy
       end
 
       it "does not compare equal to a merged copy" do

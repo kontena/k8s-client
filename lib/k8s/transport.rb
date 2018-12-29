@@ -180,7 +180,7 @@ module K8s
 
     # @param response [Hash] as returned by Excon#request
     # @param request_options [Hash] as passed to Excon#request
-    # @param response_class [Class] decode response body using #from_json
+    # @param response_class [Class] coerce into response body using #new
     # @raise [K8s::Error]
     # @raise [Excon::Error] TODO: wrap
     # @return [response_class, Hash]
@@ -208,7 +208,7 @@ module K8s
 
         return response_data unless response_class
 
-        response_class.from_json(response_data)
+        response_class.new(response_data)
       else
         error_class = K8s::Error::HTTP_STATUS_ERRORS[response.status] || K8s::Error::API
 
@@ -224,7 +224,7 @@ module K8s
       end
     end
 
-    # @param response_class [Class] decode response body using #from_json
+    # @param response_class [Class] coerce into response class using #new
     # @param options [Hash] @see Excon#request
     def request(response_class: nil, **options)
       if options[:method] == 'DELETE' && need_delete_body?
