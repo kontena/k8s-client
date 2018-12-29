@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'hashdiff', '~> 0.3.7'
   spec.add_runtime_dependency 'jsonpath', '~> 0.9.5'
   spec.add_runtime_dependency 'yajl-ruby', '~> 1.4.0'
+  spec.add_runtime_dependency "yaml-safe_load_stream", "~> 0.1"
 
   spec.add_development_dependency "bundler", "~> 1.16"
   spec.add_development_dependency "rake", "~> 10.0"

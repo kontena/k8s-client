@@ -4,6 +4,7 @@ require 'deep_merge'
 require 'recursive-open-struct'
 require 'hashdiff'
 require 'forwardable'
+require 'yaml/safe_load_stream'
 
 module K8s
   # generic untyped resource
@@ -11,7 +12,9 @@ module K8s
     extend Forwardable
     include Comparable
 
-    # @param data [Hash]
+    using YAMLSafeLoadStream
+
+    # @param data [String]
     # @return [self]
     def self.from_json(data)
       new(Yajl::Parser.parse(data))
@@ -20,7 +23,7 @@ module K8s
     # @param filename [String] file path
     # @return [K8s::Resource]
     def self.from_file(filename)
-      new(YAML.load_file(filename))
+      new(YAML.safe_load(File.read(filename), [], [], true, filename))
     end
 
     # @param path [String] file path
@@ -32,7 +35,7 @@ module K8s
         # recurse
         Dir.glob("#{path}/*.{yml,yaml}").sort.map { |dir| from_files(dir) }.flatten
       else
-        ::YAML.load_stream(File.read(path), path).map{ |doc| new(doc) }
+        YAML.safe_load_stream(File.read(path), path).map{ |doc| new(doc) }
       end
     end
 

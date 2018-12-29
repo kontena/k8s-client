@@ -23,7 +23,7 @@ RSpec.describe K8s::Util do
 
   describe '#recursive_compact' do
     it 'compacts hashes recursively with k8s style' do
-      hash = YAML::load('
+      hash = YAML.load('
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
 metadata:
