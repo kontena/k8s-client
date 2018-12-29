@@ -60,5 +60,7 @@ module K8s
     # Attempt to create a ResourceClient for an unknown resource type.
     # The client cannot construct the correct API URL without having the APIResource definition.
     UndefinedResource = Class.new(Error)
+
+    Configuration = Class.new(Error)
   end
 end
