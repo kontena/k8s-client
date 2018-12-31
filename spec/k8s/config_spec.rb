@@ -35,15 +35,15 @@ RSpec.describe K8s::Config do
   describe '#self.from_kubeconfig_env' do
     context 'KUBECONFIG points to a single file' do
       it 'reads the file' do
-        expect(YAML).to receive(:load_file).with('kubeconfig_path').and_return(current_context: 'foo')
+        expect(File).to receive(:read).with('kubeconfig_path').and_return(YAML.dump('current_context' => 'foo'))
         described_class.from_kubeconfig_env('kubeconfig_path')
       end
     end
 
     context 'KUBECONFIG points to two files' do
       it 'reads all of the files' do
-        expect(YAML).to receive(:load_file).with('kubeconfig_path').and_return(current_context: 'foo')
-        expect(YAML).to receive(:load_file).with('kubeconfig2_path').and_return(current_context: 'should not overwrite 1')
+        expect(File).to receive(:read).with('kubeconfig_path').and_return(YAML.dump('current_context' => 'foo'))
+        expect(File).to receive(:read).with('kubeconfig2_path').and_return(YAML.dump('current_context' => 'should not overwrite 1'))
         expect(described_class.from_kubeconfig_env('kubeconfig_path:kubeconfig2_path').current_context).to eq 'foo'
       end
     end

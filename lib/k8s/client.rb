@@ -83,7 +83,7 @@ module K8s
     attr_reader :transport
 
     # @param transport [K8s::Transport]
-    # @param namespace [String] default namespace for all operations
+    # @param namespace [String, nil] default namespace for all operations
     def initialize(transport, namespace: nil)
       @transport = transport
       @namespace = namespace
@@ -225,6 +225,9 @@ module K8s
       client_for_resource(resource).delete_resource(resource, **options)
     end
 
+    # @param resource [K8s::Resource]
+    # @param attrs [Hash]
+    # @return [K8s::Client]
     def patch_resource(resource, attrs)
       client_for_resource(resource).json_patch(resource.metadata.name, attrs)
     end
