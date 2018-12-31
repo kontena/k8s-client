@@ -3,6 +3,45 @@
 module K8s
   # Miscellaneous helpers
   module Util
+    module HashDeepMerge
+      refine Hash do
+        def deep_merge(other, overwrite_arrays: true, union_arrays: true, keep_existing: false, merge_nil_values: true)
+          merge(other) do |_, old_value, new_value|
+            case old_value
+            when Hash
+              raise "#{new_value.class.name} can not be merged into a Hash" unless new_value.kind_of?(Hash)
+              old_value.deep_merge(new_value)
+            when Array
+              if overwrite_arrays
+                new_value
+              else
+                raise "#{new_value.class.name} can not be merged into an Array" unless new_value.kind_of?(Array)
+                if union_arrays
+                  old_value | new_value
+                else
+                  old_value + new_value
+                end
+              end
+            else
+              if keep_existing
+                old_value
+              else
+                if new_value.nil? && merge_nil_values
+                  nil
+                else
+                  new_value
+                end
+              end
+            end
+          end
+        end
+
+        def deep_merge!(other, **options)
+          replace(deep_merge(other, **options))
+        end
+      end
+    end
+
     PATH_TR_MAP = { '~' => '~0', '/' => '~1' }.freeze
     PATH_REGEX = %r{(/|~(?!1))}.freeze
 
