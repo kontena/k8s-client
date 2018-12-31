@@ -162,6 +162,7 @@ module K8s
     end
 
     # @param options [Hash] as passed to Excon#request
+    # @return [String]
     def format_request(options)
       method = options[:method]
       path = options[:path]
@@ -226,6 +227,7 @@ module K8s
 
     # @param response_class [Class] coerce into response class using #new
     # @param options [Hash] @see Excon#request
+    # @return [response_class, Hash]
     def request(response_class: nil, **options)
       if options[:method] == 'DELETE' && need_delete_body?
         options[:request_object] = options.delete(:query)
@@ -255,7 +257,7 @@ module K8s
     # @param skip_forbidden [Boolean] return nil for HTTP 403 responses
     # @param retry_errors [Boolean] retry with non-pipelined request for HTTP 503 responses
     # @param common_options [Hash] @see #request, merged with the per-request options
-    # @return [Array<response_class, Hash, nil>]
+    # @return [Array<response_class, Hash, NilClass>]
     def requests(*options, skip_missing: false, skip_forbidden: false, retry_errors: true, **common_options)
       return [] if options.empty? # excon chokes
 
@@ -304,13 +306,14 @@ module K8s
       )
     end
 
-    # @return [true, false] true if delete options should be sent as bode of the DELETE request
+    # @return [Boolean] true if delete options should be sent as bode of the DELETE request
     def need_delete_body?
       @need_delete_body ||= Gem::Version.new(version.gitVersion.match(/v*(.*)/)[1]) < DELETE_OPTS_BODY_VERSION_MIN
     end
 
     # @param path [Array<String>] @see #path
     # @param options [Hash] @see #request
+    # @return [Array<response_class, Hash, NilClass>]
     def get(*path, **options)
       request(
         method: 'GET',
@@ -321,6 +324,7 @@ module K8s
 
     # @param paths [Array<String>]
     # @param options [Hash] @see #request
+    # @return [Array<response_class, Hash, NilClass>]
     def gets(*paths, **options)
       requests(
         *paths.map do |path|

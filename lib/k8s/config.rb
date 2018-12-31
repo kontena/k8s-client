@@ -183,17 +183,20 @@ module K8s
       self.class.new(old_attributes)
     end
 
+    # @param name [String]
     # TODO: raise error if not found
     # @return [K8s::Config::Context]
     def context(name = current_context)
       contexts.find{ |context| context.name == name }.context
     end
 
+    # @param name [String]
     # @return [K8s::Config::Cluster]
     def cluster(name = context.cluster)
       clusters.find{ |cluster| cluster.name == name }.cluster
     end
 
+    # @param name [String]
     # @return [K8s::Config::User]
     def user(name = context.user)
       users.find{ |user| user.name == name }.user
