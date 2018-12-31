@@ -5,17 +5,23 @@ module K8s
   module Util
     module HashDeepMerge
       refine Hash do
-        def deep_merge(other, overwrite_arrays: true, union_arrays: true, keep_existing: false, merge_nil_values: true)
-          merge(other) do |_, old_value, new_value|
+        # @param other [Hash]
+        # @param overwrite_arrays [Boolean] when encountering an array, replace the array with the new array
+        # @param union_arrays [Boolean] when encountering an array, use Array#union to combine with the existing array
+        # @param keep_existing [Boolean] prefer old value over new value
+        # @param merge_nil_values [Boolean] overwrite an existing value with a nil value
+        # @param merge_non_hash [Boolean] calls .merge on objects that respond to .merge
+        def deep_merge(other, overwrite_arrays: true, union_arrays: true, keep_existing: false, merge_nil_values: false, merge_non_hash: false)
+          merge(other) do |key, old_value, new_value|
             case old_value
             when Hash
-              raise "#{new_value.class.name} can not be merged into a Hash" unless new_value.kind_of?(Hash)
+              raise "#{key} : #{new_value.class.name} can not be merged into a Hash" unless new_value.kind_of?(Hash)
               old_value.deep_merge(new_value)
             when Array
               if overwrite_arrays
                 new_value
               else
-                raise "#{new_value.class.name} can not be merged into an Array" unless new_value.kind_of?(Array)
+                raise "#{key} : #{new_value.class.name} can not be merged into an Array" unless new_value.kind_of?(Array)
                 if union_arrays
                   old_value | new_value
                 else
@@ -23,7 +29,9 @@ module K8s
                 end
               end
             else
-              if keep_existing
+              if merge_non_hash && old_value.respond_to?(:merge)
+                old_value.merge(new_value)
+              elsif keep_existing
                 old_value
               else
                 if new_value.nil? && merge_nil_values
