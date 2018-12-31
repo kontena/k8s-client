@@ -2,6 +2,7 @@
 
 require 'dry-struct'
 require 'dry-types'
+require 'base64'
 require 'yaml'
 
 module K8s
@@ -90,17 +91,96 @@ module K8s
 
     attribute :kind, Types::Strict::String.optional.default(nil)
     attribute :apiVersion, Types::Strict::String.optional.default(nil)
-    attribute :preferences, Types::Strict::Hash.optional.default(nil)
-    attribute :clusters, Types::Strict::Array.of(NamedCluster)
-    attribute :users, Types::Strict::Array.of(NamedUser)
-    attribute :contexts, Types::Strict::Array.of(NamedContext)
-    attribute :current_context, Types::Strict::String
-    attribute :extensions, Types::Strict::Array.optional.default(nil)
+    attribute :preferences, Types::Strict::Hash.optional.default(proc { {} })
+    attribute :clusters, Types::Strict::Array.of(NamedCluster).optional.default(proc { [] })
+    attribute :users, Types::Strict::Array.of(NamedUser).optional.default(proc { [] })
+    attribute :contexts, Types::Strict::Array.of(NamedContext).optional.default(proc { [] })
+    attribute :current_context, Types::Strict::String.optional.default(nil)
+    attribute :extensions, Types::Strict::Array.optional.default(proc { [] })
 
+    # Loads a configuration from a YAML file
+    #
     # @param path [String]
     # @return [K8s::Config]
     def self.load_file(path)
-      new(YAML.load_file(path))
+      new(YAML.safe_load(File.read(path)))
+    end
+
+    # Loads configuration files listed in KUBE_CONFIG environment variable and
+    # merged using the configuration merge rules, @see K8s::Config.merge
+    #
+    # @param kubeconfig [String] by default read from ENV['KUBECONFIG']
+    def self.from_kubeconfig_env(kubeconfig = nil)
+      kubeconfig ||= ENV.fetch('KUBECONFIG', '')
+      return if kubeconfig.empty?
+
+      paths = kubeconfig.split(/(?!\\):/)
+      return load_file(paths.first) if paths.size == 1
+
+      paths.inject(load_file(paths.shift)) do |memo, other_cfg|
+        memo.merge(load_file(other_cfg))
+      end
+    end
+
+    # Build a minimal configuration from at least a server address, server certificate authority data and an access token.
+    #
+    # @param server [String] kubernetes server address
+    # @param ca [String] server certificate authority data
+    # @param token [String] access token (optionally base64 encoded)
+    # @param cluster_name [String] cluster name
+    # @param user [String] user name
+    # @param context [String] context name
+    # @param options [Hash] (see #initialize)
+    def self.build(server:, ca:, auth_token:, cluster_name: 'kubernetes', user: 'k8s-client', context: 'k8s-client', **options)
+      begin
+        decoded_token = Base64.strict_decode64(auth_token)
+      rescue ArgumentError
+        decoded_token = nil
+      end
+
+      new(
+        {
+          clusters: [{ name: cluster_name, cluster: { server: server, certificate_authority_data: ca } }],
+          users: [{ name: user, user: { token: decoded_token || auth_token } }],
+          contexts: [{ name: context, context: { cluster: cluster_name, user: user } }],
+          current_context: context
+        }.merge(options)
+      )
+    end
+
+    # Merges configuration according to the rules specified in
+    # https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/#merging-kubeconfig-files
+    #
+    # @param other [Hash, K8s::Config]
+    # @return [K8s::Config]
+    def merge(other)
+      old_attributes = attributes
+      other_attributes = other.is_a?(Hash) ? other : other.attributes
+
+      old_attributes.merge!(other_attributes) do |key, old_value, new_value|
+        case key
+        when :clusters, :contexts, :users
+          old_value + new_value.reject do |new_mapping|
+            old_value.any? { |old_mapping| old_mapping[:name] == new_mapping[:name] }
+          end
+        else
+          case old_value
+          when Array
+            (old_value + new_value).uniq
+          when Hash
+            old_value.merge(new_value) do |_key, inner_old_value, inner_new_value|
+              inner_old_value.nil? ? inner_new_value : inner_old_value
+            end
+          when NilClass
+            new_value
+          else
+            STDERR.puts "key is #{key} old val is #{old_value.inspect} and new val is #{new_value.inspect}"
+            old_value
+          end
+        end
+      end
+
+      self.class.new(old_attributes)
     end
 
     # @param name [String]

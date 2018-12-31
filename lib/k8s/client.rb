@@ -41,9 +41,44 @@ module K8s
       )
     end
 
+    # An K8s::Client instance from in-cluster config within a kube pod, using the kubernetes service envs and serviceaccount secrets
+    # @see K8s::Transport#in_cluster_config
+    #
+    # @param namespace [String] default namespace for all operations
     # @return [K8s::Client]
-    def self.in_cluster_config
-      new(Transport.in_cluster_config)
+    # @raise [K8s::Error::Config,Errno::ENOENT,Errno::EACCES]
+    def self.in_cluster_config(namespace: nil)
+      new(Transport.in_cluster_config, namespace: namespace)
+    end
+
+    # Attempts to create a K8s::Client instance automatically using environment variables, existing configuration
+    # files or in cluster configuration.
+    #
+    # Look-up order:
+    #   - KUBE_TOKEN, KUBE_CA, KUBE_SERVER environment variables
+    #   - KUBECONFIG environment variable
+    #   - $HOME/.kube/config file
+    #   - In cluster configuration
+    #
+    # Will raise when no means of configuration is available
+    #
+    # @param options [Hash] default namespace for all operations
+    # @raise [K8s::Error::Config,Errno::ENOENT,Errno::EACCES]
+    # @return [K8s::Client]
+    def self.autoconfig(namespace: nil, **options)
+      if ENV.values_at('KUBE_TOKEN', 'KUBE_CA', 'KUBE_SERVER').none? { |v| v.nil? || v.empty? }
+        configuration = K8s::Config.build(server: ENV['KUBE_SERVER'], ca: ENV['KUBE_CA'], auth_token: options[:auth_token] || ENV['KUBE_TOKEN'])
+      elsif !ENV['KUBECONFIG'].to_s.empty?
+        configuration = K8s::Config.from_kubeconfig_env(ENV['KUBECONFIG'], auth_token: options[:auth_token])
+      elsif File.exist?(File.join(Dir.home, '.kube', 'config'))
+        configuration = K8s::Config.load_file(File.join(Dir.home, '.kube', 'config'))
+      end
+
+      if configuration
+        config(configuration, namespace: namespace, **options)
+      else
+        in_cluster_config(namespace: namespace, **options)
+      end
     end
 
     attr_reader :transport

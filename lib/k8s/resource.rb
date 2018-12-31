@@ -4,6 +4,7 @@ require 'deep_merge'
 require 'recursive-open-struct'
 require 'hashdiff'
 require 'forwardable'
+require 'yaml/safe_load_stream'
 
 module K8s
   # generic untyped resource
@@ -11,16 +12,18 @@ module K8s
     extend Forwardable
     include Comparable
 
-    # @param data [Hash]
-    # @return [K8s::Resource]
+    using YAMLSafeLoadStream
+
+    # @param data [String]
+    # @return [self]
     def self.from_json(data)
-      new(data)
+      new(Yajl::Parser.parse(data))
     end
 
     # @param filename [String] file path
     # @return [K8s::Resource]
     def self.from_file(filename)
-      new(YAML.load_file(filename))
+      new(YAML.safe_load(File.read(filename), [], [], true, filename))
     end
 
     # @param path [String] file path
@@ -32,7 +35,7 @@ module K8s
         # recurse
         Dir.glob("#{path}/*.{yml,yaml}").sort.map { |dir| from_files(dir) }.flatten
       else
-        ::YAML.load_stream(File.read(path), path).map{ |doc| new(doc) }
+        YAML.safe_load_stream(File.read(path), path).map{ |doc| new(doc) }
       end
     end
 
@@ -92,7 +95,7 @@ module K8s
       current_cfg = metadata.annotations&.dig(config_annotation)
       return {} unless current_cfg
 
-      current_hash = JSON.parse(current_cfg)
+      current_hash = Yajl::Parser.parse(current_cfg)
       # kubectl adds empty metadata.namespace, let's fix it
       current_hash['metadata'].delete('namespace') if current_hash.dig('metadata', 'namespace').to_s.empty?
 
@@ -108,7 +111,7 @@ module K8s
     # @param hash [Hash]
     # @return [Hash]
     def stringify_hash(hash)
-      JSON.parse(JSON.dump(hash))
+      Yajl::Parser.parse(JSON.dump(hash))
     end
   end
 end

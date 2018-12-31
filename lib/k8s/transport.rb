@@ -92,16 +92,23 @@ module K8s
 
     # In-cluster config within a kube pod, using the kubernetes service envs and serviceaccount secrets
     #
+    # @param options [Hash] see #new
     # @return [K8s::Transport]
-    def self.in_cluster_config
-      host = ENV['KUBERNETES_SERVICE_HOST']
-      port = ENV['KUBERNETES_SERVICE_PORT_HTTPS']
+    # @raise [K8s::Error::Config] when the environment variables KUBERNETES_SEVICE_HOST and KUBERNETES_SERVICE_PORT_HTTPS are not set
+    # @raise [Errno::ENOENT,Errno::EACCES] when /var/run/secrets/kubernetes.io/serviceaccount/ca.crt or /var/run/secrets/kubernetes.io/serviceaccount/token can not be read
+    def self.in_cluster_config(**options)
+      host = ENV['KUBERNETES_SERVICE_HOST'].to_s
+      raise(K8s::Error::Config, "in_cluster_config failed: KUBERNETES_SERVICE_HOST environment not set") if host.empty?
+
+      port = ENV['KUBERNETES_SERVICE_PORT_HTTPS'].to_s
+      raise(K8s::Error::Config, "in_cluster_config failed: KUBERNETES_SERVICE_HOST environment not set") if port.empty?
 
       new(
         "https://#{host}:#{port}",
-        ssl_verify_peer: true,
-        ssl_ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
-        auth_token: File.read('/var/run/secrets/kubernetes.io/serviceaccount/token')
+        ssl_verify_peer: options.key?(:ssl_verify_peer) ? options.delete(:ssl_verify_peer) : true,
+        ssl_ca_file: options.delete(:ssl_ca_file) || '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
+        auth_token: options.delete(:auth_token) || File.read('/var/run/secrets/kubernetes.io/serviceaccount/token'),
+        **options
       )
     end
 
@@ -174,7 +181,7 @@ module K8s
 
     # @param response [Hash] as returned by Excon#request
     # @param request_options [Hash] as passed to Excon#request
-    # @param response_class [Class] decode response body using #from_json
+    # @param response_class [Class] coerce into response body using #new
     # @raise [K8s::Error]
     # @raise [Excon::Error] TODO: wrap
     # @return [response_class, Hash]
@@ -202,7 +209,7 @@ module K8s
 
         return response_data unless response_class
 
-        response_class.from_json(response_data)
+        response_class.new(response_data)
       else
         error_class = K8s::Error::HTTP_STATUS_ERRORS[response.status] || K8s::Error::API
 
@@ -218,7 +225,7 @@ module K8s
       end
     end
 
-    # @param response_class [Class] decode response body using #from_json
+    # @param response_class [Class] coerce into response class using #new
     # @param options [Hash] @see Excon#request
     # @return [response_class, Hash]
     def request(response_class: nil, **options)
