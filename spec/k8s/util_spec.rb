@@ -1,4 +1,106 @@
 RSpec.describe K8s::Util do
+  describe K8s::Util::HashDeepMerge do
+    using K8s::Util::HashDeepMerge
+
+    it 'deep merges hashes inside hashes' do
+      expect(
+        { 'foo' => { 'bar' => { 'baz' => 'dog' } } }.deep_merge(
+        { 'foo' => { 'bar' => { 'buzz' => 'aldrin' } } }
+        )
+      ).to eq(
+        { 'foo' => { 'bar' => { 'baz' => 'dog', 'buzz' => 'aldrin' } } }
+      )
+    end
+
+    describe 'overwrite_arrays: true' do
+      it 'replaces arrays with new arrays' do
+        expect(
+          { 'foo' => { 'bar' => [ 'baz' ] } }.deep_merge(
+          { 'foo' => { 'bar' => [ 'dog' ] } }, overwrite_arrays: true
+          )
+        ).to eq(
+          { 'foo' => { 'bar' => [ 'dog' ] } }
+        )
+      end
+    end
+
+    describe 'overwrite_arrays: false, union_arrays: true' do
+      it 'creates array union with new array' do
+        expect(
+          { 'foo' => { 'bar' => [ 'baz', 'cat' ] } }.deep_merge(
+          { 'foo' => { 'bar' => [ 'dog', 'baz' ] } }, overwrite_arrays: false, union_arrays: true
+          )
+        ).to eq(
+          { 'foo' => { 'bar' => [ 'baz', 'cat', 'dog' ] } }
+        )
+      end
+    end
+
+    describe 'overwrite_arrays: false, union_arrays: false' do
+      it 'combines arrays' do
+        expect(
+          { 'foo' => { 'bar' => [ 'baz' ] } }.deep_merge(
+          { 'foo' => { 'bar' => [ 'dog', 'baz' ] } }, overwrite_arrays: false, union_arrays: false
+          )
+        ).to eq(
+          { 'foo' => { 'bar' => [ 'baz', 'dog', 'baz' ] } }
+        )
+      end
+    end
+
+    describe 'keep_existing:' do
+      context 'true' do
+        it 'keeps existing values' do
+          expect(
+            { 'foo' => { 'bar' => 'baz' } }.deep_merge(
+            { 'foo' => { 'bar' => 'dog' } }, keep_existing: true
+            )
+          ).to eq(
+            { 'foo' => { 'bar' => 'baz' } }
+          )
+        end
+      end
+
+      context 'false' do
+        it 'replaces existing values' do
+          expect(
+            { 'foo' => { 'bar' => 'baz' } }.deep_merge(
+            { 'foo' => { 'bar' => 'dog' } }, keep_existing: false
+            )
+          ).to eq(
+            { 'foo' => { 'bar' => 'dog' } }
+          )
+        end
+      end
+    end
+
+    describe 'merge_nil_values' do
+      context 'false' do
+        it 'does not replace existing values with nils' do
+          expect(
+            { 'foo' => { 'bar' => 'baz' } }.deep_merge(
+            { 'foo' => { 'bar' => nil } }, merge_nil_values: false
+            )
+          ).to eq(
+            { 'foo' => { 'bar' => 'baz' } }
+          )
+        end
+      end
+
+      context 'true' do
+        it 'replaces existing values with nils' do
+          expect(
+            { 'foo' => { 'bar' => 'baz' } }.deep_merge(
+            { 'foo' => { 'bar' => nil } }, merge_nil_values: true
+            )
+          ).to eq(
+            { 'foo' => { 'bar' => nil } }
+          )
+        end
+      end
+    end
+  end
+
   describe '#compact_map' do
     it "returns an empty array for an empty array" do
       expect(described_class.compact_map([]) { |args| args.map(&:to_s) }).to eq []
