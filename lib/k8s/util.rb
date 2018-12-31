@@ -15,13 +15,15 @@ module K8s
           merge(other) do |key, old_value, new_value|
             case old_value
             when Hash
-              raise "#{key} : #{new_value.class.name} can not be merged into a Hash" unless new_value.kind_of?(Hash)
+              raise "#{key} : #{new_value.class.name} can not be merged into a Hash" unless new_value.is_a?(Hash)
+
               old_value.deep_merge(new_value)
             when Array
               if overwrite_arrays
                 new_value
               else
-                raise "#{key} : #{new_value.class.name} can not be merged into an Array" unless new_value.kind_of?(Array)
+                raise "#{key} : #{new_value.class.name} can not be merged into an Array" unless new_value.is_a?(Array)
+
                 if union_arrays
                   old_value | new_value
                 else
@@ -33,12 +35,10 @@ module K8s
                 old_value.merge(new_value)
               elsif keep_existing
                 old_value
+              elsif new_value.nil? && merge_nil_values
+                nil
               else
-                if new_value.nil? && merge_nil_values
-                  nil
-                else
-                  new_value
-                end
+                new_value
               end
             end
           end
