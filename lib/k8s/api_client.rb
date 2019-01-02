@@ -55,18 +55,20 @@ module K8s
     end
 
     # @param resource_name [String]
+    # @param keep_cache [Boolean] when set to true, K8s::Error::UndefinedResource exception will not clear the cache
     # @raise [K8s::Error::UndefinedResource]
     # @return [K8s::API::MetaV1::APIResource]
-    def find_api_resource(resource_name)
+    def find_api_resource(resource_name, keep_cache: false)
       found_resource = api_resources.find{ |api_resource| api_resource.name == resource_name }
-      raise K8s::Error::UndefinedResource, "Unknown resource #{resource_name} for #{@api_version}" unless found_resource
+      return found_resource if found_resource
 
-      found_resource
+      api_resources.clear unless keep_cache
+      raise K8s::Error::UndefinedResource, "Unknown resource #{resource_name} for #{@api_version}"
     end
 
     # @param resource_name [String]
     # @param namespace [String, nil]
-    # @raise [K8s::Error] unknown resource
+    # @raise [K8s::Error::UndefinedResource]
     # @return [K8s::ResourceClient]
     def resource(resource_name, namespace: nil)
       ResourceClient.new(@transport, self, find_api_resource(resource_name), namespace: namespace)
@@ -74,19 +76,21 @@ module K8s
 
     # @param resource [K8s::Resource]
     # @param namespace [String, nil] default if resource is missing namespace
-    # @raise [K8s::Error::NotFound] API Group does not exist
+    # @param keep_cache [Boolean] when set to true, K8s::Error::UndefinedResource exception will not clear the cache
     # @raise [K8s::Error::UndefinedResource]
     # @return [K8s::ResourceClient]
-    def client_for_resource(resource, namespace: nil)
+    def client_for_resource(resource, namespace: nil, keep_cache: false)
       unless @api_version == resource.apiVersion
         raise K8s::Error::UndefinedResource, "Invalid apiVersion=#{resource.apiVersion} for #{@api_version} client"
       end
 
       found_resource = api_resources.find{ |api_resource| api_resource.kind == resource.kind }
-      raise K8s::Error::UndefinedResource, "Unknown resource kind=#{resource.kind} for #{@api_version}" unless found_resource
-
-      ResourceClient.new(@transport, self, found_resource,
-                         namespace: resource.metadata.namespace || namespace)
+      if found_resource
+        ResourceClient.new(@transport, self, found_resource, namespace: resource.metadata.namespace || namespace)
+      else
+        api_resources.clear unless keep_cache
+        raise K8s::Error::UndefinedResource, "Unknown resource kind=#{resource.kind} for #{@api_version}"
+      end
     end
 
     # TODO: skip non-namespaced resources if namespace is given, or ignore namespace?
