@@ -115,31 +115,6 @@ RSpec.describe K8s::APIClient do
           expect{subject.client_for_resource(resource)}.to raise_error(K8s::Error::UndefinedResource,  %r(Unknown resource kind=Wtf for v1))
         end
       end
-
-      context "keep_cache:" do
-        let(:resource) {
-          K8s::Resource.new(
-            apiVersion: 'v1',
-            kind: 'Wtf',
-          )
-        }
-
-        context "false" do
-          it 'clears the api_resources cache' do
-            expect(subject).to receive(:api_resources!).twice.and_call_original
-            expect{subject.client_for_resource(resource)}.to raise_error(K8s::Error::UndefinedResource,  %r(Unknown resource kind=Wtf for v1))
-            expect{subject.client_for_resource(resource)}.to raise_error(K8s::Error::UndefinedResource,  %r(Unknown resource kind=Wtf for v1))
-          end
-        end
-
-        context "true" do
-          it 'does not clear the api_resources cache' do
-            expect(subject).to receive(:api_resources!).once.and_call_original
-            expect{subject.client_for_resource(resource, keep_cache: true)}.to raise_error(K8s::Error::UndefinedResource,  %r(Unknown resource kind=Wtf for v1))
-            expect{subject.client_for_resource(resource, keep_cache: true)}.to raise_error(K8s::Error::UndefinedResource,  %r(Unknown resource kind=Wtf for v1))
-          end
-        end
-      end
     end
 
     describe '#resources' do
