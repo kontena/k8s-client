@@ -62,7 +62,7 @@ module K8s
       found_resource = api_resources.find{ |api_resource| api_resource.name == resource_name }
       return found_resource if found_resource
 
-      api_resources.clear unless keep_cache
+      @api_resources = nil unless keep_cache
       raise K8s::Error::UndefinedResource, "Unknown resource #{resource_name} for #{@api_version}"
     end
 
@@ -88,7 +88,7 @@ module K8s
       if found_resource
         ResourceClient.new(@transport, self, found_resource, namespace: resource.metadata.namespace || namespace)
       else
-        api_resources.clear unless keep_cache
+        @api_resources = nil unless keep_cache
         raise K8s::Error::UndefinedResource, "Unknown resource kind=#{resource.kind} for #{@api_version}"
       end
     end

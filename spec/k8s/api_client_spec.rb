@@ -124,23 +124,19 @@ RSpec.describe K8s::APIClient do
           )
         }
 
-        let(:api_resources) { double(find: nil, clear: true) }
-
-        before do
-          allow(subject).to receive(:api_resources).and_return(api_resources)
-        end
-
         context "false" do
           it 'clears the api_resources cache' do
+            expect(subject).to receive(:api_resources!).twice.and_call_original
             expect{subject.client_for_resource(resource)}.to raise_error(K8s::Error::UndefinedResource,  %r(Unknown resource kind=Wtf for v1))
-            expect(api_resources).to have_received(:clear)
+            expect{subject.client_for_resource(resource)}.to raise_error(K8s::Error::UndefinedResource,  %r(Unknown resource kind=Wtf for v1))
           end
         end
 
         context "true" do
           it 'does not clear the api_resources cache' do
+            expect(subject).to receive(:api_resources!).once.and_call_original
             expect{subject.client_for_resource(resource, keep_cache: true)}.to raise_error(K8s::Error::UndefinedResource,  %r(Unknown resource kind=Wtf for v1))
-            expect(api_resources).not_to have_received(:clear)
+            expect{subject.client_for_resource(resource, keep_cache: true)}.to raise_error(K8s::Error::UndefinedResource,  %r(Unknown resource kind=Wtf for v1))
           end
         end
       end
