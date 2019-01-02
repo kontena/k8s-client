@@ -59,6 +59,7 @@ module K8s
     # @return [K8s::API::MetaV1::APIResource]
     def find_api_resource(resource_name)
       found_resource = api_resources.find{ |api_resource| api_resource.name == resource_name }
+      found_resource ||= api_resources!.find{ |api_resource| api_resource.name == resource_name }
       raise K8s::Error::UndefinedResource, "Unknown resource #{resource_name} for #{@api_version}" unless found_resource
 
       found_resource
@@ -66,7 +67,7 @@ module K8s
 
     # @param resource_name [String]
     # @param namespace [String, nil]
-    # @raise [K8s::Error] unknown resource
+    # @raise [K8s::Error::UndefinedResource]
     # @return [K8s::ResourceClient]
     def resource(resource_name, namespace: nil)
       ResourceClient.new(@transport, self, find_api_resource(resource_name), namespace: namespace)
@@ -74,7 +75,6 @@ module K8s
 
     # @param resource [K8s::Resource]
     # @param namespace [String, nil] default if resource is missing namespace
-    # @raise [K8s::Error::NotFound] API Group does not exist
     # @raise [K8s::Error::UndefinedResource]
     # @return [K8s::ResourceClient]
     def client_for_resource(resource, namespace: nil)
@@ -83,10 +83,10 @@ module K8s
       end
 
       found_resource = api_resources.find{ |api_resource| api_resource.kind == resource.kind }
+      found_resource ||= api_resources!.find{ |api_resource| api_resource.kind == resource.kind }
       raise K8s::Error::UndefinedResource, "Unknown resource kind=#{resource.kind} for #{@api_version}" unless found_resource
 
-      ResourceClient.new(@transport, self, found_resource,
-                         namespace: resource.metadata.namespace || namespace)
+      ResourceClient.new(@transport, self, found_resource, namespace: resource.metadata.namespace || namespace)
     end
 
     # TODO: skip non-namespaced resources if namespace is given, or ignore namespace?
