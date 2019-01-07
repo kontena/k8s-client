@@ -117,7 +117,7 @@ module K8s
         @api_groups = @transport.get(
           '/apis',
           response_class: K8s::API::MetaV1::APIGroupList
-        ).groups.map{ |api_group| api_group.versions.map(&:groupVersion) }.flatten
+        ).groups.flat_map{ |api_group| api_group.versions.map(&:groupVersion) }
 
         @api_clients.clear
       end
