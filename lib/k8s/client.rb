@@ -3,6 +3,7 @@
 require 'openssl'
 require 'base64'
 require 'yajl'
+require 'monitor'
 
 require 'k8s/api/metav1'
 require 'k8s/api/version'
@@ -81,6 +82,8 @@ module K8s
       end
     end
 
+    include MonitorMixin
+
     attr_reader :transport
 
     # @param transport [K8s::Transport]
@@ -90,6 +93,7 @@ module K8s
       @namespace = namespace
 
       @api_clients = {}
+      super()
     end
 
     # @raise [K8s::Error]
@@ -109,12 +113,14 @@ module K8s
     #
     # @return [Array<String>]
     def api_groups!
-      @api_groups = @transport.get(
-        '/apis',
-        response_class: K8s::API::MetaV1::APIGroupList
-      ).groups.map{ |api_group| api_group.versions.map(&:groupVersion) }.flatten
+      synchronize do
+        @api_groups = @transport.get(
+          '/apis',
+          response_class: K8s::API::MetaV1::APIGroupList
+        ).groups.map{ |api_group| api_group.versions.map(&:groupVersion) }.flatten
 
-      @api_clients.clear
+        @api_clients.clear
+      end
 
       @api_groups
     end
