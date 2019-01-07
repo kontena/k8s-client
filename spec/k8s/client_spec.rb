@@ -120,7 +120,7 @@ RSpec.describe K8s::Client do
 
           expect {
             subject.apis(prefetch_resources: true)
-          }.not_to raise_error(K8s::Error::NotFound)
+          }.not_to raise_error
         end
       end
     end
@@ -433,6 +433,18 @@ RSpec.describe K8s::Client do
               skip_forbidden: true,
             )).to eq [service_resource]
           end
+        end
+      end
+
+      context "with partial 404 errors" do
+        it "raises NotFound" do
+          allow(transport).to receive(:gets).and_raise(K8s::Error::NotFound.new('GET', '/foo', 404, 'NotFound'))
+          expect{
+            subject.list_resources([
+              subject.api('v1').resource('services'),
+              subject.api('v1').resource('configmaps'),
+            ])
+          }.to raise_error(K8s::Error::NotFound)
         end
       end
     end
