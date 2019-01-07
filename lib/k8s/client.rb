@@ -45,7 +45,7 @@ module K8s
     # @see K8s::Transport#in_cluster_config
     #
     # @param namespace [String] default namespace for all operations
-    # @param options [Hash] options passed, @see Transport#in_cluster_config
+    # @param options [Hash] options passed to transport, @see Transport#in_cluster_config
     # @return [K8s::Client]
     # @raise [K8s::Error::Config,Errno::ENOENT,Errno::EACCES]
     def self.in_cluster_config(namespace: nil, **options)
