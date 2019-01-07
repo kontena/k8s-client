@@ -108,6 +108,21 @@ RSpec.describe K8s::Client do
           expect(apis.map{|api| api.api_resources}.flatten.map{|r| r.name}).to include 'nodes', 'pods', 'deployments', 'jobs'
         end
       end
+
+      context "stale api cache" do
+        before do
+          subject.api.api_resources
+        end
+
+        it "ignores errors in prefetch" do
+          expect(transport).to receive(:get).once.with('/apis', hash_including(:response_class)).and_call_original
+          expect(transport).to receive(:gets).once.and_raise(K8s::Error::NotFound.new('GET', '/foo', 404, 'NotFound'))
+
+          expect {
+            subject.apis(prefetch_resources: true)
+          }.not_to raise_error
+        end
+      end
     end
 
     describe '#create_resource' do
@@ -418,6 +433,18 @@ RSpec.describe K8s::Client do
               skip_forbidden: true,
             )).to eq [service_resource]
           end
+        end
+      end
+
+      context "with partial 404 errors" do
+        it "raises NotFound" do
+          allow(transport).to receive(:gets).and_raise(K8s::Error::NotFound.new('GET', '/foo', 404, 'NotFound'))
+          expect{
+            subject.list_resources([
+              subject.api('v1').resource('services'),
+              subject.api('v1').resource('configmaps'),
+            ])
+          }.to raise_error(K8s::Error::NotFound)
         end
       end
     end
