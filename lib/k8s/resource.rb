@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'deep_merge'
 require 'recursive-open-struct'
 require 'hashdiff'
 require 'forwardable'
@@ -13,6 +12,7 @@ module K8s
     include Comparable
 
     using YAMLSafeLoadStream
+    using K8s::Util::HashDeepMerge
 
     # @param data [String]
     # @return [self]
