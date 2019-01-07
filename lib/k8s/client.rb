@@ -113,6 +113,10 @@ module K8s
         '/apis',
         response_class: K8s::API::MetaV1::APIGroupList
       ).groups.map{ |api_group| api_group.versions.map(&:groupVersion) }.flatten
+
+      @api_clients.clear
+
+      @api_groups
     end
 
     # Cached /apis preferred group apiVersions
@@ -136,8 +140,13 @@ module K8s
                     .map{ |api_version| APIClient.path(api_version) }
 
         # load into APIClient.api_resources=
-        @transport.gets(*api_paths, response_class: K8s::API::MetaV1::APIResourceList, skip_missing: skip_missing).each do |api_resource_list|
-          api(api_resource_list.groupVersion).api_resources = api_resource_list.resources if api_resource_list
+        begin
+          @transport.gets(*api_paths, response_class: K8s::API::MetaV1::APIResourceList, skip_missing: skip_missing).each do |api_resource_list|
+            api(api_resource_list.groupVersion).api_resources = api_resource_list.resources if api_resource_list
+          end
+        rescue K8s::Error::NotFound, K8s::Error::ServiceUnavailable
+          # kubernetes api is in unstable state
+          # because this is only performance optimization, better to skip prefetch and move on
         end
       end
 
@@ -158,9 +167,20 @@ module K8s
     # @param options @see K8s::ResourceClient#list
     # @return [Array<K8s::Resource>]
     def list_resources(resources = nil, **options)
+      cached_clients = @api_clients.size > 0
       resources ||= self.resources.select(&:list?)
 
-      ResourceClient.list(resources, @transport, **options)
+      begin
+        ResourceClient.list(resources, @transport, **options)
+      rescue K8s::Error::NotFound
+        if cached_clients
+          cached_clients = false
+          api_groups!
+          retry
+        else
+          raise
+        end
+      end
     end
 
     # @param resource [K8s::Resource]
