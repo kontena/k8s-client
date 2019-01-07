@@ -194,6 +194,7 @@ RSpec.describe K8s::Transport do
       }
 
       before do
+        allow(ENV).to receive(:[]).with('TELEPRESENCE_ROOT').and_return(nil)
         allow(ENV).to receive(:[]).with('KUBERNETES_SERVICE_HOST').and_return(service_host)
         allow(ENV).to receive(:[]).with('KUBERNETES_SERVICE_PORT_HTTPS').and_return(service_port)
         allow(File).to receive(:read).with('/var/run/secrets/kubernetes.io/serviceaccount/token').and_return(sa_token)
@@ -218,6 +219,18 @@ RSpec.describe K8s::Transport do
         expect(subject.request_options[:headers]).to match hash_including(
           'Authorization' => "Bearer #{sa_token}",
         )
+      end
+
+      context 'with telepresence' do
+        before do
+          allow(ENV).to receive(:[]).with('TELEPRESENCE_ROOT').and_return('/tmp')
+          allow(File).to receive(:read).with('/tmp/var/run/secrets/kubernetes.io/serviceaccount/token').and_return(sa_token)
+          allow(File).to receive(:read).with('/tmp/var/run/secrets/kubernetes.io/serviceaccount/ca.crt').and_return(sa_cacert)
+        end
+
+        it 'uses the correct server' do
+          subject.server
+        end
       end
     end
   end

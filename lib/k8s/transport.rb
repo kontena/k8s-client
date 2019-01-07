@@ -106,8 +106,8 @@ module K8s
       new(
         "https://#{host}:#{port}",
         ssl_verify_peer: options.key?(:ssl_verify_peer) ? options.delete(:ssl_verify_peer) : true,
-        ssl_ca_file: options.delete(:ssl_ca_file) || '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
-        auth_token: options.delete(:auth_token) || File.read('/var/run/secrets/kubernetes.io/serviceaccount/token'),
+        ssl_ca_file: options.delete(:ssl_ca_file) || File.join((ENV['TELEPRESENCE_ROOT'] || '/'), 'var/run/secrets/kubernetes.io/serviceaccount/ca.crt'),
+        auth_token: options.delete(:auth_token) || File.read(File.join((ENV['TELEPRESENCE_ROOT'] || '/'), 'var/run/secrets/kubernetes.io/serviceaccount/token')),
         **options
       )
     end
