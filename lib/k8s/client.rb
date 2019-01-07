@@ -47,8 +47,8 @@ module K8s
     # @param namespace [String] default namespace for all operations
     # @return [K8s::Client]
     # @raise [K8s::Error::Config,Errno::ENOENT,Errno::EACCES]
-    def self.in_cluster_config(namespace: nil)
-      new(Transport.in_cluster_config, namespace: namespace)
+    def self.in_cluster_config(namespace: nil, **options)
+      new(Transport.in_cluster_config, namespace: namespace, **options)
     end
 
     # Attempts to create a K8s::Client instance automatically using environment variables, existing configuration
