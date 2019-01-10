@@ -162,7 +162,13 @@ module K8s
     # @param namespace [String, nil]
     # @return [Array<K8s::ResourceClient>]
     def resources(namespace: nil)
-      apis(prefetch_resources: true).map { |api| api.resources(namespace: namespace) }.flatten
+      apis(prefetch_resources: true).map { |api|
+        begin
+          api.resources(namespace: namespace)
+        rescue K8s::Error::ServiceUnavailable, K8s::Error::NotFound
+          []
+        end
+      }.flatten
     end
 
     # Pipeline list requests for multiple resource types.
