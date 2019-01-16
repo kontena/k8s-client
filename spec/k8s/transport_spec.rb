@@ -233,6 +233,30 @@ RSpec.describe K8s::Transport do
         end
       end
     end
+
+    context 'without envs set' do
+      before do
+        allow(ENV).to receive(:[]).with('TELEPRESENCE_ROOT').and_return(nil)
+        allow(ENV).to receive(:[]).with('KUBERNETES_SERVICE_HOST').and_return(nil)
+        allow(ENV).to receive(:[]).with('KUBERNETES_SERVICE_PORT_HTTPS').and_return(nil)
+      end
+
+      it 'fails when KUBERNETES_SERVICE_HOST not defined' do
+        expect {
+          described_class.in_cluster_config
+        }.to raise_error(K8s::Error::Configuration)
+      end
+
+      it 'fails when KUBERNETES_SERVICE_HOST not defined' do
+        allow(ENV).to receive(:[]).with('KUBERNETES_SERVICE_HOST').and_return('foo')
+        expect(ENV).to receive(:[]).with('KUBERNETES_SERVICE_PORT_HTTPS').and_return(nil)
+        expect {
+          described_class.in_cluster_config
+        }.to raise_error(K8s::Error::Configuration)
+      end
+
+
+    end
   end
 
   let(:server) { 'http://localhost:8080' }

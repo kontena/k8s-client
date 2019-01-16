@@ -98,10 +98,10 @@ module K8s
     # @raise [Errno::ENOENT,Errno::EACCES] when /var/run/secrets/kubernetes.io/serviceaccount/ca.crt or /var/run/secrets/kubernetes.io/serviceaccount/token can not be read
     def self.in_cluster_config(**options)
       host = ENV['KUBERNETES_SERVICE_HOST'].to_s
-      raise(K8s::Error::Config, "in_cluster_config failed: KUBERNETES_SERVICE_HOST environment not set") if host.empty?
+      raise(K8s::Error::Configuration, "in_cluster_config failed: KUBERNETES_SERVICE_HOST environment not set") if host.empty?
 
       port = ENV['KUBERNETES_SERVICE_PORT_HTTPS'].to_s
-      raise(K8s::Error::Config, "in_cluster_config failed: KUBERNETES_SERVICE_HOST environment not set") if port.empty?
+      raise(K8s::Error::Configuration, "in_cluster_config failed: KUBERNETES_SERVICE_HOST environment not set") if port.empty?
 
       new(
         "https://#{host}:#{port}",
