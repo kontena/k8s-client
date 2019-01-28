@@ -110,7 +110,7 @@ module K8s
     # merged using the configuration merge rules, @see K8s::Config.merge
     #
     # @param kubeconfig [String] by default read from ENV['KUBECONFIG']
-    def self.from_kubeconfig_env(kubeconfig = nil, **options)
+    def self.from_kubeconfig_env(kubeconfig = nil)
       kubeconfig ||= ENV.fetch('KUBECONFIG', '')
       return if kubeconfig.empty?
 
