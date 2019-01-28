@@ -315,7 +315,7 @@ module K8s
         query: make_query(
           'propagationPolicy' => propagationPolicy
         ),
-        response_class: @resource_class, # XXX: documented as returning Status
+        response_class: @resource_class # XXX: documented as returning Status
       )
     end
 
@@ -333,7 +333,7 @@ module K8s
           'fieldSelector' => selector_query(fieldSelector),
           'propagationPolicy' => propagationPolicy
         ),
-        response_class: K8s::API::MetaV1::List, # XXX: documented as returning Status
+        response_class: K8s::API::MetaV1::List # XXX: documented as returning Status
       )
       process_list(list)
     end

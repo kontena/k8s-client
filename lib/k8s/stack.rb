@@ -20,7 +20,7 @@ module K8s
     # These would lead to stack prune misbehaving if not skipped.
     PRUNE_IGNORE = [
       'v1:ComponentStatus', # apiserver ignores GET /v1/componentstatuses?labelSelector=... and returns all resources
-      'v1:Endpoints', # inherits stack label from service, but not checksum annotation
+      'v1:Endpoints' # inherits stack label from service, but not checksum annotation
     ].freeze
 
     # @param name [String] unique name for stack
