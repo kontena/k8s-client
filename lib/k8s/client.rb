@@ -70,7 +70,7 @@ module K8s
       if ENV.values_at('KUBE_TOKEN', 'KUBE_CA', 'KUBE_SERVER').none? { |v| v.nil? || v.empty? }
         configuration = K8s::Config.build(server: ENV['KUBE_SERVER'], ca: ENV['KUBE_CA'], auth_token: options[:auth_token] || ENV['KUBE_TOKEN'])
       elsif !ENV['KUBECONFIG'].to_s.empty?
-        configuration = K8s::Config.from_kubeconfig_env(ENV['KUBECONFIG'], auth_token: options[:auth_token])
+        configuration = K8s::Config.from_kubeconfig_env(ENV['KUBECONFIG'])
       elsif File.exist?(File.join(Dir.home, '.kube', 'config'))
         configuration = K8s::Config.load_file(File.join(Dir.home, '.kube', 'config'))
       end
