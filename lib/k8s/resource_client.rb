@@ -137,6 +137,10 @@ module K8s
       end
     end
 
+    def response_class(path)
+      K8s::TypedResource.find_resource_class(path)
+    end
+
     # @return [Bool]
     def create?
       @api_resource.verbs.include? 'create'
@@ -145,11 +149,13 @@ module K8s
     # @param resource [#metadata] with metadata.namespace and metadata.name set
     # @return [Object] instance of resource_class
     def create_resource(resource)
+      path = path(namespace: resource.metadata.namespace)
+      response_class = response_class(path) || @resource_class
       @transport.request(
         method: 'POST',
-        path: path(namespace: resource.metadata.namespace),
+        path: path,
         request_object: resource,
-        response_class: @resource_class
+        response_class: response_class
       )
     end
 
@@ -162,20 +168,22 @@ module K8s
     # @param namespace [String, NilClass]
     # @return [Object] instance of resource_class
     def get(name, namespace: @namespace)
+      response_class = response_class(path('{name}', namespace: '{namespace}')) || @resource_class
       @transport.request(
         method: 'GET',
         path: path(name, namespace: namespace),
-        response_class: @resource_class
+        response_class: response_class
       )
     end
 
     # @param resource [resource_class]
     # @return [Object] instance of resource_class
     def get_resource(resource)
+      response_class = response_class('{name}', namespace: '{namespace}') || @resource_class
       @transport.request(
         method: 'GET',
-        path: path(resource.metadata.name, namespace: resource.metadata.namespace),
-        response_class: @resource_class
+        path: path = path(resource.metadata.name, namespace: resource.metadata.namespace),
+        response_class: response_class
       )
     end
 
@@ -186,10 +194,12 @@ module K8s
 
     # @param list [K8s::API::MetaV1::List]
     # @return [Array<Object>] array of instances of resource_class
-    def process_list(list)
+    def process_list(list, namespace: @namespace)
+      path = path('{name}', namespace: '{namespace}')
+      response_class = response_class(path) || K8s::Resource
       list.items.map { |item|
         # list items omit kind/apiVersion
-        @resource_class.new(item.merge('apiVersion' => list.apiVersion, 'kind' => @api_resource.kind))
+        response_class.new(item.merge('apiVersion' => list.apiVersion, 'kind' => @api_resource.kind))
       }
     end
 
@@ -199,7 +209,7 @@ module K8s
     # @return [Array<Object>] array of instances of resource_class
     def list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
       list = meta_list(labelSelector: labelSelector, fieldSelector: fieldSelector, namespace: namespace)
-      process_list(list)
+      process_list(list, namespace: namespace)
     end
 
     # @param labelSelector [nil, String, Hash{String => String}]
@@ -207,10 +217,11 @@ module K8s
     # @param namespace [nil, String]
     # @return [K8s::API::MetaV1::List]
     def meta_list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
+      response_class = response_class(path(namespace: '{namespace}')) || K8s::API::MetaV1::List
       @transport.request(
         method: 'GET',
         path: path(namespace: namespace),
-        response_class: K8s::API::MetaV1::List,
+        response_class: response_class,
         query: make_query(
           'labelSelector' => selector_query(labelSelector),
           'fieldSelector' => selector_query(fieldSelector)
@@ -255,13 +266,14 @@ module K8s
     end
 
     # @param resource [#metadata] with metadata.resourceVersion set
-    # @return [Object] instance of resource_class
+    # @return [K8s::TypedResource, K8s::Resource] instance of resource_class
     def update_resource(resource)
+      response_class = response_class(path('{name}', namespace: '{namespace}')) || @resource_class
       @transport.request(
         method: 'PUT',
         path: path(resource.metadata.name, namespace: resource.metadata.namespace),
         request_object: resource,
-        response_class: @resource_class
+        response_class: response_class
       )
     end
 
@@ -274,28 +286,31 @@ module K8s
     # @param obj [#to_json]
     # @param namespace [String, nil]
     # @param strategic_merge [Boolean] use kube Strategic Merge Patch instead of standard Merge Patch (arrays of objects are merged by name)
-    # @return [Object] instance of resource_class
+    # @return [K8s::TypedResource, K8s::Resource] instance of resource_class
     def merge_patch(name, obj, namespace: @namespace, strategic_merge: true)
+      resource_class = response_class(path('{name}', namespace: '{namespace}')) || @resource_class
       @transport.request(
         method: 'PATCH',
-        path: path(name, namespace: namespace),
+        path: path = path(name, namespace: namespace),
         content_type: strategic_merge ? 'application/strategic-merge-patch+json' : 'application/merge-patch+json',
         request_object: obj,
-        response_class: @resource_class
+        response_class: resource_class
       )
     end
 
     # @param name [String]
     # @param ops [Hash] json-patch operations
     # @param namespace [String, nil]
-    # @return [Object] instance of resource_class
+    # @return [K8s::TypedResource, K8s::Resource] instance of resource_class
     def json_patch(name, ops, namespace: @namespace)
+      path = path(name, namespace: namespace)
+      response_class = response_class(path) || @resource_class
       @transport.request(
         method: 'PATCH',
-        path: path(name, namespace: namespace),
+        path: path,
         content_type: 'application/json-patch+json',
         request_object: ops,
-        response_class: @resource_class
+        response_class: response_class
       )
     end
 
@@ -307,15 +322,17 @@ module K8s
     # @param name [String]
     # @param namespace [String, nil]
     # @param propagationPolicy [String, nil] The propagationPolicy to use for the API call. Possible values include “Orphan”, “Foreground”, or “Background”
-    # @return [K8s::API::MetaV1::Status]
+    # @return [K8s::TypedResource, K8s::Resource]
     def delete(name, namespace: @namespace, propagationPolicy: nil)
+      path = path(name, namespace: namespace)
+      response_class = response_class(path) || @resource_class
       @transport.request(
         method: 'DELETE',
-        path: path(name, namespace: namespace),
+        path: path,
         query: make_query(
           'propagationPolicy' => propagationPolicy
         ),
-        response_class: @resource_class # XXX: documented as returning Status
+        response_class: response_class # XXX: documented as returning Status
       )
     end
 
@@ -323,17 +340,19 @@ module K8s
     # @param labelSelector [nil, String, Hash{String => String}]
     # @param fieldSelector [nil, String, Hash{String => String}]
     # @param propagationPolicy [String, nil]
-    # @return [Array<Object>] array of instances of resource_class
+    # @return [Array<K8s::TypedResource, K8s::Resource>] array of instances of resource_class
     def delete_collection(namespace: @namespace, labelSelector: nil, fieldSelector: nil, propagationPolicy: nil)
+      path = path(namespace: namespace)
+      response_class = response_class(path) || K8s::Model::Apimachinery::Apis::Meta::V1::ListMeta
       list = @transport.request(
         method: 'DELETE',
-        path: path(namespace: namespace),
+        path: path,
         query: make_query(
           'labelSelector' => selector_query(labelSelector),
           'fieldSelector' => selector_query(fieldSelector),
           'propagationPolicy' => propagationPolicy
         ),
-        response_class: K8s::API::MetaV1::List # XXX: documented as returning Status
+        response_class: response_class # XXX: documented as returning Status
       )
       process_list(list)
     end

@@ -2,6 +2,8 @@
 
 require 'dry-types'
 require 'dry-struct'
+require 'k8s/resource'
+require 'k8s/typed_resource'
 
 module K8s
   # Kube API definitions
@@ -29,3 +31,12 @@ module K8s
     end
   end
 end
+
+Dir.glob("#{__dir__}/model/**/**/*.rb").sort.each do |file|
+  require file
+end
+
+require 'k8s/api/metav1'
+require 'k8s/api/version'
+require 'k8s/model/apimachinery/apis/meta/v1/api_group_list'
+require 'k8s/model/apimachinery/apis/meta/v1/api_resource_list'

@@ -1,10 +1,15 @@
 # frozen_string_literal: true
 
+require 'k8s/string_zoo'
+require 'k8s/model/apimachinery/apis/meta/v1/api_resource_list'
+
 module K8s
   # Per-APIGroup/version client.
   #
   # Offers access to {ResourceClient} instances for the APIResource types defined in this apigroup/version
   class APIClient
+    using K8s::StringZoo
+
     # @param api_version [String] either core version (v1) or apigroup/apiversion (apps/v1)
     # @return [String]
     def self.path(api_version)
@@ -41,22 +46,24 @@ module K8s
 
     # Force-update APIResources
     #
-    # @return [Array<K8s::API::MetaV1::APIResource>]
+    # @return [Array<K8s::Model::Apimachinery::Apis::Meta::V1::APIResource>]
     def api_resources!
-      @api_resources = @transport.get(path,
-                                      response_class: K8s::API::MetaV1::APIResourceList).resources
+      @api_resources = @transport.get(
+        path,
+        response_class: K8s::Model::Apimachinery::Apis::Meta::V1::APIResourceList
+      ).resources
     end
 
     # Cached APIResources
     #
-    # @return [Array<K8s::API::MetaV1::APIResource>]
+    # @return [Array<K8s::Model::Apimachinery::Apis::Meta::V1::APIResource>]
     def api_resources
       @api_resources || api_resources!
     end
 
     # @param resource_name [String]
     # @raise [K8s::Error::UndefinedResource]
-    # @return [K8s::API::MetaV1::APIResource]
+    # @return [K8s::Model::Apimachinery::Apis::Meta::V1::APIResource]
     def find_api_resource(resource_name)
       found_resource = api_resources.find{ |api_resource| api_resource.name == resource_name }
       found_resource ||= api_resources!.find{ |api_resource| api_resource.name == resource_name }
@@ -106,7 +113,7 @@ module K8s
     #
     # @param resources [Array<K8s::ResourceClient>] default is all listable resources for api
     # @param options @see [K8s::ResourceClient#list]
-    # @return [Array<K8s::Resource>]
+    # @return [Array<K8s::TypedResource, K8s::Resource>]
     def list_resources(resources = nil, **options)
       resources ||= self.resources.select(&:list?)
 

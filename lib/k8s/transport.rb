@@ -214,7 +214,7 @@ module K8s
         error_class = K8s::Error::HTTP_STATUS_ERRORS[response.status] || K8s::Error::API
 
         if response_data.is_a?(Hash) && response_data['kind'] == 'Status'
-          status = K8s::API::MetaV1::Status.new(response_data)
+          status = K8s::Model::Apimachinery::Apis::Meta::V1::Status.new(response_data)
 
           raise error_class.new(method, path, response.status, response.reason_phrase, status)
         elsif response_data

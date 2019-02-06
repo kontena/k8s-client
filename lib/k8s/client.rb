@@ -7,8 +7,7 @@ require 'monitor'
 
 require 'k8s/util'
 
-require 'k8s/api/metav1'
-require 'k8s/api/version'
+require 'k8s/api'
 require 'k8s/config'
 require 'k8s/logging'
 require 'k8s/api_client'
@@ -116,7 +115,7 @@ module K8s
       synchronize do
         @api_groups = @transport.get(
           '/apis',
-          response_class: K8s::API::MetaV1::APIGroupList
+          response_class: K8s::Model::Apimachinery::Apis::Meta::V1::APIGroupList
         ).groups.flat_map{ |api_group| api_group.versions.map(&:groupVersion) }
 
         @api_clients.clear
@@ -147,7 +146,7 @@ module K8s
 
         # load into APIClient.api_resources=
         begin
-          @transport.gets(*api_paths, response_class: K8s::API::MetaV1::APIResourceList, skip_missing: skip_missing).each do |api_resource_list|
+          @transport.gets(*api_paths, response_class: K8s::Model::Apimachinery::Apis::Meta::V1::APIResourceList, skip_missing: skip_missing).each do |api_resource_list|
             api(api_resource_list.groupVersion).api_resources = api_resource_list.resources if api_resource_list
           end
         rescue K8s::Error::NotFound, K8s::Error::ServiceUnavailable # rubocop:disable Lint/HandleExceptions

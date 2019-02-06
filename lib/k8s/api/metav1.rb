@@ -18,9 +18,5 @@ module K8s
   end
 end
 
-require 'k8s/api/metav1/api_group'
-require 'k8s/api/metav1/api_resource'
 require 'k8s/api/metav1/list'
-require 'k8s/api/metav1/object'
-require 'k8s/api/metav1/status'
 require 'k8s/api/metav1/watch_event'

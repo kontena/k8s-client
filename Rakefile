@@ -14,3 +14,22 @@ RuboCop::RakeTask.new(:rubocop).tap do |task|
 end
 
 task default: [:spec, :rubocop]
+
+desc "generate api models"
+task :generate_models do
+  require "k8s/model_generator"
+
+  swagger = JSON.parse(File.read('./openapi/v1.13/swagger.json'))
+  generator = K8s::ModelGenerator.new(swagger)
+  generator.each_module do |path, contents|
+    file = 'lib/' + path
+    FileUtils.mkdir_p(File.dirname(file))
+    File.write(file, contents)
+  end
+
+  generator.each_model do |path, model|
+    file = 'lib/' + path + '.rb'
+    FileUtils.mkdir_p(File.dirname(file))
+    File.write(file, model)
+  end
+end
