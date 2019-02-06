@@ -4,7 +4,5 @@
 require "k8s/model/kubernetes/api/v1"
 
 module K8s::Model::Kubernetes::Api::V1
-  class Secret < K8s::TypedResource
-    attribute :dummy, K8s::API::Types::Bool
-  end
+  class Secret < K8s::TypedResource; end
 end

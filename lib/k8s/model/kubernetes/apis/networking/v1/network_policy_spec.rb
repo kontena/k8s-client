@@ -4,7 +4,5 @@
 require "k8s/model/kubernetes/apis/networking/v1"
 
 module K8s::Model::Kubernetes::Apis::Networking::V1
-  class NetworkPolicySpec < K8s::TypedResource
-    attribute :dummy, K8s::API::Types::Bool
-  end
+  class NetworkPolicySpec < K8s::TypedResource; end
 end

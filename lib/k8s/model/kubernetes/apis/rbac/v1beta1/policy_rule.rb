@@ -4,7 +4,5 @@
 require "k8s/model/kubernetes/apis/rbac/v1beta1"
 
 module K8s::Model::Kubernetes::Apis::Rbac::V1beta1
-  class PolicyRule < K8s::TypedResource
-    attribute :dummy, K8s::API::Types::Bool
-  end
+  class PolicyRule < K8s::TypedResource; end
 end

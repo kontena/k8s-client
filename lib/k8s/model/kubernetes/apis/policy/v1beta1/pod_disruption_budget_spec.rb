@@ -4,7 +4,5 @@
 require "k8s/model/kubernetes/apis/policy/v1beta1"
 
 module K8s::Model::Kubernetes::Apis::Policy::V1beta1
-  class PodDisruptionBudgetSpec < K8s::TypedResource
-    attribute :dummy, K8s::API::Types::Bool
-  end
+  class PodDisruptionBudgetSpec < K8s::TypedResource; end
 end

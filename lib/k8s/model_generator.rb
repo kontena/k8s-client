@@ -128,9 +128,7 @@ MODEL
 require "#{name.split('::')[0...-1].map(&:snake_case).join('/')}"
 
 module #{name.split('::')[0...-1].join('::')}
-  class #{name.split('::').last} < K8s::TypedResource
-    attribute :dummy, K8s::API::Types::Bool
-  end
+  class #{name.split('::').last} < K8s::TypedResource; end
 end
 MODEL
       model

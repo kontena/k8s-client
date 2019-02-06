@@ -4,7 +4,5 @@
 require "k8s/model/kubernetes/apis/authentication/v1"
 
 module K8s::Model::Kubernetes::Apis::Authentication::V1
-  class TokenReviewStatus < K8s::TypedResource
-    attribute :dummy, K8s::API::Types::Bool
-  end
+  class TokenReviewStatus < K8s::TypedResource; end
 end

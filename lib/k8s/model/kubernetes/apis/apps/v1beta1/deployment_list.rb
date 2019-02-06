@@ -4,7 +4,5 @@
 require "k8s/model/kubernetes/apis/apps/v1beta1"
 
 module K8s::Model::Kubernetes::Apis::Apps::V1beta1
-  class DeploymentList < K8s::TypedResource
-    attribute :dummy, K8s::API::Types::Bool
-  end
+  class DeploymentList < K8s::TypedResource; end
 end
