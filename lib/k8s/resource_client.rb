@@ -150,7 +150,8 @@ module K8s
     # @return [Object] instance of resource_class
     def create_resource(resource)
       path = path(namespace: resource.metadata.namespace)
-      response_class = response_class(path) || @resource_class
+      response_class = response_class(path('{name}', namespace: '{namespace}')) || @resource_class
+      resource = response_class.new(resource.to_h) if response_class.kind_of?(K8s::TypedResource)
       @transport.request(
         method: 'POST',
         path: path,
