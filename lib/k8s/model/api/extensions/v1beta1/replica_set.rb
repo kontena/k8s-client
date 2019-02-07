@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -29,9 +30,6 @@ module K8s::Model::Api::Extensions::V1beta1
     # @return [K8s::Model::Api::Extensions::V1beta1::ReplicaSetStatus,NilClass]
     attribute :status, K8s::Model::Api::Extensions::V1beta1::ReplicaSetStatus.optional.default(nil)
 
-    register_paths [
-      '/apis/extensions/v1beta1/namespaces/{namespace}/replicasets/{name}',
-      '/apis/extensions/v1beta1/namespaces/{namespace}/replicasets/{name}/status'
-    ]
+    register_paths ["/apis/extensions/v1beta1/namespaces/{namespace}/replicasets/{name}","/apis/extensions/v1beta1/namespaces/{namespace}/replicasets/{name}/status"]
   end
 end

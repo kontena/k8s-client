@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -29,10 +30,6 @@ module K8s::Model::Api::Apps::V1beta2
     # @return [K8s::Model::Api::Apps::V1beta2::ScaleStatus,NilClass]
     attribute :status, K8s::Model::Api::Apps::V1beta2::ScaleStatus.optional.default(nil)
 
-    register_paths [
-      '/apis/apps/v1beta2/namespaces/{namespace}/deployments/{name}/scale',
-      '/apis/apps/v1beta2/namespaces/{namespace}/replicasets/{name}/scale',
-      '/apis/apps/v1beta2/namespaces/{namespace}/statefulsets/{name}/scale'
-    ]
+    register_paths ["/apis/apps/v1beta2/namespaces/{namespace}/deployments/{name}/scale","/apis/apps/v1beta2/namespaces/{namespace}/replicasets/{name}/scale","/apis/apps/v1beta2/namespaces/{namespace}/statefulsets/{name}/scale"]
   end
 end

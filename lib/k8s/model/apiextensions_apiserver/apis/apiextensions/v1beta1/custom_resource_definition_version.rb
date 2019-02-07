@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -33,8 +34,6 @@ module K8s::Model::ApiextensionsApiserver::Apis::Apiextensions::V1beta1
     # @return [K8s::Model::ApiextensionsApiserver::Apis::Apiextensions::V1beta1::CustomResourceSubresources,NilClass]
     attribute :subresources, K8s::Model::ApiextensionsApiserver::Apis::Apiextensions::V1beta1::CustomResourceSubresources.optional.default(nil)
 
-    register_paths [
-      
-    ]
+    register_paths []
   end
 end

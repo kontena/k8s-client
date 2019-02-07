@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -28,9 +29,6 @@ module K8s::Model::KubeAggregator::Apis::Apiregistration::V1beta1
     # @return [K8s::Model::KubeAggregator::Apis::Apiregistration::V1beta1::APIServiceStatus,NilClass]
     attribute :status, K8s::Model::KubeAggregator::Apis::Apiregistration::V1beta1::APIServiceStatus.optional.default(nil)
 
-    register_paths [
-      '/apis/apiregistration.k8s.io/v1beta1/apiservices/{name}',
-      '/apis/apiregistration.k8s.io/v1beta1/apiservices/{name}/status'
-    ]
+    register_paths ["/apis/apiregistration.k8s.io/v1beta1/apiservices/{name}","/apis/apiregistration.k8s.io/v1beta1/apiservices/{name}/status"]
   end
 end

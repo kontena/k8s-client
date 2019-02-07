@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -24,8 +25,6 @@ module K8s::Model::Api::Policy::V1beta1
     # @return [K8s::Model::Apimachinery::Apis::Meta::V1::ListMeta,NilClass]
     attribute :metadata, K8s::Model::Apimachinery::Apis::Meta::V1::ListMeta.optional.default(nil)
 
-    register_paths [
-      '/apis/policy/v1beta1/podsecuritypolicies'
-    ]
+    register_paths ["/apis/policy/v1beta1/podsecuritypolicies"]
   end
 end

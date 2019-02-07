@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -22,8 +23,6 @@ module K8s::Model::Api::Settings::V1alpha1
     # @return [K8s::Model::Api::Settings::V1alpha1::PodPresetSpec,NilClass]
     attribute :spec, K8s::Model::Api::Settings::V1alpha1::PodPresetSpec.optional.default(nil)
 
-    register_paths [
-      '/apis/settings.k8s.io/v1alpha1/namespaces/{namespace}/podpresets/{name}'
-    ]
+    register_paths ["/apis/settings.k8s.io/v1alpha1/namespaces/{namespace}/podpresets/{name}"]
   end
 end

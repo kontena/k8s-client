@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -29,8 +30,6 @@ module K8s::Model::Api::Rbac::V1
     # @return [K8s::API::Types::Array.of(K8s::Model::Api::Rbac::V1::Subject),NilClass]
     attribute :subjects, K8s::API::Types::Array.of(K8s::Model::Api::Rbac::V1::Subject).optional.default(nil)
 
-    register_paths [
-      '/apis/rbac.authorization.k8s.io/v1/namespaces/{namespace}/rolebindings/{name}'
-    ]
+    register_paths ["/apis/rbac.authorization.k8s.io/v1/namespaces/{namespace}/rolebindings/{name}"]
   end
 end

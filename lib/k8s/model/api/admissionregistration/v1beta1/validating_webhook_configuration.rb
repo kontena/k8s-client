@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -24,8 +25,6 @@ module K8s::Model::Api::Admissionregistration::V1beta1
     # @return [K8s::API::Types::Array.of(K8s::Model::Api::Admissionregistration::V1beta1::Webhook),NilClass]
     attribute :webhooks, K8s::API::Types::Array.of(K8s::Model::Api::Admissionregistration::V1beta1::Webhook).optional.default(nil)
 
-    register_paths [
-      '/apis/admissionregistration.k8s.io/v1beta1/validatingwebhookconfigurations/{name}'
-    ]
+    register_paths ["/apis/admissionregistration.k8s.io/v1beta1/validatingwebhookconfigurations/{name}"]
   end
 end

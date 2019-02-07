@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -24,8 +25,6 @@ module K8s::Model::Api::Networking::V1
     # @return [K8s::Model::Api::Networking::V1::NetworkPolicySpec,NilClass]
     attribute :spec, K8s::Model::Api::Networking::V1::NetworkPolicySpec.optional.default(nil)
 
-    register_paths [
-      '/apis/networking.k8s.io/v1/namespaces/{namespace}/networkpolicies/{name}'
-    ]
+    register_paths ["/apis/networking.k8s.io/v1/namespaces/{namespace}/networkpolicies/{name}"]
   end
 end

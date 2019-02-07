@@ -15,7 +15,7 @@ module K8s
       # @param path [Integer] HTTP request path
       # @param code [Integer] HTTP response code
       # @param reason [String] HTTP response reason
-      # @param status [K8s::API::MetaV1::Status]
+      # @param status [K8s::Model::Apimachinery::Apis::Meta::V1::Status]
       def initialize(method, path, code, reason, status = nil)
         @method = method
         @path = path

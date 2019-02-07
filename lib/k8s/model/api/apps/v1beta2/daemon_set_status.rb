@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -47,8 +48,6 @@ module K8s::Model::Api::Apps::V1beta2
     # @return [K8s::API::Types::Integer,NilClass]
     attribute :updatedNumberScheduled, K8s::API::Types::Integer.optional.default(nil)
 
-    register_paths [
-      
-    ]
+    register_paths []
   end
 end

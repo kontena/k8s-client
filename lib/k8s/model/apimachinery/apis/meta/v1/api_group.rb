@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -32,26 +33,6 @@ module K8s::Model::Apimachinery::Apis::Meta::V1
     # @return [K8s::API::Types::Array.of(K8s::Model::Apimachinery::Apis::Meta::V1::GroupVersionForDiscovery)]
     attribute :versions, K8s::API::Types::Array.of(K8s::Model::Apimachinery::Apis::Meta::V1::GroupVersionForDiscovery)
 
-    register_paths [
-      '/apis/admissionregistration.k8s.io/',
-      '/apis/apiextensions.k8s.io/',
-      '/apis/apiregistration.k8s.io/',
-      '/apis/apps/',
-      '/apis/auditregistration.k8s.io/',
-      '/apis/authentication.k8s.io/',
-      '/apis/authorization.k8s.io/',
-      '/apis/autoscaling/',
-      '/apis/batch/',
-      '/apis/certificates.k8s.io/',
-      '/apis/coordination.k8s.io/',
-      '/apis/events.k8s.io/',
-      '/apis/extensions/',
-      '/apis/networking.k8s.io/',
-      '/apis/policy/',
-      '/apis/rbac.authorization.k8s.io/',
-      '/apis/scheduling.k8s.io/',
-      '/apis/settings.k8s.io/',
-      '/apis/storage.k8s.io/'
-    ]
+    register_paths ["/apis/admissionregistration.k8s.io/","/apis/apiextensions.k8s.io/","/apis/apiregistration.k8s.io/","/apis/apps/","/apis/auditregistration.k8s.io/","/apis/authentication.k8s.io/","/apis/authorization.k8s.io/","/apis/autoscaling/","/apis/batch/","/apis/certificates.k8s.io/","/apis/coordination.k8s.io/","/apis/events.k8s.io/","/apis/extensions/","/apis/networking.k8s.io/","/apis/policy/","/apis/rbac.authorization.k8s.io/","/apis/scheduling.k8s.io/","/apis/settings.k8s.io/","/apis/storage.k8s.io/"]
   end
 end

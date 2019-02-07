@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -15,8 +16,6 @@ module K8s::Model::Api::Core::V1
     # @return [K8s::API::Types::Array.of(K8s::Model::Api::Core::V1::NodeSelectorRequirement),NilClass]
     attribute :matchFields, K8s::API::Types::Array.of(K8s::Model::Api::Core::V1::NodeSelectorRequirement).optional.default(nil)
 
-    register_paths [
-      
-    ]
+    register_paths []
   end
 end

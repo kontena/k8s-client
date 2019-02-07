@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -29,9 +30,6 @@ module K8s::Model::Api::Batch::V2alpha1
     # @return [K8s::Model::Api::Batch::V2alpha1::CronJobStatus,NilClass]
     attribute :status, K8s::Model::Api::Batch::V2alpha1::CronJobStatus.optional.default(nil)
 
-    register_paths [
-      '/apis/batch/v2alpha1/namespaces/{namespace}/cronjobs/{name}',
-      '/apis/batch/v2alpha1/namespaces/{namespace}/cronjobs/{name}/status'
-    ]
+    register_paths ["/apis/batch/v2alpha1/namespaces/{namespace}/cronjobs/{name}","/apis/batch/v2alpha1/namespaces/{namespace}/cronjobs/{name}/status"]
   end
 end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -27,8 +28,6 @@ module K8s::Model::Api::Core::V1
     # @return [K8s::Model::Apimachinery::Apis::Meta::V1::ObjectMeta,NilClass]
     attribute :metadata, K8s::Model::Apimachinery::Apis::Meta::V1::ObjectMeta.optional.default(nil)
 
-    register_paths [
-      '/api/v1/namespaces/{namespace}/configmaps/{name}'
-    ]
+    register_paths ["/api/v1/namespaces/{namespace}/configmaps/{name}"]
   end
 end

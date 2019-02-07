@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -34,8 +35,6 @@ module K8s::Model::Apimachinery::Version
     # @return [K8s::API::Types::String]
     attribute :platform, K8s::API::Types::String
 
-    register_paths [
-      '/version/'
-    ]
+    register_paths ["/version/"]
   end
 end

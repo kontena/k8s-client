@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -24,8 +25,6 @@ module K8s::Model::Api::Networking::V1
     # @return [K8s::Model::Apimachinery::Apis::Meta::V1::LabelSelector,NilClass]
     attribute :podSelector, K8s::Model::Apimachinery::Apis::Meta::V1::LabelSelector.optional.default(nil)
 
-    register_paths [
-      
-    ]
+    register_paths []
   end
 end

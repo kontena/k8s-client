@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -23,8 +24,6 @@ module K8s::Model::Api::Auditregistration::V1alpha1
     # @return [K8s::Model::Api::Auditregistration::V1alpha1::AuditSinkSpec,NilClass]
     attribute :spec, K8s::Model::Api::Auditregistration::V1alpha1::AuditSinkSpec.optional.default(nil)
 
-    register_paths [
-      '/apis/auditregistration.k8s.io/v1alpha1/auditsinks/{name}'
-    ]
+    register_paths ["/apis/auditregistration.k8s.io/v1alpha1/auditsinks/{name}"]
   end
 end

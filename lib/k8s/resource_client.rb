@@ -64,7 +64,7 @@ module K8s
 
     # @param transport [K8s::Transport]
     # @param api_client [K8s::APIClient]
-    # @param api_resource [K8s::API::MetaV1::APIResource]
+    # @param api_resource [K8s::Model::Apimachinery::Apis::Meta::V1::APIResource]
     # @param namespace [String]
     # @param resource_class [Class]
     def initialize(transport, api_client, api_resource, namespace: nil, resource_class: K8s::Resource)
@@ -360,7 +360,7 @@ module K8s
     # @param resource [resource_class] with metadata
     # @param options [Hash]
     # @see #delete for possible options
-    # @return [K8s::API::MetaV1::Status]
+    # @return [K8s::Model::Apimachinery::Apis::Meta::V1::Status]
     def delete_resource(resource, **options)
       delete(resource.metadata.name, namespace: resource.metadata.namespace, **options)
     end

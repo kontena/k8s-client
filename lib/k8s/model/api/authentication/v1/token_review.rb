@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -28,8 +29,6 @@ module K8s::Model::Api::Authentication::V1
     # @return [K8s::Model::Api::Authentication::V1::TokenReviewStatus,NilClass]
     attribute :status, K8s::Model::Api::Authentication::V1::TokenReviewStatus.optional.default(nil)
 
-    register_paths [
-      
-    ]
+    register_paths []
   end
 end

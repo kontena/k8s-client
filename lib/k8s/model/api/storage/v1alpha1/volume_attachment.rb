@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -29,8 +30,6 @@ module K8s::Model::Api::Storage::V1alpha1
     # @return [K8s::Model::Api::Storage::V1alpha1::VolumeAttachmentStatus,NilClass]
     attribute :status, K8s::Model::Api::Storage::V1alpha1::VolumeAttachmentStatus.optional.default(nil)
 
-    register_paths [
-      '/apis/storage.k8s.io/v1alpha1/volumeattachments/{name}'
-    ]
+    register_paths ["/apis/storage.k8s.io/v1alpha1/volumeattachments/{name}"]
   end
 end

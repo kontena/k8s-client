@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -28,8 +29,6 @@ module K8s::Model::Api::Apps::V1
     # @return [K8s::API::Types::Integer]
     attribute :revision, K8s::API::Types::Integer
 
-    register_paths [
-      '/apis/apps/v1/namespaces/{namespace}/controllerrevisions/{name}'
-    ]
+    register_paths ["/apis/apps/v1/namespaces/{namespace}/controllerrevisions/{name}"]
   end
 end

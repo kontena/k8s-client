@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -29,9 +30,6 @@ module K8s::Model::Api::Autoscaling::V1
     # @return [K8s::Model::Api::Autoscaling::V1::HorizontalPodAutoscalerStatus,NilClass]
     attribute :status, K8s::Model::Api::Autoscaling::V1::HorizontalPodAutoscalerStatus.optional.default(nil)
 
-    register_paths [
-      '/apis/autoscaling/v1/namespaces/{namespace}/horizontalpodautoscalers/{name}',
-      '/apis/autoscaling/v1/namespaces/{namespace}/horizontalpodautoscalers/{name}/status'
-    ]
+    register_paths ["/apis/autoscaling/v1/namespaces/{namespace}/horizontalpodautoscalers/{name}","/apis/autoscaling/v1/namespaces/{namespace}/horizontalpodautoscalers/{name}/status"]
   end
 end

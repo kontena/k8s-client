@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -23,42 +24,6 @@ module K8s::Model::Apimachinery::Apis::Meta::V1
     # @return [K8s::API::Types::Array.of(K8s::Model::Apimachinery::Apis::Meta::V1::APIResource)]
     attribute :resources, K8s::API::Types::Array.of(K8s::Model::Apimachinery::Apis::Meta::V1::APIResource)
 
-    register_paths [
-      '/api/v1/',
-      '/apis/admissionregistration.k8s.io/v1alpha1/',
-      '/apis/admissionregistration.k8s.io/v1beta1/',
-      '/apis/apiextensions.k8s.io/v1beta1/',
-      '/apis/apiregistration.k8s.io/v1/',
-      '/apis/apiregistration.k8s.io/v1beta1/',
-      '/apis/apps/v1/',
-      '/apis/apps/v1beta1/',
-      '/apis/apps/v1beta2/',
-      '/apis/auditregistration.k8s.io/v1alpha1/',
-      '/apis/authentication.k8s.io/v1/',
-      '/apis/authentication.k8s.io/v1beta1/',
-      '/apis/authorization.k8s.io/v1/',
-      '/apis/authorization.k8s.io/v1beta1/',
-      '/apis/autoscaling/v1/',
-      '/apis/autoscaling/v2beta1/',
-      '/apis/autoscaling/v2beta2/',
-      '/apis/batch/v1/',
-      '/apis/batch/v1beta1/',
-      '/apis/batch/v2alpha1/',
-      '/apis/certificates.k8s.io/v1beta1/',
-      '/apis/coordination.k8s.io/v1beta1/',
-      '/apis/events.k8s.io/v1beta1/',
-      '/apis/extensions/v1beta1/',
-      '/apis/networking.k8s.io/v1/',
-      '/apis/policy/v1beta1/',
-      '/apis/rbac.authorization.k8s.io/v1/',
-      '/apis/rbac.authorization.k8s.io/v1alpha1/',
-      '/apis/rbac.authorization.k8s.io/v1beta1/',
-      '/apis/scheduling.k8s.io/v1alpha1/',
-      '/apis/scheduling.k8s.io/v1beta1/',
-      '/apis/settings.k8s.io/v1alpha1/',
-      '/apis/storage.k8s.io/v1/',
-      '/apis/storage.k8s.io/v1alpha1/',
-      '/apis/storage.k8s.io/v1beta1/'
-    ]
+    register_paths ["/api/v1/","/apis/admissionregistration.k8s.io/v1alpha1/","/apis/admissionregistration.k8s.io/v1beta1/","/apis/apiextensions.k8s.io/v1beta1/","/apis/apiregistration.k8s.io/v1/","/apis/apiregistration.k8s.io/v1beta1/","/apis/apps/v1/","/apis/apps/v1beta1/","/apis/apps/v1beta2/","/apis/auditregistration.k8s.io/v1alpha1/","/apis/authentication.k8s.io/v1/","/apis/authentication.k8s.io/v1beta1/","/apis/authorization.k8s.io/v1/","/apis/authorization.k8s.io/v1beta1/","/apis/autoscaling/v1/","/apis/autoscaling/v2beta1/","/apis/autoscaling/v2beta2/","/apis/batch/v1/","/apis/batch/v1beta1/","/apis/batch/v2alpha1/","/apis/certificates.k8s.io/v1beta1/","/apis/coordination.k8s.io/v1beta1/","/apis/events.k8s.io/v1beta1/","/apis/extensions/v1beta1/","/apis/networking.k8s.io/v1/","/apis/policy/v1beta1/","/apis/rbac.authorization.k8s.io/v1/","/apis/rbac.authorization.k8s.io/v1alpha1/","/apis/rbac.authorization.k8s.io/v1beta1/","/apis/scheduling.k8s.io/v1alpha1/","/apis/scheduling.k8s.io/v1beta1/","/apis/settings.k8s.io/v1alpha1/","/apis/storage.k8s.io/v1/","/apis/storage.k8s.io/v1alpha1/","/apis/storage.k8s.io/v1beta1/"]
   end
 end

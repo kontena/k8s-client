@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -15,8 +16,6 @@ module K8s::Model::Api::Extensions::V1beta1
     # @return [K8s::Model::Apimachinery::Util::Intstr::IntOrString]
     attribute :servicePort, K8s::Model::Apimachinery::Util::Intstr::IntOrString
 
-    register_paths [
-      
-    ]
+    register_paths []
   end
 end

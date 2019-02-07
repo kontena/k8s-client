@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -31,8 +32,6 @@ module K8s::Model::Api::Scheduling::V1alpha1
     # @return [K8s::API::Types::Integer]
     attribute :value, K8s::API::Types::Integer
 
-    register_paths [
-      '/apis/scheduling.k8s.io/v1alpha1/priorityclasses/{name}'
-    ]
+    register_paths ["/apis/scheduling.k8s.io/v1alpha1/priorityclasses/{name}"]
   end
 end

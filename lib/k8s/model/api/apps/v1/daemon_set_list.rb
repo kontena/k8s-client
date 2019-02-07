@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -24,9 +25,6 @@ module K8s::Model::Api::Apps::V1
     # @return [K8s::Model::Apimachinery::Apis::Meta::V1::ListMeta,NilClass]
     attribute :metadata, K8s::Model::Apimachinery::Apis::Meta::V1::ListMeta.optional.default(nil)
 
-    register_paths [
-      '/apis/apps/v1/daemonsets',
-      '/apis/apps/v1/namespaces/{namespace}/daemonsets'
-    ]
+    register_paths ["/apis/apps/v1/daemonsets","/apis/apps/v1/namespaces/{namespace}/daemonsets"]
   end
 end

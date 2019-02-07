@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -19,8 +20,6 @@ module K8s::Model::Api::Autoscaling::V2beta2
     # @return [K8s::Model::Apimachinery::Api::Resource::Quantity,NilClass]
     attribute :value, K8s::Model::Apimachinery::Api::Resource::Quantity.optional.default(nil)
 
-    register_paths [
-      
-    ]
+    register_paths []
   end
 end

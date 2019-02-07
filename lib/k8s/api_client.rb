@@ -41,7 +41,7 @@ module K8s
       !!@api_resources
     end
 
-    # @param api_resources [Array<K8s::API::MetaV1::APIResource>]
+    # @param api_resources [Array<K8s::Model::Apimachinery::Apis::Meta::V1::ApiResource>]
     attr_writer :api_resources
 
     # Force-update APIResources

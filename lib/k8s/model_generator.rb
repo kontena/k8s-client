@@ -38,9 +38,9 @@ module K8s
     end
 
     def build_module(name)
-      padding = 2
       content = <<HEADER
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 HEADER
@@ -48,12 +48,12 @@ HEADER
       parts.size.times.each do |i|
         mod_name = parts[i]
         content << <<PART
-#{'  ' * (i +1)}module #{mod_name}
+#{'  ' * i}module #{mod_name}
 PART
       end
       parts.size.times.each do |i|
         content << <<PART
-#{'  ' * (parts.size - i)}end
+#{'  ' * (parts.size - i - 1)}end
 PART
       end
       content
@@ -66,12 +66,15 @@ PART
         elsif definition['type']
           model = build_type(ref, definition)
         else
-          model = build_stub(ref, definition)
+          model = build_stub(ref)
         end
         yield parse_name(ref).map(&:snake_case).join('/'), model
       end
     end
 
+    # @param ref [String]
+    # @param definition [Hash]
+    # @return [String]
     def build_model(ref, definition)
       name = name_to_module_path(ref)
       registered_paths = build_model_registrations(ref)
@@ -80,6 +83,7 @@ PART
 
       model = <<MODEL
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "k8s/typed_resource"
@@ -90,9 +94,7 @@ module #{name.split('::')[0...-1].join('::')}
   class #{name.split('::').last} < K8s::TypedResource
     #{properties.map{ |p| p.join("\n    ") }.join("\n\n    ")}
 
-    register_paths [
-      #{registered_paths.map {|path| "'#{path}'" }.join(",\n      ")}
-    ]
+    register_paths #{registered_paths.to_json}
   end
 end
 MODEL
@@ -100,12 +102,15 @@ MODEL
       model
     end
 
+    # @param ref [String]
+    # @param definition [Hash]
+    # @return [String]
     def build_type(ref, definition)
       name = name_to_module_path(ref)
-      registered_paths = build_model_registrations(ref)
 
       model = <<MODEL
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "#{name.split('::')[0...-1].map(&:snake_case).join('/')}"
@@ -117,12 +122,14 @@ MODEL
       model
     end
 
-    def build_stub(ref, definition)
+    # @param ref [String]
+    # @return [String]
+    def build_stub(ref)
       name = name_to_module_path(ref)
-      registered_paths = build_model_registrations(ref)
 
       model = <<MODEL
 # frozen_string_literal: true
+
 # THIS FILE WAS AUTO GENERATED FROM THE K8S SWAGGER SPEC
 
 require "#{name.split('::')[0...-1].map(&:snake_case).join('/')}"
@@ -130,6 +137,7 @@ require "#{name.split('::')[0...-1].map(&:snake_case).join('/')}"
 module #{name.split('::')[0...-1].join('::')}
   class #{name.split('::').last} < K8s::TypedResource; end
 end
+
 MODEL
       model
     end
