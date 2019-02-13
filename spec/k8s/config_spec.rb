@@ -30,6 +30,16 @@ RSpec.describe K8s::Config do
         )
       end
     end
+
+    context 'for a config with timestamps' do
+      subject {
+        described_class.load_file(fixture_path('config/with_timestamps.conf'))
+      }
+
+      it "does not raise" do
+        expect{described_class.load_file(fixture_path('config/with_timestamps.conf'))}.not_to raise_error
+      end
+    end
   end
 
   describe '#self.from_kubeconfig_env' do
