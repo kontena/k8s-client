@@ -103,45 +103,39 @@ module K8s
     # @param path [String]
     # @return [K8s::Config]
     def self.load_file(path)
-      new(YAML.safe_load(File.read(path), [Time, DateTime, Date]))
+      new(YAML.safe_load(File.read(File.expand_path(path)), [Time, DateTime, Date], [], true))
     end
 
     # Loads configuration files listed in KUBE_CONFIG environment variable and
-    # merged using the configuration merge rules, @see K8s::Config.merge
+    # merge using the configuration merge rules, @see K8s::Config.merge
     #
     # @param kubeconfig [String] by default read from ENV['KUBECONFIG']
     def self.from_kubeconfig_env(kubeconfig = nil)
       kubeconfig ||= ENV.fetch('KUBECONFIG', '')
-      return if kubeconfig.empty?
+      raise ArgumentError, "KUBECONFIG not set" if kubeconfig.empty?
 
       paths = kubeconfig.split(/(?!\\):/)
-      return load_file(paths.first) if paths.size == 1
 
-      paths.inject(load_file(paths.shift)) do |memo, other_cfg|
+      res = paths.inject(load_file(paths.shift)) do |memo, other_cfg|
         memo.merge(load_file(other_cfg))
       end
+      res
     end
 
     # Build a minimal configuration from at least a server address, server certificate authority data and an access token.
     #
     # @param server [String] kubernetes server address
-    # @param ca [String] server certificate authority data
-    # @param token [String] access token (optionally base64 encoded)
+    # @param ca [String] server certificate authority data (base64 encoded)
+    # @param token [String] access token
     # @param cluster_name [String] cluster name
     # @param user [String] user name
     # @param context [String] context name
     # @param options [Hash] (see #initialize)
     def self.build(server:, ca:, auth_token:, cluster_name: 'kubernetes', user: 'k8s-client', context: 'k8s-client', **options)
-      begin
-        decoded_token = Base64.strict_decode64(auth_token)
-      rescue ArgumentError
-        decoded_token = nil
-      end
-
       new(
         {
           clusters: [{ name: cluster_name, cluster: { server: server, certificate_authority_data: ca } }],
-          users: [{ name: user, user: { token: decoded_token || auth_token } }],
+          users: [{ name: user, user: { token: auth_token } }],
           contexts: [{ name: context, context: { cluster: cluster_name, user: user } }],
           current_context: context
         }.merge(options)
@@ -174,7 +168,6 @@ module K8s
           when NilClass
             new_value
           else
-            STDERR.puts "key is #{key} old val is #{old_value.inspect} and new val is #{new_value.inspect}"
             old_value
           end
         end
@@ -184,10 +177,12 @@ module K8s
     end
 
     # @param name [String]
-    # TODO: raise error if not found
+    # @raise [K8s::Error::Configuration]
     # @return [K8s::Config::Context]
     def context(name = current_context)
-      contexts.find{ |context| context.name == name }.context
+      found = contexts.find{ |context| context.name == name }
+      raise K8s::Error::Configuration, "context not found: #{name.inspect}" unless found
+      found.context
     end
 
     # @param name [String]
