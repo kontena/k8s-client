@@ -182,6 +182,7 @@ module K8s
     def context(name = current_context)
       found = contexts.find{ |context| context.name == name }
       raise K8s::Error::Configuration, "context not found: #{name.inspect}" unless found
+
       found.context
     end
 
