@@ -101,7 +101,7 @@ module K8s
         if !server_resource
           logger.info "Create resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource.checksum}"
           keep_resource! client.create_resource(prepare_resource(resource))
-        elsif server_resource.metadata.annotations.nil? || server_resource.metadata.annotations[@checksum_annotation] != resource.checksum
+        elsif server_resource.metadata&.annotations[@checksum_annotation] != resource.checksum
           logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource.checksum}"
           r = prepare_resource(resource)
           if server_resource.can_patch?(@last_config_annotation)
