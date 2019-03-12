@@ -127,7 +127,12 @@ module K8s
 
     # @return [Excon::Connection]
     def excon
-      @excon ||= Excon.new(
+      @excon ||= build_excon
+    end
+
+    # @return [Excon::Connection]
+    def build_excon
+      Excon.new(
         @server,
         persistent: true,
         middlewares: EXCON_MIDDLEWARES,
@@ -236,7 +241,8 @@ module K8s
       excon_options = request_options(**options)
 
       start = Time.now
-      response = excon.request(**excon_options)
+      excon_client = options[:response_block] ? build_excon : excon
+      response = excon_client.request(**excon_options)
       t = Time.now - start
 
       obj = options[:response_block] ? {} : parse_response(response, options, response_class: response_class)
