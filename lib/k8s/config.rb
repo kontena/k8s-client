@@ -174,7 +174,7 @@ module K8s
           when NilClass
             new_value
           else
-            STDERR.puts "key is #{key} old val is #{old_value.inspect} and new val is #{new_value.inspect}"
+            warn "key is #{key} old val is #{old_value.inspect} and new val is #{new_value.inspect}"
             old_value
           end
         end

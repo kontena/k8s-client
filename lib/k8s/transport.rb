@@ -247,8 +247,8 @@ module K8s
       t = Time.now - start
 
       obj = options[:response_block] ? {} : parse_response(response, options, response_class: response_class)
-    rescue K8s::Error::API => exc
-      logger.warn { "#{format_request(options)} => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s" }
+    rescue K8s::Error::API => e
+      logger.warn { "#{format_request(options)} => HTTP #{e.code} #{e.reason} in #{'%.3f' % t}s" }
       logger.debug { "Request: #{excon_options[:body]}" } if excon_options[:body]
       logger.debug { "Response: #{response.body}" }
       raise
