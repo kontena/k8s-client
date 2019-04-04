@@ -147,7 +147,7 @@ module K8s
     def path(*path)
       path_components = ['/', *path]
       # Only add the path_prefix if it isn't there already...
-      path_components.prepend(path_prefix) unless [*path].join.match?(/^#{path_prefix}/)
+      path_components.insert(0, path_prefix) unless [*path].join.match?(/^#{path_prefix}/)
       File.join(path_components)
     end
 
