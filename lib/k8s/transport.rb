@@ -145,7 +145,10 @@ module K8s
     # @param path [Array<String>] join path parts together to build the full URL
     # @return [String]
     def path(*path)
-      File.join(path_prefix, '/', *path)
+      path_components = ['/', *path]
+      # Only add the path_prefix if it isn't there already...
+      path_components.prepend(path_prefix) unless [*path].join.match?(/^#{path_prefix}/)
+      File.join(path_components)
     end
 
     # @param request_object [Object] include request body using to_json
