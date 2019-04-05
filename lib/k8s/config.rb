@@ -116,10 +116,9 @@ module K8s
 
       paths = kubeconfig.split(/(?!\\):/)
 
-      res = paths.inject(load_file(paths.shift)) do |memo, other_cfg|
+      paths.inject(load_file(paths.shift)) do |memo, other_cfg|
         memo.merge(load_file(other_cfg))
       end
-      res
     end
 
     # Build a minimal configuration from at least a server address, server certificate authority data and an access token.
