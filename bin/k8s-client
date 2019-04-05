@@ -313,8 +313,8 @@ options.delete_resources.each do |resource|
     resource = client.delete_resource(resource)
 
     logger.info "Deleted #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}:\n#{JSON.pretty_generate(resource)}"
-  rescue K8s::Error::NotFound => exc
-    logger.info "Skip #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}: #{exc}"
+  rescue K8s::Error::NotFound => e
+    logger.info "Skip #{resource.apiVersion} resource #{resource.kind} #{resource.metadata.name} in namespace #{resource.metadata.namespace}: #{e}"
   end
 end
 

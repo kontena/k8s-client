@@ -25,7 +25,7 @@ module K8s
   class Config < ConfigStruct
     # Common dry-types for config
     class Types
-      include Dry::Types.module
+      include Dry.Types()
     end
 
     # structured cluster
@@ -34,7 +34,7 @@ module K8s
       attribute :insecure_skip_tls_verify, Types::Bool.optional.default(nil)
       attribute :certificate_authority, Types::String.optional.default(nil)
       attribute :certificate_authority_data, Types::String.optional.default(nil)
-      attribute :extensions, Types::Strict::Array.optional.default(nil)
+      attribute :extensions, Types::Array.optional.default(nil)
     end
 
     # structured cluster with name
@@ -46,7 +46,7 @@ module K8s
     # structured user auth provider
     class UserAuthProvider < ConfigStruct
       attribute :name, Types::String
-      attribute :config, Types::Strict::Hash
+      attribute :config, Types::Hash
     end
 
     # structured user
@@ -63,8 +63,8 @@ module K8s
       attribute :username, Types::String.optional.default(nil)
       attribute :password, Types::String.optional.default(nil)
       attribute :auth_provider, UserAuthProvider.optional.default(nil)
-      attribute :exec, Types::Strict::Hash.optional.default(nil)
-      attribute :extensions, Types::Strict::Array.optional.default(nil)
+      attribute :exec, Types::Hash.optional.default(nil)
+      attribute :extensions, Types::Array.optional.default(nil)
     end
 
     # structured user with name
@@ -77,10 +77,10 @@ module K8s
     #
     # Referrs to other named User/cluster objects within the same config.
     class Context < ConfigStruct
-      attribute :cluster, Types::Strict::String
-      attribute :user, Types::Strict::String
-      attribute :namespace, Types::Strict::String.optional.default(nil)
-      attribute :extensions, Types::Strict::Array.optional.default(nil)
+      attribute :cluster, Types::String
+      attribute :user, Types::String
+      attribute :namespace, Types::String.optional.default(nil)
+      attribute :extensions, Types::Array.optional.default(nil)
     end
 
     # named context
@@ -89,14 +89,14 @@ module K8s
       attribute :context, Context
     end
 
-    attribute :kind, Types::Strict::String.optional.default(nil)
-    attribute :apiVersion, Types::Strict::String.optional.default(nil)
-    attribute :preferences, Types::Strict::Hash.optional.default(proc { {} })
-    attribute :clusters, Types::Strict::Array.of(NamedCluster).optional.default(proc { [] })
-    attribute :users, Types::Strict::Array.of(NamedUser).optional.default(proc { [] })
-    attribute :contexts, Types::Strict::Array.of(NamedContext).optional.default(proc { [] })
-    attribute :current_context, Types::Strict::String.optional.default(nil)
-    attribute :extensions, Types::Strict::Array.optional.default(proc { [] })
+    attribute :kind, Types::String.optional.default(nil)
+    attribute :apiVersion, Types::String.optional.default(nil)
+    attribute(:preferences, Types::Hash.optional.default { {} })
+    attribute(:clusters, Types::Array.of(NamedCluster).optional.default { [] })
+    attribute(:users, Types::Array.of(NamedUser).optional.default { [] })
+    attribute(:contexts, Types::Array.of(NamedContext).optional.default { [] })
+    attribute :current_context, Types::String.optional.default(nil)
+    attribute(:extensions, Types::Array.optional.default { [] })
 
     # Loads a configuration from a YAML file
     #
@@ -174,7 +174,6 @@ module K8s
           when NilClass
             new_value
           else
-            STDERR.puts "key is #{key} old val is #{old_value.inspect} and new val is #{new_value.inspect}"
             old_value
           end
         end
