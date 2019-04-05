@@ -12,8 +12,8 @@ module K8s
         attribute :version, Types::String.optional.default(nil)
         attribute :kind, Types::String
         attribute :verbs, Types::Array.of(Types::Strict::String)
-        attribute :shortNames, Types::Array.of(Types::Strict::String).optional.default { [] }
-        attribute :categories, Types::Array.of(Types::Strict::String).optional.default { [] }
+        attribute(:shortNames, Types::Array.of(Types::Strict::String).optional.default { [] })
+        attribute(:categories, Types::Array.of(Types::Strict::String).optional.default { [] })
       end
 
       # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#APIResourceList

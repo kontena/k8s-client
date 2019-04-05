@@ -91,12 +91,12 @@ module K8s
 
     attribute :kind, Types::String.optional.default(nil)
     attribute :apiVersion, Types::String.optional.default(nil)
-    attribute :preferences, Types::Hash.optional.default { {} }
-    attribute :clusters, Types::Array.of(NamedCluster).optional.default { [] }
-    attribute :users, Types::Array.of(NamedUser).optional.default { [] }
-    attribute :contexts, Types::Array.of(NamedContext).optional.default{ [] }
+    attribute(:preferences, Types::Hash.optional.default { {} })
+    attribute(:clusters, Types::Array.of(NamedCluster).optional.default { [] })
+    attribute(:users, Types::Array.of(NamedUser).optional.default { [] })
+    attribute(:contexts, Types::Array.of(NamedContext).optional.default { [] })
     attribute :current_context, Types::String.optional.default(nil)
-    attribute :extensions, Types::Array.optional.default { [] }
+    attribute(:extensions, Types::Array.optional.default { [] })
 
     # Loads a configuration from a YAML file
     #
@@ -174,7 +174,6 @@ module K8s
           when NilClass
             new_value
           else
-            STDERR.puts "key is #{key} old val is #{old_value.inspect} and new val is #{new_value.inspect}"
             old_value
           end
         end

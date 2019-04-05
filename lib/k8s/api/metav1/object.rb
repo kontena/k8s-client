@@ -38,9 +38,9 @@ module K8s
         attribute :deletionGracePeriodSeconds, Types::Integer.optional.default(nil)
         attribute :labels, Types::Hash.map(Types::Strict::String, Types::Strict::String).optional.default(nil)
         attribute :annotations, Types::Hash.map(Types::Strict::String, Types::Strict::String).optional.default(nil)
-        attribute :ownerReferences, Types::Array.of(OwnerReference).optional.default { [] }
+        attribute(:ownerReferences, Types::Array.of(OwnerReference).optional.default { [] })
         attribute :initializers, Initializers.optional.default(nil)
-        attribute :finalizers, Types::Array.of(Types::Strict::String).optional.default { [] }
+        attribute(:finalizers, Types::Array.of(Types::Strict::String).optional.default { [] })
         attribute :clusterName, Types::String.optional.default(nil)
       end
 

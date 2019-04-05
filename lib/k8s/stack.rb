@@ -163,10 +163,10 @@ module K8s
           logger.info "Delete resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace}"
           begin
             client.delete_resource(resource, propagationPolicy: 'Background')
-          rescue K8s::Error::NotFound => ex
+          rescue K8s::Error::NotFound => e
             # assume aliased objects in multiple API groups, like for Deployments
             # alternatively, a custom resource whose definition was already deleted earlier
-            logger.debug { "Ignoring #{ex} : #{ex.message}" }
+            logger.debug { "Ignoring #{e} : #{e.message}" }
           end
         end
       end
