@@ -4,14 +4,14 @@ module K8s
   module API
     # GET /version
     class Version < Struct
-      attribute :buildDate, Types::Strict::String # TODO: parse datetime?
-      attribute :compiler, Types::Strict::String
-      attribute :gitCommit, Types::Strict::String
-      attribute :gitTreeState, Types::Strict::String
-      attribute :gitVersion, Types::Strict::String
-      attribute :major, Types::Strict::String
-      attribute :minor, Types::Strict::String
-      attribute :platform, Types::Strict::String
+      attribute :buildDate, Types::String # TODO: parse datetime?
+      attribute :compiler, Types::String
+      attribute :gitCommit, Types::String
+      attribute :gitTreeState, Types::String
+      attribute :gitVersion, Types::String
+      attribute :major, Types::String
+      attribute :minor, Types::String
+      attribute :platform, Types::String
     end
   end
 end
