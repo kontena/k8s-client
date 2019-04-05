@@ -25,7 +25,7 @@ module K8s
   class Config < ConfigStruct
     # Common dry-types for config
     class Types
-      include Dry::Types.module
+      include Dry.Types()
     end
 
     # structured cluster
@@ -91,12 +91,12 @@ module K8s
 
     attribute :kind, Types::Strict::String.optional.default(nil)
     attribute :apiVersion, Types::Strict::String.optional.default(nil)
-    attribute :preferences, Types::Strict::Hash.optional.default(proc { {} })
-    attribute :clusters, Types::Strict::Array.of(NamedCluster).optional.default(proc { [] })
-    attribute :users, Types::Strict::Array.of(NamedUser).optional.default(proc { [] })
-    attribute :contexts, Types::Strict::Array.of(NamedContext).optional.default(proc { [] })
+    attribute :preferences, Types::Strict::Hash.optional.default { {} }
+    attribute :clusters, Types::Strict::Array.of(NamedCluster).optional.default { [] }
+    attribute :users, Types::Strict::Array.of(NamedUser).optional.default { [] }
+    attribute :contexts, Types::Strict::Array.of(NamedContext).optional.default{ [] }
     attribute :current_context, Types::Strict::String.optional.default(nil)
-    attribute :extensions, Types::Strict::Array.optional.default(proc { [] })
+    attribute :extensions, Types::Strict::Array.optional.default { [] }
 
     # Loads a configuration from a YAML file
     #
