@@ -127,7 +127,12 @@ module K8s
 
     # @return [Excon::Connection]
     def excon
-      @excon ||= Excon.new(
+      @excon ||= build_excon
+    end
+
+    # @return [Excon::Connection]
+    def build_excon
+      Excon.new(
         @server,
         persistent: true,
         middlewares: EXCON_MIDDLEWARES,
@@ -236,12 +241,13 @@ module K8s
       excon_options = request_options(**options)
 
       start = Time.now
-      response = excon.request(**excon_options)
+      excon_client = options[:response_block] ? build_excon : excon
+      response = excon_client.request(**excon_options)
       t = Time.now - start
 
       obj = options[:response_block] ? {} : parse_response(response, options, response_class: response_class)
-    rescue K8s::Error::API => exc
-      logger.warn { "#{format_request(options)} => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s" }
+    rescue K8s::Error::API => e
+      logger.warn { "#{format_request(options)} => HTTP #{e.code} #{e.reason} in #{'%.3f' % t}s" }
       logger.debug { "Request: #{excon_options[:body]}" } if excon_options[:body]
       logger.debug { "Response: #{response.body}" }
       raise
@@ -281,17 +287,17 @@ module K8s
           raise unless skip_forbidden
 
           nil
-        rescue K8s::Error::ServiceUnavailable => exc
+        rescue K8s::Error::ServiceUnavailable => e
           raise unless retry_errors
 
-          logger.warn { "Retry #{format_request(request_options)} => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s" }
+          logger.warn { "Retry #{format_request(request_options)} => HTTP #{e.code} #{e.reason} in #{'%.3f' % t}s" }
 
           # only retry the failed request, not the entire pipeline
           request(response_class: response_class, **common_options.merge(request_options))
         end
       }
-    rescue K8s::Error => exc
-      logger.warn { "[#{options.map{ |o| format_request(o) }.join ', '}] => HTTP #{exc.code} #{exc.reason} in #{'%.3f' % t}s" }
+    rescue K8s::Error => e
+      logger.warn { "[#{options.map{ |o| format_request(o) }.join ', '}] => HTTP #{e.code} #{e.reason} in #{'%.3f' % t}s" }
       raise
     else
       logger.info { "[#{options.map{ |o| format_request(o) }.join ', '}] => HTTP [#{responses.map(&:status).join ', '}] in #{'%.3f' % t}s" }
