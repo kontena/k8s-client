@@ -11,8 +11,8 @@ module K8s
       # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#TypeMeta
       class Resource < Struct
         # XXX: making these optional seems dangerous, but some APIs (GET /api/v1) are missing these
-        attribute :kind, Types::Strict::String.optional.default(nil)
-        attribute :apiVersion, Types::Strict::String.optional.default(nil)
+        attribute :kind, Types::String.optional.default(nil)
+        attribute :apiVersion, Types::String.optional.default(nil)
       end
     end
   end

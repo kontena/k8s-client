@@ -8,7 +8,7 @@ module K8s
   module API
     # Common Dry::Types used in the API
     module Types
-      include Dry::Types.module
+      include Dry.Types()
     end
 
     # Common API struct type, handling JSON transforms with symbol keys
