@@ -183,8 +183,11 @@ RSpec.describe K8s::Transport do
             exec: {
               apiVersion: 'client.authentication.k8s.io/v1beta1',
               command: 'echo',
+              env: [
+                { 'name' => 'CUSTOM_ENV', 'value' => '123' }
+              ],
               args: [
-                'tokenz'
+                'tokenz${CUSTOM_ENV}'
               ]
             }
           }
@@ -211,7 +214,7 @@ RSpec.describe K8s::Transport do
           method: 'GET',
           path: '/',
           headers: {
-            'Authorization' => 'Bearer tokenz',
+            'Authorization' => 'Bearer tokenz123',
           },
         })
       end
