@@ -231,12 +231,12 @@ RSpec.describe K8s::Transport do
           user: {
             exec: {
               apiVersion: 'client.authentication.k8s.io/v1beta1',
-              command: 'echo',
+              command: 'cat',
               env: [
                 { 'name' => 'CUSTOM_ENV', 'value' => '123' }
               ],
               args: [
-                'tokenz${CUSTOM_ENV}'
+                "#{fixture_path}/config/kubeconfig_user_exec_data.json"
               ]
             }
           }
@@ -263,7 +263,7 @@ RSpec.describe K8s::Transport do
           method: 'GET',
           path: '/',
           headers: {
-            'Authorization' => 'Bearer tokenz123',
+            'Authorization' => 'Bearer my-bearer-token',
           },
         })
       end

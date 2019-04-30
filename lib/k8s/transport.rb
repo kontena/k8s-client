@@ -114,10 +114,10 @@ module K8s
           ENV[env['name']] = env['value']
         end
       end
-      auth_token = %x(#{cmd.join(' ')}).strip
+      auth_json = %x(#{cmd.join(' ')}).strip
       ENV.replace(orig_env)
 
-      auth_token
+      JSON.parse(auth_json).dig('status', 'token')
     end
 
     # In-cluster config within a kube pod, using the kubernetes service envs and serviceaccount secrets
