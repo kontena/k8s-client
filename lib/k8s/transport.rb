@@ -94,7 +94,7 @@ module K8s
     # @param auth_provider [K8s::Config::UserAuthProvider]
     # @return [String]
     def self.token_from_auth_provider(auth_provider)
-      auth_data = %x(#{auth_provider['cmd-path']} #{auth_provider['cmd-args']}).strip
+      auth_data = `#{auth_provider['cmd-path']} #{auth_provider['cmd-args']}`.strip
       if auth_provider['token-key']
         json_path = JsonPath.new(auth_provider['token-key'][1...-1])
         json_path.first(auth_data)
@@ -107,14 +107,14 @@ module K8s
     # @return [String]
     def self.token_from_exec(exec_conf)
       cmd = [exec_conf.command]
-      cmd = cmd + exec_conf.args if exec_conf.args
+      cmd += exec_conf.args if exec_conf.args
       orig_env = ENV.to_h
       if envs = exec_conf.env
         envs.each do |env|
           ENV[env['name']] = env['value']
         end
       end
-      auth_json = %x(#{cmd.join(' ')}).strip
+      auth_json = `#{cmd.join(' ')}`.strip
       ENV.replace(orig_env)
 
       JSON.parse(auth_json).dig('status', 'token')
