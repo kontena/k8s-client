@@ -8,8 +8,7 @@ rvm:
 matrix:
   allow_failures:
   - rvm: ruby-head
-before_install: gem install bundler
-script: bundle exec rspec spec/
+before_install: gem install bundler -v 1.16.2
 deploy:
   provider: rubygems
   gem: k8s-client
