@@ -164,7 +164,7 @@ RSpec.describe K8s::Transport do
     end
   end
 
-  context 'for a kubeconfig using auth-provider' do
+  context 'for a kubeconfig using exec' do
     let(:config) { K8s::Config.new(
       clusters: [
         {
