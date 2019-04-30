@@ -8,7 +8,9 @@ rvm:
 matrix:
   allow_failures:
   - rvm: ruby-head
-before_install: gem install bundler -v 1.16.2
+before_install:
+  - gem uninstall -a bundler
+  - gem install bundler -v 1.16.2
 script: bundle exec rspec spec/
 deploy:
   provider: rubygems
