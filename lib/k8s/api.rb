@@ -23,7 +23,7 @@ module K8s
       end
 
       # @return [String]
-      def to_json
+      def to_json(*_args)
         to_hash.to_json
       end
     end
