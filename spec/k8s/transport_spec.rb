@@ -108,6 +108,55 @@ RSpec.describe K8s::Transport do
       end
     end
 
+    context 'for a kubeconfig using username and password auth' do
+      let(:config) { K8s::Config.new(
+        clusters: [
+          {
+            name: 'kubernetes',
+            cluster: {
+              server: 'http://localhost:8080',
+              certificate_authority: 'ca.pem',
+
+            }
+          }
+        ],
+        users: [
+          {
+            name: 'test',
+            user: {
+              username: 'user',
+              password: 'SECRET'
+            }
+          }
+        ],
+
+        contexts: [
+          {
+            name: 'test',
+            context: {
+              cluster: 'kubernetes',
+              user: 'test'
+            }
+          }
+        ],
+        current_context: 'test'
+      ) }
+
+      subject { described_class.config(config) }
+
+      describe '#request_options' do
+        it "includes the Authorization token" do
+          expect(subject.request_options(method: 'GET', path: '/')).to eq({
+            method: 'GET',
+            path: '/',
+            headers: {
+              'Authorization' => "Basic #{Base64.strict_encode64('user:SECRET')}",
+            },
+          })
+        end
+      end
+    end
+
     context 'for a kubeconfig using auth-provider' do
       let(:config) { K8s::Config.new(
         clusters: [

@@ -83,6 +83,11 @@ module K8s
         else
           options[:auth_token] = auth_data
         end
+      elsif config.user.username && config.user.password
+        logger.debug "Using config with .user.password=..."
+
+        options[:auth_username] = config.user.username
+        options[:auth_password] = config.user.password
       end
 
       logger.info "Using config with server=#{server}"
@@ -116,10 +121,14 @@ module K8s
 
     # @param server [String] URL with protocol://host:port - any /path is ignored
     # @param auth_token [String] optional Authorization: Bearer token
+    # @param auth_username [String] optional Basic authentication username
+    # @param auth_password [String] optional Basic authentication password
     # @param options [Hash] @see Excon.new
-    def initialize(server, auth_token: nil, **options)
+    def initialize(server, auth_token: nil, auth_username: nil, auth_password: nil, **options)
       @server = server
       @auth_token = auth_token
+      @auth_username = auth_username
+      @auth_password = auth_password
       @options = options
 
       logger! progname: @server
@@ -156,6 +165,8 @@ module K8s
 
       if @auth_token
         options[:headers]['Authorization'] = "Bearer #{@auth_token}"
+      elsif @auth_username && @auth_password
+        options[:headers]['Authorization'] = "Basic #{Base64.strict_encode64("#{@auth_username}:#{@auth_password}")}"
       end
 
       if request_object
