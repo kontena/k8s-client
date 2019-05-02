@@ -75,14 +75,10 @@ module K8s
         options[:auth_token] = token
       elsif config.user.auth_provider && auth_provider = config.user.auth_provider.config
         logger.debug "Using config with .user.auth-provider.name=#{config.user.auth_provider.name}"
-
-        auth_data = `#{auth_provider['cmd-path']} #{auth_provider['cmd-args']}`.strip
-        if auth_provider['token-key']
-          json_path = JsonPath.new(auth_provider['token-key'][1...-1])
-          options[:auth_token] = json_path.first(auth_data)
-        else
-          options[:auth_token] = auth_data
-        end
+        options[:auth_token] = token_from_auth_provider(auth_provider)
+      elsif exec_conf = config.user.exec
+        logger.debug "Using config with .user.exec.command=#{exec_conf.command}"
+        options[:auth_token] = token_from_exec(exec_conf)
       elsif config.user.username && config.user.password
         logger.debug "Using config with .user.password=..."
 
@@ -93,6 +89,35 @@ module K8s
       logger.info "Using config with server=#{server}"
 
       new(server, **options, **overrides)
+    end
+
+    # @param auth_provider [K8s::Config::UserAuthProvider]
+    # @return [String]
+    def self.token_from_auth_provider(auth_provider)
+      auth_data = `#{auth_provider['cmd-path']} #{auth_provider['cmd-args']}`.strip
+      if auth_provider['token-key']
+        json_path = JsonPath.new(auth_provider['token-key'][1...-1])
+        json_path.first(auth_data)
+      else
+        auth_data
+      end
+    end
+
+    # @param exec_conf [K8s::Config::UserExec]
+    # @return [String]
+    def self.token_from_exec(exec_conf)
+      cmd = [exec_conf.command]
+      cmd += exec_conf.args if exec_conf.args
+      orig_env = ENV.to_h
+      if envs = exec_conf.env
+        envs.each do |env|
+          ENV[env['name']] = env['value']
+        end
+      end
+      auth_json = `#{cmd.join(' ')}`.strip
+      ENV.replace(orig_env)
+
+      JSON.parse(auth_json).dig('status', 'token')
     end
 
     # In-cluster config within a kube pod, using the kubernetes service envs and serviceaccount secrets
