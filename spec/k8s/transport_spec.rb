@@ -31,7 +31,7 @@ RSpec.describe K8s::Transport do
         subject { described_class.config(K8s::Config.load_file(fixture_path('config/kubeadm-admin-with-path-prefix.conf')))}
 
         it 'uses the correct server' do
-          expect(subject.server).to eq 'https://192.168.56.11:6443/k8s/clusters/c-dnmgm'
+          expect(subject.server).to eq 'https://192.168.56.11:6443'
         end
 
         it 'uses the correct path' do

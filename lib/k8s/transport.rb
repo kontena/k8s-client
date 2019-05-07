@@ -118,8 +118,9 @@ module K8s
     # @param auth_token [String] optional Authorization: Bearer token
     # @param options [Hash] @see Excon.new
     def initialize(server, auth_token: nil, **options)
-      @server = server
-      @path_prefix = URI.parse(server).path
+      uri = URI.parse(server)
+      @server = "#{uri.scheme}://#{uri.host}:#{uri.port}"
+      @path_prefix = uri.path.empty? ? '/' : uri.path
       @auth_token = auth_token
       @options = options
 
@@ -145,10 +146,9 @@ module K8s
     # @param path [Array<String>] join path parts together to build the full URL
     # @return [String]
     def path(*path)
-      path_components = ['/', *path]
-      # Only add the path_prefix if it isn't there already...
-      path_components.insert(0, path_prefix) unless [*path].join.match?(/^#{path_prefix}/)
-      File.join(path_components)
+      result = path.join('/')
+      result = File.join(path_prefix, path) unless result.start_with?(path_prefix)
+      result.start_with?('/') ? result : "/#{result}"
     end
 
     # @param request_object [Object] include request body using to_json
