@@ -2,6 +2,7 @@ RSpec.describe K8s::APIClient do
   include FixtureHelpers
 
   let(:transport) { K8s::Transport.new('http://localhost:8080') }
+  let(:transport_with_prefix) { K8s::Transport.new('http://localhost:8080/k8s/clusters/c-dnmgm') }
 
   context "for the v1 API" do
     subject { described_class.new(transport, 'v1') }
@@ -19,6 +20,20 @@ RSpec.describe K8s::APIClient do
 
       it "returns the correct resource path" do
         expect(subject.path('tests')).to eq '/api/v1/tests'
+      end
+    end
+
+    context "for URIs with a path prefix" do
+      subject { described_class.new(transport_with_prefix, 'v1') }
+
+      describe '#path' do
+        it "returns the correct root path" do
+          expect(subject.path).to eq '/k8s/clusters/c-dnmgm/api/v1'
+        end
+
+        it "returns the correct resource path" do
+          expect(subject.path('tests')).to eq '/k8s/clusters/c-dnmgm/api/v1/tests'
+        end
       end
     end
 

@@ -142,15 +142,17 @@ module K8s
       )
     end
 
-    attr_reader :server, :options
+    attr_reader :server, :options, :path_prefix
 
-    # @param server [String] URL with protocol://host:port - any /path is ignored
+    # @param server [String] URL with protocol://host:port (paths are preserved as well)
     # @param auth_token [String] optional Authorization: Bearer token
     # @param auth_username [String] optional Basic authentication username
     # @param auth_password [String] optional Basic authentication password
     # @param options [Hash] @see Excon.new
     def initialize(server, auth_token: nil, auth_username: nil, auth_password: nil, **options)
-      @server = server
+      uri = URI.parse(server)
+      @server = "#{uri.scheme}://#{uri.host}:#{uri.port}"
+      @path_prefix = File.join('/', uri.path, '/') # add leading and/or trailing slashes
       @auth_token = auth_token
       @auth_username = auth_username
       @auth_password = auth_password
@@ -175,10 +177,10 @@ module K8s
       )
     end
 
-    # @param path [Array<String>] join path parts together to build the full URL
+    # @param parts [Array<String>] join path parts together to build the full URL
     # @return [String]
-    def path(*path)
-      File.join('/', *path)
+    def path(*parts)
+      File.join(path_prefix, *parts)
     end
 
     # @param request_object [Object] include request body using to_json

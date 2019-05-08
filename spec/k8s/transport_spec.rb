@@ -11,6 +11,10 @@ RSpec.describe K8s::Transport do
         expect(subject.server).to eq 'https://192.168.56.11:6443'
       end
 
+      it 'uses the correct path' do
+        expect(subject.path).to eq '/'
+      end
+
       it 'uses the correct options' do
         expect(subject.options).to match(
           ssl_cert_store: OpenSSL::X509::Store,
@@ -23,6 +27,30 @@ RSpec.describe K8s::Transport do
         expect(subject.options[:ssl_cert_store].verify(server_cert)).to eq true
       end
 
+      context "for URIs with a path prefix" do
+        subject { described_class.config(K8s::Config.load_file(fixture_path('config/kubeadm-admin-with-path-prefix.conf')))}
+
+        it 'uses the correct server' do
+          expect(subject.server).to eq 'https://192.168.56.11:6443'
+        end
+
+        it 'uses the correct path' do
+          expect(subject.path).to eq '/k8s/clusters/c-dnmgm/'
+        end
+
+        it 'uses the correct options' do
+          expect(subject.options).to match(
+            ssl_cert_store: OpenSSL::X509::Store,
+            client_cert_data: /^-----BEGIN CERTIFICATE-----\n/,
+            client_key_data: /^-----BEGIN RSA PRIVATE KEY-----\n/,
+          )
+        end
+
+        it 'uses an ssl_cert_store that verifies the server cert' do
+          expect(subject.options[:ssl_cert_store].verify(server_cert)).to eq true
+        end
+      end
+
       context "overriding the server option" do
         subject {
           described_class.config(K8s::Config.load_file(fixture_path('config/kubeadm-admin.conf')),
@@ -32,6 +60,21 @@ RSpec.describe K8s::Transport do
 
         it "uses the overriden server" do
           expect(subject.server).to eq 'http://localhost:8001'
+        end
+
+        context "for URIs with a path prefix" do
+          subject { described_class.config(K8s::Config.load_file(fixture_path('config/kubeadm-admin-with-path-prefix.conf')),
+              server: 'http://localhost:8001',
+            )
+          }
+
+          it 'uses the correct server' do
+            expect(subject.server).to eq 'http://localhost:8001'
+          end
+
+          it 'uses the correct path' do
+            expect(subject.path).to eq '/'
+          end
         end
       end
 
