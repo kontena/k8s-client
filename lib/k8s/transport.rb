@@ -152,7 +152,7 @@ module K8s
     def initialize(server, auth_token: nil, auth_username: nil, auth_password: nil, **options)
       uri = URI.parse(server)
       @server = "#{uri.scheme}://#{uri.host}:#{uri.port}"
-      @path_prefix = uri.path.empty? ? '/' : uri.path
+      @path_prefix = File.join('/', uri.path, '/') # add leading and/or trailing slashes
       @auth_token = auth_token
       @auth_username = auth_username
       @auth_password = auth_password
@@ -177,12 +177,10 @@ module K8s
       )
     end
 
-    # @param path [Array<String>] join path parts together to build the full URL
+    # @param parts [Array<String>] join path parts together to build the full URL
     # @return [String]
-    def path(*path)
-      result = path.join('/')
-      result = File.join(path_prefix, path) unless result.start_with?(path_prefix)
-      result.start_with?('/') ? result : "/#{result}"
+    def path(*parts)
+      File.join(path_prefix, *parts)
     end
 
     # @param request_object [Object] include request body using to_json
