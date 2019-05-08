@@ -25,7 +25,7 @@ module K8s
   class Config < ConfigStruct
     # Common dry-types for config
     class Types
-      include Dry.Types()
+      include Dry::Types.module
     end
 
     # structured cluster
@@ -34,7 +34,7 @@ module K8s
       attribute :insecure_skip_tls_verify, Types::Bool.optional.default(nil)
       attribute :certificate_authority, Types::String.optional.default(nil)
       attribute :certificate_authority_data, Types::String.optional.default(nil)
-      attribute :extensions, Types::Array.optional.default(nil)
+      attribute :extensions, Types::Strict::Array.optional.default(nil)
     end
 
     # structured cluster with name
@@ -46,7 +46,15 @@ module K8s
     # structured user auth provider
     class UserAuthProvider < ConfigStruct
       attribute :name, Types::String
-      attribute :config, Types::Hash
+      attribute :config, Types::Strict::Hash
+    end
+
+    # structured user exec
+    class UserExec < ConfigStruct
+      attribute :command, Types::String
+      attribute :apiVersion, Types::String
+      attribute :env, Types::Strict::Array.of(Types::Hash).optional.default(nil)
+      attribute :args, Types::Strict::Array.of(Types::String).optional.default(nil)
     end
 
     # structured user
@@ -63,8 +71,8 @@ module K8s
       attribute :username, Types::String.optional.default(nil)
       attribute :password, Types::String.optional.default(nil)
       attribute :auth_provider, UserAuthProvider.optional.default(nil)
-      attribute :exec, Types::Hash.optional.default(nil)
-      attribute :extensions, Types::Array.optional.default(nil)
+      attribute :exec, UserExec.optional.default(nil)
+      attribute :extensions, Types::Strict::Array.optional.default(nil)
     end
 
     # structured user with name
@@ -77,10 +85,10 @@ module K8s
     #
     # Referrs to other named User/cluster objects within the same config.
     class Context < ConfigStruct
-      attribute :cluster, Types::String
-      attribute :user, Types::String
-      attribute :namespace, Types::String.optional.default(nil)
-      attribute :extensions, Types::Array.optional.default(nil)
+      attribute :cluster, Types::Strict::String
+      attribute :user, Types::Strict::String
+      attribute :namespace, Types::Strict::String.optional.default(nil)
+      attribute :extensions, Types::Strict::Array.optional.default(nil)
     end
 
     # named context
@@ -89,33 +97,32 @@ module K8s
       attribute :context, Context
     end
 
-    attribute :kind, Types::String.optional.default(nil)
-    attribute :apiVersion, Types::String.optional.default(nil)
-    attribute(:preferences, Types::Hash.optional.default { {} })
-    attribute(:clusters, Types::Array.of(NamedCluster).optional.default { [] })
-    attribute(:users, Types::Array.of(NamedUser).optional.default { [] })
-    attribute(:contexts, Types::Array.of(NamedContext).optional.default { [] })
-    attribute :current_context, Types::String.optional.default(nil)
-    attribute(:extensions, Types::Array.optional.default { [] })
+    attribute :kind, Types::Strict::String.optional.default(nil)
+    attribute :apiVersion, Types::Strict::String.optional.default(nil)
+    attribute :preferences, Types::Strict::Hash.optional.default(proc { {} })
+    attribute :clusters, Types::Strict::Array.of(NamedCluster).optional.default(proc { [] })
+    attribute :users, Types::Strict::Array.of(NamedUser).optional.default(proc { [] })
+    attribute :contexts, Types::Strict::Array.of(NamedContext).optional.default(proc { [] })
+    attribute :current_context, Types::Strict::String.optional.default(nil)
+    attribute :extensions, Types::Strict::Array.optional.default(proc { [] })
 
     # Loads a configuration from a YAML file
     #
     # @param path [String]
     # @return [K8s::Config]
     def self.load_file(path)
-      new(YAML.safe_load(File.read(path), [Time, DateTime, Date]))
+      new(YAML.safe_load(File.read(File.expand_path(path)), [Time, DateTime, Date], [], true))
     end
 
     # Loads configuration files listed in KUBE_CONFIG environment variable and
-    # merged using the configuration merge rules, @see K8s::Config.merge
+    # merge using the configuration merge rules, @see K8s::Config.merge
     #
     # @param kubeconfig [String] by default read from ENV['KUBECONFIG']
     def self.from_kubeconfig_env(kubeconfig = nil)
       kubeconfig ||= ENV.fetch('KUBECONFIG', '')
-      return if kubeconfig.empty?
+      raise ArgumentError, "KUBECONFIG not set" if kubeconfig.empty?
 
       paths = kubeconfig.split(/(?!\\):/)
-      return load_file(paths.first) if paths.size == 1
 
       paths.inject(load_file(paths.shift)) do |memo, other_cfg|
         memo.merge(load_file(other_cfg))
@@ -125,23 +132,17 @@ module K8s
     # Build a minimal configuration from at least a server address, server certificate authority data and an access token.
     #
     # @param server [String] kubernetes server address
-    # @param ca [String] server certificate authority data
-    # @param token [String] access token (optionally base64 encoded)
+    # @param ca [String] server certificate authority data (base64 encoded)
+    # @param token [String] access token
     # @param cluster_name [String] cluster name
     # @param user [String] user name
     # @param context [String] context name
     # @param options [Hash] (see #initialize)
     def self.build(server:, ca:, auth_token:, cluster_name: 'kubernetes', user: 'k8s-client', context: 'k8s-client', **options)
-      begin
-        decoded_token = Base64.strict_decode64(auth_token)
-      rescue ArgumentError
-        decoded_token = nil
-      end
-
       new(
         {
           clusters: [{ name: cluster_name, cluster: { server: server, certificate_authority_data: ca } }],
-          users: [{ name: user, user: { token: decoded_token || auth_token } }],
+          users: [{ name: user, user: { token: auth_token } }],
           contexts: [{ name: context, context: { cluster: cluster_name, user: user } }],
           current_context: context
         }.merge(options)
@@ -174,6 +175,7 @@ module K8s
           when NilClass
             new_value
           else
+            warn "key is #{key} old val is #{old_value.inspect} and new val is #{new_value.inspect}"
             old_value
           end
         end
@@ -183,10 +185,13 @@ module K8s
     end
 
     # @param name [String]
-    # TODO: raise error if not found
+    # @raise [K8s::Error::Configuration]
     # @return [K8s::Config::Context]
     def context(name = current_context)
-      contexts.find{ |context| context.name == name }.context
+      found = contexts.find{ |context| context.name == name }
+      raise K8s::Error::Configuration, "context not found: #{name.inspect}" unless found
+
+      found.context
     end
 
     # @param name [String]

@@ -151,6 +151,55 @@ RSpec.describe K8s::Transport do
       end
     end
 
+    context 'for a kubeconfig using username and password auth' do
+      let(:config) { K8s::Config.new(
+        clusters: [
+          {
+            name: 'kubernetes',
+            cluster: {
+              server: 'http://localhost:8080',
+              certificate_authority: 'ca.pem',
+
+            }
+          }
+        ],
+        users: [
+          {
+            name: 'test',
+            user: {
+              username: 'user',
+              password: 'SECRET'
+            }
+          }
+        ],
+
+        contexts: [
+          {
+            name: 'test',
+            context: {
+              cluster: 'kubernetes',
+              user: 'test'
+            }
+          }
+        ],
+        current_context: 'test'
+      ) }
+
+      subject { described_class.config(config) }
+
+      describe '#request_options' do
+        it "includes the Authorization token" do
+          expect(subject.request_options(method: 'GET', path: '/')).to eq({
+            method: 'GET',
+            path: '/',
+            headers: {
+              'Authorization' => "Basic #{Base64.strict_encode64('user:SECRET')}",
+            },
+          })
+        end
+      end
+    end
+
     context 'for a kubeconfig using auth-provider' do
       let(:config) { K8s::Config.new(
         clusters: [
@@ -207,7 +256,62 @@ RSpec.describe K8s::Transport do
     end
   end
 
+  context 'for a kubeconfig using exec' do
+    let(:config) { K8s::Config.new(
+      clusters: [
+        {
+          name: 'kubernetes',
+          cluster: {
+            server: 'http://localhost:8080',
+            certificate_authority: 'ca.pem',
 
+          }
+        }
+      ],
+      users: [
+        {
+          name: 'test',
+          user: {
+            exec: {
+              apiVersion: 'client.authentication.k8s.io/v1beta1',
+              command: 'cat',
+              env: [
+                { 'name' => 'CUSTOM_ENV', 'value' => '123' }
+              ],
+              args: [
+                "#{fixture_path}/config/kubeconfig_user_exec_data.json"
+              ]
+            }
+          }
+        }
+      ],
+
+      contexts: [
+        {
+          name: 'test',
+          context: {
+            cluster: 'kubernetes',
+            user: 'test'
+          }
+        }
+      ],
+      current_context: 'test'
+    ) }
+
+    subject { described_class.config(config) }
+
+    describe '#request_options' do
+      it "includes the Authorization token" do
+        expect(subject.request_options(method: 'GET', path: '/')).to eq({
+          method: 'GET',
+          path: '/',
+          headers: {
+            'Authorization' => 'Bearer my-bearer-token',
+          },
+        })
+      end
+    end
+  end
 
   describe '#self.in_cluster_config' do
     context "with envs set" do

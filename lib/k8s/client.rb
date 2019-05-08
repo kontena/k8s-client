@@ -69,7 +69,17 @@ module K8s
     # @return [K8s::Client]
     def self.autoconfig(namespace: nil, **options)
       if ENV.values_at('KUBE_TOKEN', 'KUBE_CA', 'KUBE_SERVER').none? { |v| v.nil? || v.empty? }
-        configuration = K8s::Config.build(server: ENV['KUBE_SERVER'], ca: ENV['KUBE_CA'], auth_token: options[:auth_token] || ENV['KUBE_TOKEN'])
+        unless Base64.decode64(ENV['KUBE_CA']).match?(/CERTIFICATE/)
+          raise ArgumentError, 'KUBE_CA does not seem to be base64 encoded'
+        end
+
+        begin
+          token = options[:auth_token] || Base64.strict_decode64(ENV['KUBE_TOKEN'])
+        rescue ArgumentError
+          raise ArgumentError, 'KUBE_TOKEN does not seem to be base64 encoded'
+        end
+
+        configuration = K8s::Config.build(server: ENV['KUBE_SERVER'], ca: ENV['KUBE_CA'], auth_token: token)
       elsif !ENV['KUBECONFIG'].to_s.empty?
         configuration = K8s::Config.from_kubeconfig_env(ENV['KUBECONFIG'])
       elsif File.exist?(File.join(Dir.home, '.kube', 'config'))
