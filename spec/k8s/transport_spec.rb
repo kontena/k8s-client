@@ -498,6 +498,10 @@ RSpec.describe K8s::Transport do
       it "raises Forbidden" do
         expect{subject.get('/api/v1/nodes')}.to raise_error K8s::Error::Forbidden, 'GET /api/v1/nodes => HTTP 403 Forbidden: nodes is forbidden: User "system:anonymous" cannot list nodes at the cluster scope'
       end
+
+      it "returns nil if called with the ! variant" do
+        expect(subject.get!('/api/v1/nodes')).to be_nil
+      end
     end
   end
 
@@ -665,16 +669,6 @@ RSpec.describe K8s::Transport do
       end
 
       it "raises NotFound" do
-        expect{
-          subject.gets(
-            '/api/v1/namespaces/default/services/foo',
-            '/api/v1/namespaces/default/configmaps/bar',
-            skip_forbidden: true,
-          )
-        }.to raise_error(K8s::Error::NotFound)
-      end
-
-      it "returns nil when called via the ! variant" do
         expect{
           subject.gets(
             '/api/v1/namespaces/default/services/foo',
