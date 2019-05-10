@@ -68,23 +68,38 @@ RSpec.describe K8s::ResourceClient do
     end
 
     context "GET /api/v1/nodes/*" do
-      before do
-        stub_request(:get, 'localhost:8080/api/v1/nodes/ubuntu-xenial')
-          .to_return(
-            status: 200,
-            body: fixture('api/nodes-get.json'),
-            headers: { 'Content-Type' => 'application/json' }
-          )
-      end
-
       describe '#get' do
-        it "returns a resource" do
-          obj = subject.get('ubuntu-xenial')
+        let(:status) { 200 }
 
-          expect(obj).to match K8s::Resource
-          expect(obj.kind).to eq "Node"
-          expect(obj.metadata.namespace).to be nil
-          expect(obj.metadata.name).to eq "ubuntu-xenial"
+        before do
+          stub_request(:get, 'localhost:8080/api/v1/nodes/ubuntu-xenial')
+            .to_return(
+              status: status,
+              body: fixture('api/nodes-get.json'),
+              headers: { 'Content-Type' => 'application/json' }
+            )
+        end
+        context '200' do
+          it "returns a resource" do
+            obj = subject.get('ubuntu-xenial')
+
+            expect(obj).to match K8s::Resource
+            expect(obj.kind).to eq "Node"
+            expect(obj.metadata.namespace).to be nil
+            expect(obj.metadata.name).to eq "ubuntu-xenial"
+          end
+        end
+
+        context '404' do
+          let(:status) { 404 }
+
+          it 'raises K8s::Error::NotFound' do
+            expect{subject.get('ubuntu-xenial')}.to raise_error(K8s::Error::NotFound)
+          end
+
+          it 'returns nil when called with the ! variant' do
+            expect(subject.get!('ubuntu-xenial')).to be_nil
+          end
         end
       end
     end

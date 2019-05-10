@@ -35,6 +35,7 @@ module K8s
 
     include Utils
     extend Utils
+    extend K8s::Util::ExceptionlessBangMethod
 
     # Pipeline list requests for multiple resource types.
     #
@@ -152,6 +153,7 @@ module K8s
         response_class: @resource_class
       )
     end
+    exceptionless_bang_method :create_resource
 
     # @return [Bool]
     def get?
@@ -168,6 +170,7 @@ module K8s
         response_class: @resource_class
       )
     end
+    exceptionless_bang_method :get
 
     # @param resource [resource_class]
     # @return [Object] instance of resource_class
@@ -178,6 +181,7 @@ module K8s
         response_class: @resource_class
       )
     end
+    exceptionless_bang_method :get_resource
 
     # @return [Bool]
     def list?
@@ -264,6 +268,7 @@ module K8s
         response_class: @resource_class
       )
     end
+    exceptionless_bang_method :update_resource
 
     # @return [Boolean]
     def patch?
@@ -284,6 +289,7 @@ module K8s
         response_class: @resource_class
       )
     end
+    exceptionless_bang_method :merge_patch
 
     # @param name [String]
     # @param ops [Hash] json-patch operations
@@ -298,6 +304,7 @@ module K8s
         response_class: @resource_class
       )
     end
+    exceptionless_bang_method :json_patch
 
     # @return [Boolean]
     def delete?
@@ -318,6 +325,7 @@ module K8s
         response_class: @resource_class # XXX: documented as returning Status
       )
     end
+    exceptionless_bang_method :delete
 
     # @param namespace [String, nil]
     # @param labelSelector [nil, String, Hash{String => String}]
@@ -340,10 +348,11 @@ module K8s
 
     # @param resource [resource_class] with metadata
     # @param options [Hash]
-    # @see #delete for possible options
+    # @param (see #delete)
     # @return [K8s::API::MetaV1::Status]
     def delete_resource(resource, **options)
       delete(resource.metadata.name, namespace: resource.metadata.namespace, **options)
     end
+    exceptionless_bang_method :delete_resource
   end
 end

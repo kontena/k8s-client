@@ -8,6 +8,7 @@ module K8s
   # Excon-based HTTP transport handling request/response body JSON encoding
   class Transport
     include Logging
+    extend K8s::Util::ExceptionlessBangMethod
 
     quiet! # do not log warnings by default
 
@@ -29,7 +30,7 @@ module K8s
     #
     # @param config [K8s::Config]
     # @param server [String] override cluster.server from config
-    # @param overrides @see #initialize
+    # @param (see #initialize)
     # @return [K8s::Transport]
     def self.config(config, server: nil, **overrides)
       options = {}
@@ -142,13 +143,20 @@ module K8s
       )
     end
 
-    attr_reader :server, :options, :path_prefix
+    # @return [String] server URL
+    attr_reader :server
+
+    # @return [Hash]
+    attr_reader :options
+
+    # @return [String] query path perfix
+    attr_reader :path_prefix
 
     # @param server [String] URL with protocol://host:port (paths are preserved as well)
     # @param auth_token [String] optional Authorization: Bearer token
     # @param auth_username [String] optional Basic authentication username
     # @param auth_password [String] optional Basic authentication password
-    # @param options [Hash] @see Excon.new
+    # @param options [Hash] see https://www.rubydoc.info/github/excon/excon/Excon.new
     def initialize(server, auth_token: nil, auth_username: nil, auth_password: nil, **options)
       uri = URI.parse(server)
       @server = "#{uri.scheme}://#{uri.host}:#{uri.port}"
@@ -185,7 +193,7 @@ module K8s
 
     # @param request_object [Object] include request body using to_json
     # @param content_type [String] request body content-type
-    # @param options [Hash] @see Excon#request
+    # @param options see https://www.rubydoc.info/github/excon/excon/Excon%2FConnection:request
     # @return [Hash]
     def request_options(request_object: nil, content_type: 'application/json', **options)
       options[:headers] ||= {}
@@ -268,8 +276,8 @@ module K8s
       end
     end
 
-    # @param response_class [Class] coerce into response class using #new
-    # @param options [Hash] @see Excon#request
+    # @param response_class [Class] coerce into response class using response_class.new
+    # @param options [Hash] see https://www.rubydoc.info/github/excon/excon/Excon%2FConnection:request
     # @return [response_class, Hash]
     def request(response_class: nil, **options)
       if options[:method] == 'DELETE' && need_delete_body?
@@ -365,9 +373,10 @@ module K8s
         **options
       )
     end
+    exceptionless_bang_method :get
 
     # @param paths [Array<String>]
-    # @param options [Hash] @see #request
+    # @param (see #request)
     # @return [Array<response_class, Hash, NilClass>]
     def gets(*paths, **options)
       requests(

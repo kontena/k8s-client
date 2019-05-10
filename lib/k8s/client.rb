@@ -21,7 +21,8 @@ require 'k8s/transport'
 
 module K8s
   # @param server [String] http/s URL
-  # @param options [Hash] @see Transport.new
+  # @param options [Hash]
+  # @param (see Transport#initialize)
   # @return [K8s::Client]
   def self.client(server, **options)
     Client.new(Transport.new(server, **options))
@@ -31,9 +32,11 @@ module K8s
   # Uses a {Transport} instance to talk to the kube API.
   # Offers access to {APIClient} and {ResourceClient} instances.
   class Client
+    extend K8s::Util::ExceptionlessBangMethod
+
     # @param config [Phraos::Kube::Config]
-    # @param namespace [String] @see #initialize
-    # @param options [Hash] @see Transport.config
+    # @param namespace [String] default namespace for all operations
+    # @param (see K8s::Transport.config)
     # @return [K8s::Client]
     def self.config(config, namespace: nil, **options)
       new(
@@ -43,10 +46,9 @@ module K8s
     end
 
     # An K8s::Client instance from in-cluster config within a kube pod, using the kubernetes service envs and serviceaccount secrets
-    # @see K8s::Transport#in_cluster_config
     #
     # @param namespace [String] default namespace for all operations
-    # @param options [Hash] options passed to transport, @see Transport#in_cluster_config
+    # @param (see Transport.in_cluster_config)
     # @return [K8s::Client]
     # @raise [K8s::Error::Config,Errno::ENOENT,Errno::EACCES]
     def self.in_cluster_config(namespace: nil, **options)
@@ -95,6 +97,7 @@ module K8s
 
     include MonitorMixin
 
+    # @return [K8s::Transport]
     attr_reader :transport
 
     # @param transport [K8s::Transport]
@@ -187,7 +190,7 @@ module K8s
     # Returns flattened array with mixed resource kinds.
     #
     # @param resources [Array<K8s::ResourceClient>] default is all listable resources for api
-    # @param options @see K8s::ResourceClient#list
+    # @param (see ResourceClient.list)
     # @return [Array<K8s::Resource>]
     def list_resources(resources = nil, **options)
       cached_clients = @api_clients.size.positive?
@@ -218,12 +221,14 @@ module K8s
     def create_resource(resource)
       client_for_resource(resource).create_resource(resource)
     end
+    exceptionless_bang_method :create_resource
 
     # @param resource [K8s::Resource]
     # @return [K8s::Resource]
     def get_resource(resource)
       client_for_resource(resource).get_resource(resource)
     end
+    exceptionless_bang_method :get_resource
 
     # Returns nils for any resources that do not exist.
     # This includes custom resources that were not yet defined.
@@ -258,14 +263,15 @@ module K8s
     def update_resource(resource)
       client_for_resource(resource).update_resource(resource)
     end
+    exceptionless_bang_method :update_resource
 
     # @param resource [K8s::Resource]
-    # @param options [Hash]
-    # @see ResourceClient#delete for options
+    # @param (see ResourceClient.delete)
     # @return [K8s::Resource]
     def delete_resource(resource, **options)
       client_for_resource(resource).delete_resource(resource, **options)
     end
+    exceptionless_bang_method :delete_resource
 
     # @param resource [K8s::Resource]
     # @param attrs [Hash]
@@ -273,5 +279,6 @@ module K8s
     def patch_resource(resource, attrs)
       client_for_resource(resource).json_patch(resource.metadata.name, attrs)
     end
+    exceptionless_bang_method :patch_resource
   end
 end

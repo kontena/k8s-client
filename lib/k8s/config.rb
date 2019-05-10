@@ -133,7 +133,7 @@ module K8s
     #
     # @param server [String] kubernetes server address
     # @param ca [String] server certificate authority data (base64 encoded)
-    # @param token [String] access token
+    # @param auth_token [String] access token
     # @param cluster_name [String] cluster name
     # @param user [String] user name
     # @param context [String] context name

@@ -5,6 +5,8 @@ module K8s
   #
   # Offers access to {ResourceClient} instances for the APIResource types defined in this apigroup/version
   class APIClient
+    extend K8s::Util::ExceptionlessBangMethod
+
     # @param api_version [String] either core version (v1) or apigroup/apiversion (apps/v1)
     # @return [String]
     def self.path(api_version)
@@ -36,7 +38,6 @@ module K8s
       !!@api_resources
     end
 
-    # @param api_resources [Array<K8s::API::MetaV1::APIResource>]
     attr_writer :api_resources
 
     # Force-update APIResources
@@ -64,6 +65,7 @@ module K8s
 
       found_resource
     end
+    exceptionless_bang_method :find_api_resource
 
     # @param resource_name [String]
     # @param namespace [String, nil]
@@ -72,6 +74,7 @@ module K8s
     def resource(resource_name, namespace: nil)
       ResourceClient.new(@transport, self, find_api_resource(resource_name), namespace: namespace)
     end
+    exceptionless_bang_method :resource
 
     # @param resource [K8s::Resource]
     # @param namespace [String, nil] default if resource is missing namespace
@@ -88,6 +91,7 @@ module K8s
 
       ResourceClient.new(@transport, self, found_resource, namespace: resource.metadata.namespace || namespace)
     end
+    exceptionless_bang_method :client_for_resource
 
     # TODO: skip non-namespaced resources if namespace is given, or ignore namespace?
     #
@@ -105,7 +109,7 @@ module K8s
     # Returns flattened array with mixed resource kinds.
     #
     # @param resources [Array<K8s::ResourceClient>] default is all listable resources for api
-    # @param options @see [K8s::ResourceClient#list]
+    # @param (see K8s::ResourceClient#list)
     # @return [Array<K8s::Resource>]
     def list_resources(resources = nil, **options)
       resources ||= self.resources.select(&:list?)

@@ -50,14 +50,18 @@ module K8s
       new(name, **options).delete(client)
     end
 
-    attr_reader :name, :resources
+    # @return [String]
+    attr_reader :name
+
+    # @return [Array<K8s::Resource>]
+    attr_reader :resources
 
     # @param name [String]
     # @param resources [Array<K8s::Resource>]
     # @param debug [Boolean]
     # @param label [String]
     # @param checksum_annotation [String]
-    # @param last_config_annotation [String]
+    # @param last_configuration_annotation [String]
     def initialize(name, resources = [], debug: false, label: self.class::LABEL, checksum_annotation: self.class::CHECKSUM_ANNOTATION, last_configuration_annotation: self.class::LAST_CONFIG_ANNOTATION)
       @name = name
       @resources = resources

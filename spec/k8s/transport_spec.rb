@@ -673,6 +673,16 @@ RSpec.describe K8s::Transport do
           )
         }.to raise_error(K8s::Error::NotFound)
       end
+
+      it "returns nil when called via the ! variant" do
+        expect{
+          subject.gets(
+            '/api/v1/namespaces/default/services/foo',
+            '/api/v1/namespaces/default/configmaps/bar',
+            skip_forbidden: true,
+          )
+        }.to raise_error(K8s::Error::NotFound)
+      end
     end
   end
 end

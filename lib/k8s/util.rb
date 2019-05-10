@@ -3,6 +3,23 @@
 module K8s
   # Miscellaneous helpers
   module Util
+    module ExceptionlessBangMethod
+      private
+
+      # @!macro [attach] exceptionless_bang_method
+      #   @method $1!
+      #   Same as $1 but all exceptions are suppressed
+      def exceptionless_bang_method(meth)
+        define_method(meth.to_s.concat('!')) do |*args, **options|
+          begin
+            send(meth, *args, **options)
+          rescue StandardError
+            nil
+          end
+        end
+      end
+    end
+
     module HashDeepMerge
       refine Hash do
         # @param other [Hash]
