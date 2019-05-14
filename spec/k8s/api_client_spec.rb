@@ -1,8 +1,8 @@
 RSpec.describe K8s::APIClient do
   include FixtureHelpers
 
-  let(:transport) { K8s::Transport.new('http://localhost:8080') }
-  let(:transport_with_prefix) { K8s::Transport.new('http://localhost:8080/k8s/clusters/c-dnmgm') }
+  let(:transport) { K8s::Transport::Excon.new('http://localhost:8080') }
+  let(:transport_with_prefix) { K8s::Transport::Excon.new('http://localhost:8080/k8s/clusters/c-dnmgm') }
 
   context "for the v1 API" do
     subject { described_class.new(transport, 'v1') }

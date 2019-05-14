@@ -1,7 +1,7 @@
 RSpec.describe K8s::ResourceClient do
   include FixtureHelpers
 
-  let(:transport) { K8s::Transport.new('http://localhost:8080') }
+  let(:transport) { K8s::Transport::Excon.new('http://localhost:8080') }
 
   context "for the nodes API" do
     let(:api_client) { K8s::APIClient.new(transport, 'v1') }

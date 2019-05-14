@@ -4,9 +4,9 @@ require 'excon'
 require 'json'
 require 'jsonpath'
 
-module K8s
+module K8s; module Transport
   # Excon-based HTTP transport handling request/response body JSON encoding
-  class Transport
+  class Excon
     include Logging
 
     quiet! # do not log warnings by default
@@ -14,8 +14,8 @@ module K8s
     # Excon middlewares for requests
     EXCON_MIDDLEWARES = [
       # XXX: necessary? redirected requests omit authz headers?
-      Excon::Middleware::RedirectFollower
-    ] + Excon.defaults[:middlewares]
+      ::Excon::Middleware::RedirectFollower
+    ] + ::Excon.defaults[:middlewares]
 
     # Default request headers
     REQUEST_HEADERS = {
@@ -148,7 +148,7 @@ module K8s
     # @param auth_token [String] optional Authorization: Bearer token
     # @param auth_username [String] optional Basic authentication username
     # @param auth_password [String] optional Basic authentication password
-    # @param options [Hash] @see Excon.new
+    # @param options [Hash] @see ::Excon.new
     def initialize(server, auth_token: nil, auth_username: nil, auth_password: nil, **options)
       uri = URI.parse(server)
       @server = "#{uri.scheme}://#{uri.host}:#{uri.port}"
@@ -168,7 +168,7 @@ module K8s
 
     # @return [Excon::Connection]
     def build_excon
-      Excon.new(
+      ::Excon.new(
         @server,
         persistent: true,
         middlewares: EXCON_MIDDLEWARES,
@@ -185,7 +185,7 @@ module K8s
 
     # @param request_object [Object] include request body using to_json
     # @param content_type [String] request body content-type
-    # @param options [Hash] @see Excon#request
+    # @param options [Hash] @see ::Excon#request
     # @return [Hash]
     def request_options(request_object: nil, content_type: 'application/json', **options)
       options[:headers] ||= {}
@@ -204,7 +204,7 @@ module K8s
       options
     end
 
-    # @param options [Hash] as passed to Excon#request
+    # @param options [Hash] as passed to ::Excon#request
     # @return [String]
     def format_request(options)
       method = options[:method]
@@ -212,7 +212,7 @@ module K8s
       body = nil
 
       if options[:query]
-        path += Excon::Utils.query_string(options)
+        path += ::Excon::Utils.query_string(options)
       end
 
       if obj = options[:request_object]
@@ -226,7 +226,7 @@ module K8s
     # @param request_options [Hash] as passed to Excon#request
     # @param response_class [Class] coerce into response body using #new
     # @raise [K8s::Error]
-    # @raise [Excon::Error] TODO: wrap
+    # @raise [::Excon::Error] TODO: wrap
     # @return [response_class, Hash]
     def parse_response(response, request_options, response_class: nil)
       method = request_options[:method]
@@ -269,7 +269,7 @@ module K8s
     end
 
     # @param response_class [Class] coerce into response class using #new
-    # @param options [Hash] @see Excon#request
+    # @param options [Hash] @see ::Excon#request
     # @return [response_class, Hash]
     def request(response_class: nil, **options)
       if options[:method] == 'DELETE' && need_delete_body?
@@ -381,4 +381,4 @@ module K8s
       )
     end
   end
-end
+end; end

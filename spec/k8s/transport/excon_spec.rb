@@ -1,4 +1,4 @@
-RSpec.describe K8s::Transport do
+RSpec.describe K8s::Transport::Excon do
   include FixtureHelpers
 
   describe '#self.config' do

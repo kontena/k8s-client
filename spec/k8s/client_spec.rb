@@ -145,7 +145,7 @@ RSpec.describe K8s::Client do
   end
 
   context "for a mocked API" do
-    let(:transport) { K8s::Transport.new('http://localhost:8080') }
+    let(:transport) { K8s::Transport::Excon.new('http://localhost:8080') }
 
     subject { described_class.new(transport) }
 

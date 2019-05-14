@@ -17,14 +17,14 @@ require "k8s/error"
 require 'k8s/resource'
 require 'k8s/resource_client'
 require 'k8s/stack'
-require 'k8s/transport'
+require 'k8s/transport/excon'
 
 module K8s
   # @param server [String] http/s URL
-  # @param options [Hash] @see Transport.new
+  # @param (see K8s::Transport::Excon.new)
   # @return [K8s::Client]
   def self.client(server, **options)
-    Client.new(Transport.new(server, **options))
+    Client.new(Transport::Excon.new(server, **options))
   end
 
   # Top-level client wrapper.
@@ -32,25 +32,25 @@ module K8s
   # Offers access to {APIClient} and {ResourceClient} instances.
   class Client
     # @param config [Phraos::Kube::Config]
-    # @param namespace [String] @see #initialize
-    # @param options [Hash] @see Transport.config
+    # @param namespace [String] default namespace for all operations
+    # @param (see K8s::Transport::Excon.config)
     # @return [K8s::Client]
     def self.config(config, namespace: nil, **options)
       new(
-        Transport.config(config, **options),
+        Transport::Excon.config(config, **options),
         namespace: namespace
       )
     end
 
     # An K8s::Client instance from in-cluster config within a kube pod, using the kubernetes service envs and serviceaccount secrets
-    # @see K8s::Transport#in_cluster_config
+    # @see K8s::Transport::Excon.in_cluster_config
     #
     # @param namespace [String] default namespace for all operations
-    # @param options [Hash] options passed to transport, @see Transport#in_cluster_config
+    # @param options [Hash] options passed to transport, @see Transport::Excon.#in_cluster_config
     # @return [K8s::Client]
     # @raise [K8s::Error::Config,Errno::ENOENT,Errno::EACCES]
     def self.in_cluster_config(namespace: nil, **options)
-      new(Transport.in_cluster_config(**options), namespace: namespace)
+      new(Transport::Excon.in_cluster_config(**options), namespace: namespace)
     end
 
     # Attempts to create a K8s::Client instance automatically using environment variables, existing configuration
