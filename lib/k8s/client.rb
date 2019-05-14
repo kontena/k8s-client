@@ -48,7 +48,7 @@ module K8s
     # An K8s::Client instance from in-cluster config within a kube pod, using the kubernetes service envs and serviceaccount secrets
     #
     # @param namespace [String] default namespace for all operations
-    # @param (see Transport.in_cluster_config)
+    # @param (see K8s::Transport.in_cluster_config)
     # @return [K8s::Client]
     # @raise [K8s::Error::Config,Errno::ENOENT,Errno::EACCES]
     def self.in_cluster_config(namespace: nil, **options)
@@ -66,7 +66,8 @@ module K8s
     #
     # Will raise when no means of configuration is available
     #
-    # @param options [Hash] default namespace for all operations
+    # @param namespace [String] default namespace for all operations
+    # @param (see K8s::Transport.config)
     # @raise [K8s::Error::Config,Errno::ENOENT,Errno::EACCES]
     # @return [K8s::Client]
     def self.autoconfig(namespace: nil, **options)
@@ -190,7 +191,7 @@ module K8s
     # Returns flattened array with mixed resource kinds.
     #
     # @param resources [Array<K8s::ResourceClient>] default is all listable resources for api
-    # @param (see ResourceClient.list)
+    # @param (see K8s::ResourceClient.list)
     # @return [Array<K8s::Resource>]
     def list_resources(resources = nil, **options)
       cached_clients = @api_clients.size.positive?
