@@ -8,9 +8,6 @@ require 'yaml/safe_load_stream'
 module K8s
   # generic untyped resource
   class Resource < RecursiveOpenStruct
-    extend Forwardable
-    include Comparable
-
     using YAMLSafeLoadStream
     using K8s::Util::HashDeepMerge
 
