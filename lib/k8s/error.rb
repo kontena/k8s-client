@@ -7,8 +7,6 @@ module K8s
   class Error < StandardError
     # Kube API error, related to a HTTP response with a non-2xx code
     class API < Error
-      extend Forwardable
-
       attr_reader :method, :path, :code, :reason, :status
 
       # @param method [Integer] HTTP request method
