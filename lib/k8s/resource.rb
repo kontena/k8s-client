@@ -2,7 +2,6 @@
 
 require 'recursive-open-struct'
 require 'hashdiff'
-require 'forwardable'
 require 'yaml/safe_load_stream'
 
 module K8s
