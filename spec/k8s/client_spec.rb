@@ -47,7 +47,7 @@ RSpec.describe K8s::Client do
         let(:token) { 'foobar' }
 
         it 'raises' do
-          expect{subject.autoconfig}.to raise_error(ArgumentError, /KUBE_TOKEN.*base64/)
+          expect{subject.autoconfig}.to raise_error(K8s::Error::Configuration, /KUBE_TOKEN.*base64/)
         end
       end
 
@@ -56,7 +56,7 @@ RSpec.describe K8s::Client do
         let(:token) { Base64.encode64('foobar').chomp }
 
         it 'raises' do
-          expect{subject.autoconfig}.to raise_error(ArgumentError, /KUBE_CA.*base64/)
+          expect{subject.autoconfig}.to raise_error(K8s::Error::Configuration, /KUBE_CA.*base64/)
         end
       end
 
@@ -81,15 +81,25 @@ RSpec.describe K8s::Client do
 
       context 'KUBECONFIG contains a single path' do
         let(:kubeconfig_string) { '~/.kube/config' }
+        let(:expanded_kubeconfig_string) { File.expand_path(kubeconfig_string) }
+
+        before do
+          allow(File).to receive(:readable?).with(expanded_kubeconfig_string).and_return(true)
+        end
 
         it 'loads the file and returns a client' do
-          expect(File).to receive(:read).with(File.join(Dir.home, '.kube', 'config')).and_return(kubeconfig)
+          expect(File).to receive(:read).with(expanded_kubeconfig_string).and_return(kubeconfig)
           expect(subject.autoconfig).to be_a K8s::Client
         end
       end
 
       context 'KUBECONFIG contains a multiple paths' do
         let(:kubeconfig_string) { '~/.kube/config:~/.kube/config2' }
+
+        before do
+          allow(File).to receive(:readable?).with(%r{\.kube/config}).and_return(true)
+        end
+
         let(:kubeconfig2) do
           <<~EOB
             ---
@@ -125,7 +135,7 @@ RSpec.describe K8s::Client do
 
     context 'from default ~/.kube/config' do
       it 'loads the file' do
-        expect(File).to receive(:exist?).with(default_kubeconfig_path).and_return(true)
+        expect(File).to receive(:readable?).with(default_kubeconfig_path).and_return(true)
         expect(File).to receive(:read).with(default_kubeconfig_path).and_return(kubeconfig)
         expect(subject.autoconfig).to be_a K8s::Client
       end
@@ -133,13 +143,15 @@ RSpec.describe K8s::Client do
 
     context 'from in_cluster_config' do
       before do
-        allow(File).to receive(:exist?).with(default_kubeconfig_path).and_return(false)
-        stub_const("ENV", {})
+        allow(File).to receive(:readable?).and_return(false)
+        allow(File).to receive(:read).with('/var/run/secrets/kubernetes.io/serviceaccount/ca.crt').and_return(Base64.decode64(ca_b64))
+        allow(File).to receive(:read).with('/var/run/secrets/kubernetes.io/serviceaccount/token').and_return('ABCD')
+        stub_const("ENV", { 'KUBERNETES_SERVICE_PORT_HTTPS' => '1234', 'KUBERNETES_SERVICE_HOST' => 'localhost' })
       end
 
-      it 'resorts to in_cluster_config finally' do
-        expect(subject).to receive(:in_cluster_config)
-        subject.autoconfig
+      it 'uses in cluster configuration' do
+        expect(K8s::Config).to receive(:from_in_cluster_config).and_call_original
+        expect(subject.autoconfig).to be_a K8s::Client
       end
     end
   end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'k8s/util'
+
 module K8s
   # Similar to RecursiveOpenStruct / Hashie, a Hash with dot notation accessors.
   #

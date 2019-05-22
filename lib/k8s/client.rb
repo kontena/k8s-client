@@ -48,49 +48,23 @@ module K8s
     # @param namespace [String] default namespace for all operations
     # @param options [Hash] options passed to transport, @see Transport#in_cluster_config
     # @return [K8s::Client]
-    # @raise [K8s::Error::Config,Errno::ENOENT,Errno::EACCES]
+    # @raise [K8s::Error::Configuration,Errno::ENOENT,Errno::EACCES]
     def self.in_cluster_config(namespace: nil, **options)
       new(Transport.in_cluster_config(**options), namespace: namespace)
     end
 
-    # Attempts to create a K8s::Client instance automatically using environment variables, existing configuration
-    # files or in cluster configuration.
+    # Attempts to create a K8s::Client instance automatically using environment variables,
+    # existing configuration files or in cluster configuration.
     #
-    # Look-up order:
-    #   - KUBE_TOKEN, KUBE_CA, KUBE_SERVER environment variables
-    #   - KUBECONFIG environment variable
-    #   - $HOME/.kube/config file
-    #   - In cluster configuration
+    # @see K8s::Config#initialize
     #
     # Will raise when no means of configuration is available
-    #
-    # @param options [Hash] default namespace for all operations
-    # @raise [K8s::Error::Config,Errno::ENOENT,Errno::EACCES]
+    # @param namespace [String] default namespace for all operations
+    # @param options [Hash] transport overrides
+    # @raise [K8s::Error::Configuration,Errno::ENOENT,Errno::EACCES]
     # @return [K8s::Client]
     def self.autoconfig(namespace: nil, **options)
-      if ENV.values_at('KUBE_TOKEN', 'KUBE_CA', 'KUBE_SERVER').none? { |v| v.nil? || v.empty? }
-        unless Base64.decode64(ENV['KUBE_CA']).match?(/CERTIFICATE/)
-          raise ArgumentError, 'KUBE_CA does not seem to be base64 encoded'
-        end
-
-        begin
-          token = options[:auth_token] || Base64.strict_decode64(ENV['KUBE_TOKEN'])
-        rescue ArgumentError
-          raise ArgumentError, 'KUBE_TOKEN does not seem to be base64 encoded'
-        end
-
-        configuration = K8s::Config.build(server: ENV['KUBE_SERVER'], ca: ENV['KUBE_CA'], auth_token: token)
-      elsif !ENV['KUBECONFIG'].to_s.empty?
-        configuration = K8s::Config.from_kubeconfig_env(ENV['KUBECONFIG'])
-      elsif File.exist?(File.join(Dir.home, '.kube', 'config'))
-        configuration = K8s::Config.load_file(File.join(Dir.home, '.kube', 'config'))
-      end
-
-      if configuration
-        config(configuration, namespace: namespace, **options)
-      else
-        in_cluster_config(namespace: namespace, **options)
-      end
+      config(K8s::Config.autodiscovery, namespace: namespace, **options)
     end
 
     include MonitorMixin

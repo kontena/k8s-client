@@ -6,7 +6,7 @@ RSpec.describe K8s::Config do
       let(:server_cert) { OpenSSL::X509::Certificate.new(fixture('config/kubeadm-apiserver-cert.pem')) }
 
       subject {
-        described_class.load_file(fixture_path('config/kubeadm-admin.conf'))
+        described_class.from_file(fixture_path('config/kubeadm-admin.conf'))
       }
 
       it "loads the current context" do
@@ -42,19 +42,25 @@ RSpec.describe K8s::Config do
     end
   end
 
-  describe '#self.from_kubeconfig_env' do
+  describe '#self.from_kubeconfig' do
+    before { stub_const('ENV', { 'KUBECONFIG' => kubeconfig_path } ) }
+
     context 'KUBECONFIG points to a single file' do
+      let(:kubeconfig_path) { 'kubeconfig_path' }
+
       it 'reads the file' do
-        expect(File).to receive(:read).with(File.expand_path('kubeconfig_path')).and_return(YAML.dump('current_context' => 'foo'))
-        described_class.from_kubeconfig_env('kubeconfig_path')
+        expect(File).to receive(:read).with(File.expand_path(kubeconfig_path)).and_return(YAML.dump('current_context' => 'foo'))
+        described_class.from_kubeconfig
       end
     end
 
     context 'KUBECONFIG points to two files' do
+      let(:kubeconfig_path) { 'kubeconfig_path:kubeconfig2_path' }
+
       it 'reads all of the files' do
         expect(File).to receive(:read).with(File.expand_path('kubeconfig_path')).and_return(YAML.dump('current_context' => 'foo'))
         expect(File).to receive(:read).with(File.expand_path('kubeconfig2_path')).and_return(YAML.dump('current_context' => 'should not overwrite 1'))
-        expect(described_class.from_kubeconfig_env('kubeconfig_path:kubeconfig2_path').current_context).to eq 'foo'
+        expect(described_class.from_kubeconfig.current_context).to eq 'foo'
       end
     end
   end

@@ -124,7 +124,7 @@ module K8s
     #
     # @param options [Hash] see #new
     # @return [K8s::Transport]
-    # @raise [K8s::Error::Config] when the environment variables KUBERNETES_SEVICE_HOST and KUBERNETES_SERVICE_PORT_HTTPS are not set
+    # @raise [K8s::Error::Configuration] when the environment variables KUBERNETES_SEVICE_HOST and KUBERNETES_SERVICE_PORT_HTTPS are not set
     # @raise [Errno::ENOENT,Errno::EACCES] when /var/run/secrets/kubernetes.io/serviceaccount/ca.crt or /var/run/secrets/kubernetes.io/serviceaccount/token can not be read
     def self.in_cluster_config(**options)
       host = ENV['KUBERNETES_SERVICE_HOST'].to_s
