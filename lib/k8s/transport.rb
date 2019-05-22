@@ -91,7 +91,7 @@ module K8s
       new(server, **options, **overrides)
     end
 
-    # @param auth_provider [K8s::Config::UserAuthProvider]
+    # @param auth_provider [K8s::HashStruct,Hash]
     # @return [String]
     def self.token_from_auth_provider(auth_provider)
       auth_data = `#{auth_provider['cmd-path']} #{auth_provider['cmd-args']}`.strip
@@ -103,7 +103,7 @@ module K8s
       end
     end
 
-    # @param exec_conf [K8s::Config::UserExec]
+    # @param exec_conf [K8s::HashStruct]
     # @return [String]
     def self.token_from_exec(exec_conf)
       cmd = [exec_conf.command]
