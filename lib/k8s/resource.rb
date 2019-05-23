@@ -17,7 +17,7 @@ module K8s
     # @param data [String]
     # @return [self]
     def self.from_json(data)
-      new(Yajl::Parser.parse(data))
+      new(K8s::JSONParser.parse(data))
     end
 
     # @param filename [String] file path
@@ -84,7 +84,7 @@ module K8s
     # @param config_annotation [String]
     # @return [Hash]
     def merge_patch_ops(attrs, config_annotation)
-      Util.json_patch(current_config(config_annotation), stringify_hash(attrs))
+      Util.json_patch(current_config(config_annotation), Util.deep_transform_keys(attrs, :to_s))
     end
 
     # Gets the existing resources (on kube api) configuration, an empty hash if not present
@@ -95,7 +95,7 @@ module K8s
       current_cfg = metadata.annotations&.dig(config_annotation)
       return {} unless current_cfg
 
-      current_hash = Yajl::Parser.parse(current_cfg)
+      current_hash = K8s::JSONParser.parse(current_cfg)
       # kubectl adds empty metadata.namespace, let's fix it
       current_hash['metadata'].delete('namespace') if current_hash.dig('metadata', 'namespace').to_s.empty?
 
@@ -106,12 +106,6 @@ module K8s
     # @return [Boolean]
     def can_patch?(config_annotation)
       !!metadata.annotations&.dig(config_annotation)
-    end
-
-    # @param hash [Hash]
-    # @return [Hash]
-    def stringify_hash(hash)
-      Yajl::Parser.parse(JSON.dump(hash))
     end
   end
 end

@@ -2,10 +2,11 @@
 
 require 'openssl'
 require 'base64'
-require 'yajl'
+
 require 'monitor'
 require 'uri'
 
+require 'k8s/json_parser'
 require 'k8s/util'
 
 require 'k8s/api/metav1'

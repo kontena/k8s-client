@@ -36,6 +36,20 @@ And then load the code using:
 require 'k8s-client'
 ```
 
+To use the [yajl-ruby](https://github.com/brianmario/yajl-ruby) JSON parser backend, add `yalj-ruby` to your Gemfile:
+
+```ruby
+gem 'yajl-ruby'
+gem 'k8s-client'
+```
+
+And then load the code using:
+
+```ruby
+require 'k8s-client'
+require 'k8s/json_parser/yajl'
+```
+
 ## Usage
 
 ### Overview

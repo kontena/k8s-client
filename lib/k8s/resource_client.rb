@@ -227,10 +227,8 @@ module K8s
     def watch(labelSelector: nil, fieldSelector: nil, resourceVersion: nil, timeout: nil, namespace: @namespace)
       method = 'GET'
       path = path(namespace: namespace)
-      parser = Yajl::Parser.new
-      parser.on_parse_complete = lambda do |data|
-        event = K8s::API::MetaV1::WatchEvent.new(data)
-        yield event
+      parser = K8s::JSONParser.new do |data|
+        yield K8s::API::MetaV1::WatchEvent.new(data)
       end
       @transport.request(
         method: method,
