@@ -34,20 +34,30 @@ RSpec.describe K8s::JSONParser do
             result << item
           end
 
-          # Feed ten json examples in random chunks into the parser
+          # Feed the buffer with two complete jsons in one push, should yield two results.
+          parser << json * 2
+          expect(result.size).to eq 2
+          result.clear
+
+          # Feed ten json examples in random chunks into the parser, should still yield ten results
           10.times do |strlen|
             json.split('').each_slice(strlen + 1) do |slice|
               parser << slice.join
             end
           end
-          # Feed empty line and empty data into the parser for good measure
-          parser << "\n"
-          parser << ""
 
           expect(result.size).to eq 10
           result.each do |item|
             expect(item).to eq expected_result
           end
+
+          result.clear
+
+          # Feed an empty line and some empty data into the parser for good measure, should yield nothing
+          parser << "\n"
+          parser << "  "
+
+          expect(result).to be_empty
         end
       end
     end

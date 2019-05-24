@@ -16,12 +16,19 @@ module K8s
 
         # @param data [String] partial JSON content
         def <<(data)
-          @buffer << data
+          chunks = data.rpartition("\n")
+          tail = chunks.pop
+          @buffer << chunks.join
 
           if @buffer.include?("\n")
-            item, @buffer = @buffer.split("\n", 2)
-            @parser.call(item) unless item.match?(/^\s{0,}$/)
+            @buffer.each_line do |line|
+              @parser.call(line) unless line.strip.empty?
+            end
+
+            @buffer.clear
           end
+
+          @buffer << tail
         end
       end
 
