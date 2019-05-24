@@ -74,14 +74,15 @@ module K8s
       when Array
         value.map { |v| deep_transform_keys(v, transform_method, &block) }
       when Hash
-        value.transform_keys do |key|
-          if key.is_a?(String) || key.is_a?(Symbol)
-            transform_method ? key.send(transform_method) : block.call(key)
-          else
-            key
+        {}.tap do |result|
+          value.each do |key, value|
+            new_key = if key.is_a?(String) || key.is_a?(Symbol)
+                        transform_method ? key.send(transform_method) : block.call(key)
+                      else
+                        key
+                      end
+            result[new_key] = deep_transform_keys(value, transform_method, &block)
           end
-        end.transform_values do |inner_value|
-          deep_transform_keys(inner_value, transform_method, &block)
         end
       else
         value
