@@ -1,73 +1,73 @@
 RSpec.describe K8s::Util do
-  describe K8s::Util::HashDeepMerge do
-    using K8s::Util::HashDeepMerge
+  describe "#deep_merge" do
+    let(:hash1) { { 'foo' => { 'bar' => { 'baz' => 'dog' } } } }
+    let(:hash2) { { 'foo' => { 'bar' => { 'buzz' => 'aldrin' } } } }
+    let(:options) { {} }
+
+    subject { described_class.deep_merge(hash1, hash2, **options) }
 
     it 'deep merges hashes inside hashes' do
-      expect(
-        { 'foo' => { 'bar' => { 'baz' => 'dog' } } }.deep_merge(
-        { 'foo' => { 'bar' => { 'buzz' => 'aldrin' } } }
-        )
-      ).to eq(
+      expect(subject).to eq(
         { 'foo' => { 'bar' => { 'baz' => 'dog', 'buzz' => 'aldrin' } } }
       )
     end
 
     describe 'overwrite_arrays: true' do
+      let(:hash1) { { 'foo' => { 'bar' => [ 'baz' ] } } }
+      let(:hash2) { { 'foo' => { 'bar' => [ 'dog' ] } } }
+      let(:options) { { overwrite_arrays: true } }
+
       it 'replaces arrays with new arrays' do
-        expect(
-          { 'foo' => { 'bar' => [ 'baz' ] } }.deep_merge(
-          { 'foo' => { 'bar' => [ 'dog' ] } }, overwrite_arrays: true
-          )
-        ).to eq(
+        expect(subject).to eq(
           { 'foo' => { 'bar' => [ 'dog' ] } }
         )
       end
     end
 
     describe 'overwrite_arrays: false, union_arrays: true' do
+      let(:hash1) { { 'foo' => { 'bar' => [ 'baz', 'cat' ] } } }
+      let(:hash2) { { 'foo' => { 'bar' => [ 'dog', 'baz' ] } } }
+      let(:options) { { overwrite_arrays: false, union_arrays: true } }
+
       it 'creates array union with new array' do
-        expect(
-          { 'foo' => { 'bar' => [ 'baz', 'cat' ] } }.deep_merge(
-          { 'foo' => { 'bar' => [ 'dog', 'baz' ] } }, overwrite_arrays: false, union_arrays: true
-          )
-        ).to eq(
+        expect(subject).to eq (
           { 'foo' => { 'bar' => [ 'baz', 'cat', 'dog' ] } }
         )
       end
     end
 
     describe 'overwrite_arrays: false, union_arrays: false' do
+      let(:hash1) { { 'foo' => { 'bar' => [ 'baz' ] } } }
+      let(:hash2) { { 'foo' => { 'bar' => [ 'dog', 'baz' ] } } }
+      let(:options) { { overwrite_arrays: false, union_arrays: false } }
+
       it 'combines arrays' do
-        expect(
-          { 'foo' => { 'bar' => [ 'baz' ] } }.deep_merge(
-          { 'foo' => { 'bar' => [ 'dog', 'baz' ] } }, overwrite_arrays: false, union_arrays: false
-          )
-        ).to eq(
+        expect(subject).to eq(
           { 'foo' => { 'bar' => [ 'baz', 'dog', 'baz' ] } }
         )
       end
     end
 
     describe 'keep_existing:' do
+      let(:hash1) { { 'foo' => { 'bar' => 'baz' } } }
+      let(:hash2) { { 'foo' => { 'bar' => 'dog' } } }
+      let(:options) { { keep_existing: keep_existing } }
+
       context 'true' do
+        let(:keep_existing) { true }
+
         it 'keeps existing values' do
-          expect(
-            { 'foo' => { 'bar' => 'baz' } }.deep_merge(
-            { 'foo' => { 'bar' => 'dog' } }, keep_existing: true
-            )
-          ).to eq(
+          expect(subject).to eq(
             { 'foo' => { 'bar' => 'baz' } }
           )
         end
       end
 
       context 'false' do
+        let(:keep_existing) { false }
+
         it 'replaces existing values' do
-          expect(
-            { 'foo' => { 'bar' => 'baz' } }.deep_merge(
-            { 'foo' => { 'bar' => 'dog' } }, keep_existing: false
-            )
-          ).to eq(
+          expect(subject).to eq(
             { 'foo' => { 'bar' => 'dog' } }
           )
         end
@@ -75,25 +75,25 @@ RSpec.describe K8s::Util do
     end
 
     describe 'merge_nil_values' do
+      let(:hash1) { { 'foo' => { 'bar' => 'baz' } } }
+      let(:hash2) { { 'foo' => { 'bar' => nil } } }
+      let(:options) { { merge_nil_values: merge_nil_values } }
+
       context 'false' do
+        let(:merge_nil_values) { false }
+
         it 'does not replace existing values with nils' do
-          expect(
-            { 'foo' => { 'bar' => 'baz' } }.deep_merge(
-            { 'foo' => { 'bar' => nil } }, merge_nil_values: false
-            )
-          ).to eq(
+          expect(subject).to eq(
             { 'foo' => { 'bar' => 'baz' } }
           )
         end
       end
 
       context 'true' do
+        let(:merge_nil_values) { true }
+
         it 'replaces existing values with nils' do
-          expect(
-            { 'foo' => { 'bar' => 'baz' } }.deep_merge(
-            { 'foo' => { 'bar' => nil } }, merge_nil_values: true
-            )
-          ).to eq(
+          expect(subject).to eq(
             { 'foo' => { 'bar' => nil } }
           )
         end
