@@ -4,13 +4,11 @@ require 'recursive-open-struct'
 require 'hashdiff'
 require 'forwardable'
 require 'yaml/safe_load_stream'
+require 'k8s/hash_struct'
 
 module K8s
   # generic untyped resource
-  class Resource < RecursiveOpenStruct
-    extend Forwardable
-    include Comparable
-
+  class Resource < HashStruct
     using YAMLSafeLoadStream
     using K8s::Util::HashDeepMerge
 
@@ -39,26 +37,8 @@ module K8s
       end
     end
 
-    # @param hash [Hash]
-    # @param recurse_over_arrays [Boolean]
-    # @param options [Hash] see RecursiveOpenStruct#initialize
-    def initialize(hash, recurse_over_arrays: true, **options)
-      super(hash,
-        recurse_over_arrays: recurse_over_arrays,
-        **options
-      )
-    end
-
-    # @param options [Hash] see Hash#to_json
-    # @return [String]
-    def to_json(**options)
-      to_hash.to_json(**options)
-    end
-
-    # @param other [K8s::Resource]
-    # @return [Boolean]
-    def <=>(other)
-      to_hash <=> other.to_hash
+    def __value(hash)
+      self.class.new(merge(hash))
     end
 
     # merge in fields
@@ -66,13 +46,7 @@ module K8s
     # @param attrs [Hash, K8s::Resource]
     # @return [K8s::Resource]
     def merge(attrs)
-      # deep clone of attrs
-      h = to_hash
-
-      # merge in-place
-      h.deep_merge!(attrs.to_hash, overwrite_arrays: true, merge_nil_values: true)
-
-      self.class.new(h)
+      self.deep_merge!(attrs, overwrite_arrays: true, merge_nil_values: true)
     end
 
     # @return [String]

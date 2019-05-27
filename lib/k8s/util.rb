@@ -14,7 +14,7 @@ module K8s
         def deep_merge(other, overwrite_arrays: true, union_arrays: false, keep_existing: false, merge_nil_values: false, merge_non_hash: false)
           merge(other) do |key, old_value, new_value|
             case old_value
-            when Hash
+            when Hash, K8s::Resource
               raise "#{key} : #{new_value.class.name} can not be merged into a Hash" unless new_value.is_a?(Hash)
 
               old_value.deep_merge(
