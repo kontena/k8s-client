@@ -16,7 +16,7 @@ module K8s
       raise ArgumentError, "input expected to be Hash, was #{input.class.name}" unless input.is_a?(Hash)
       raise ArgumentError, "other expected to be Hash, was #{other.class.name}" unless other.is_a?(Hash)
 
-      input.merge(other) do |key, old_value, new_value|
+      input.send(input.respond_to?(:original_merge) ? :original_merge : :merge, other) do |key, old_value, new_value|
         case old_value
         when Hash
           raise "#{key} : #{new_value.class.name} can not be merged into a Hash" unless new_value.is_a?(Hash)

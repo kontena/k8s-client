@@ -1,30 +1,18 @@
 # frozen_string_literal: true
 
-require 'dry-types'
-require 'dry-struct'
+require 'k8s/hash_struct'
 
 module K8s
   # Kube API definitions
   module API
-    # Common Dry::Types used in the API
-    module Types
-      include Dry::Types.module
-    end
 
     # Common API struct type, handling JSON transforms with symbol keys
-    class Struct < Dry::Struct
-      # input from JSON with string keys
-      transform_keys(&:to_sym)
+    class Struct < K8s::HashStruct
 
       # @param data [Hash]
       # @return [self]
       def self.from_json(data)
         new(Yajl::Parser.parse(data))
-      end
-
-      # @return [String]
-      def to_json(*_args)
-        to_hash.to_json
       end
     end
   end

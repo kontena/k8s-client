@@ -24,13 +24,13 @@ module K8s
 
     def self.defaults
       {
-        'apiVersion' => 'v1',
-        'clusters' => [],
-        'contexts' => [],
-        'current-context' => nil,
-        'kind' => 'Config',
-        'preferences' => {},
-        'users' => []
+        :apiVersion => 'v1',
+        :clusters=> [],
+        :contexts => [],
+        :current_context => nil,
+        :kind => 'Config',
+        :preferences => {},
+        :users => []
       }
     end
 
@@ -111,27 +111,26 @@ module K8s
     def merge!(other)
       other.each do |key, value|
         case key
-        when 'clusters', 'contexts', 'users'
+        when :clusters, :contexts, :users
           value.each do |other_value|
-            next if self[key].find { |c| c['name'] == other_value['name'] }
+            next if self[key].find { |c| c[:name] == other_value[:name] }
 
             self[key] << other_value
           end
-        when 'current-context', 'preferences'
-          self[key] = value
         else
-          case old_value
-          when Array
-            (old_value + new_value).uniq
-          when Hash
-            old_value.merge(new_value) do |_key, inner_old_value, inner_new_value|
-              inner_old_value.nil? ? inner_new_value : inner_old_value
-            end
-          when NilClass
-            new_value
-          else
-            old_value
-          end
+          old_value = self[key]
+          self[key] = case value
+                      when Array
+                        (old_value + new_value).uniq
+                      when Hash
+                        (old_value || HashStruct.new).merge(new_value || {}) do |_key, inner_old_value, inner_new_value|
+                          inner_old_value.nil? ? inner_new_value : inner_old_value
+                        end
+                      when NilClass
+                        old_value
+                      else
+                        old_value.nil? ? value : old_value
+                      end
         end
       end
 
@@ -146,6 +145,8 @@ module K8s
     end
     alias clone dup
 
+    alias original_merge merge
+
     # Performs a merge and returns a new instance
     # @param other_config [Pharos::Kube::Config]
     # @return [Pharos::Kube::Config]
@@ -158,9 +159,9 @@ module K8s
     # @raise [K8s::Error::Configuration]
     # @return [K8s::Config::Context]
     def context(name = current_context)
-      return nil if name.nil? || !key?('contexts')
+      return nil if name.nil? || !key?(:contexts)
 
-      found = self['contexts'].find { |context| context['name'] == name }
+      found = contexts.find { |context| context.name == name }
       raise K8s::Error::Configuration, "context not found: #{name.inspect}" unless found
 
       found.context
@@ -169,9 +170,9 @@ module K8s
     # @param name [String]
     # @return [K8s::Config::Cluster]
     def cluster(name = context&.cluster)
-      return nil if name.nil? || !key?('clusters')
+      return nil if name.nil? || !key?(:clusters)
 
-      found = self['clusters'].find { |cluster| cluster.name == name }
+      found = clusters.find { |cluster| cluster.name == name }
       raise K8s::Error::Configuration, "cluster not found: #{name.inspect}" unless found
 
       found.cluster
@@ -180,9 +181,9 @@ module K8s
     # @param name [String]
     # @return [K8s::Config::User]
     def user(name = context&.user)
-      return nil if name.nil? || !key?('users')
+      return nil if name.nil? || !key?(:users)
 
-      found = self['users'].find { |user| user.name == name }
+      found = users.find { |user| user.name == name }
       raise K8s::Error::Configuration, "user not found: #{name.inspect}" unless found
 
       found.user

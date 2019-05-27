@@ -5,15 +5,15 @@ module K8s
     module MetaV1
       # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#ListMeta
       class ListMeta < Struct
-        attribute :selfLink, Types::Strict::String.optional.default(nil)
-        attribute :resourceVersion, Types::Strict::String.optional.default(nil)
-        attribute :continue, Types::Strict::String.optional.default(nil)
+        attribute :selfLink, K8s::Type::String
+        attribute :resourceVersion, K8s::Type::String
+        attribute :continue, K8s::Type::String
       end
 
       # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#List
       class List < Resource
         attribute :metadata, ListMeta
-        attribute :items, Types::Strict::Array # untyped
+        attribute :items, K8s::Type::Array
       end
     end
   end

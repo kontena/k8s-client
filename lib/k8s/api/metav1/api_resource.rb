@@ -5,21 +5,21 @@ module K8s
     module MetaV1
       # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#APIResource
       class APIResource < Struct
-        attribute :name, Types::Strict::String
-        attribute :singularName, Types::Strict::String
-        attribute :namespaced, Types::Strict::Bool
-        attribute :group, Types::Strict::String.optional.default(nil)
-        attribute :version, Types::Strict::String.optional.default(nil)
-        attribute :kind, Types::Strict::String
-        attribute :verbs, Types::Strict::Array.of(Types::Strict::String)
-        attribute :shortNames, Types::Strict::Array.of(Types::Strict::String).optional.default(proc { [] })
-        attribute :categories, Types::Strict::Array.of(Types::Strict::String).optional.default(proc { [] })
+        attribute :name, K8s::Type::String
+        attribute :singularName, K8s::Type::String
+        attribute :namespaced, K8s::Type::Bool
+        attribute :group, K8s::Type::String
+        attribute :version, K8s::Type::String
+        attribute :kind, K8s::Type::String
+        attribute :verbs, K8s::Type::Array.of(K8s::Type::String), default: proc { [] }
+        attribute :shortNames, K8s::Type::Array.of(K8s::Type::String), default: proc { [] }
+        attribute :categories, K8s::Type::Array.of(K8s::Type::String), default: proc { [] }
       end
 
       # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#APIResourceList
       class APIResourceList < Resource
-        attribute :groupVersion, Types::Strict::String
-        attribute :resources, Types::Strict::Array.of(APIResource)
+        attribute :groupVersion, K8s::Type::String
+        attribute :resources, K8s::Type::Array.of(APIResource)
       end
     end
   end

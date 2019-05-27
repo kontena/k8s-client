@@ -7,8 +7,8 @@ module K8s
     module MetaV1
       # @see https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#WatchEvent
       class WatchEvent < Resource
-        attribute :type, Types::Strict::String
-        attribute :object, Types::Strict::Hash
+        attribute :type, K8s::Type::String
+        attribute :object, K8s::Type::Hash
 
         # @return [K8s::Resource]
         def resource

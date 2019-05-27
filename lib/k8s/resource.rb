@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'recursive-open-struct'
 require 'hashdiff'
 require 'forwardable'
 require 'yaml/safe_load_stream'
@@ -40,6 +39,8 @@ module K8s
       self.class.new(merge(hash))
     end
 
+    alias original_merge merge
+
     # merge in fields
     #
     # @param attrs [Hash, K8s::Resource]
@@ -67,7 +68,7 @@ module K8s
     # @param config_annotation [String]
     # @return [Hash]
     def current_config(config_annotation)
-      current_cfg = metadata.annotations&.dig(config_annotation)
+      current_cfg = metadata.annotations&.dig(config_annotation.to_sym)
       return {} unless current_cfg
 
       current_hash = Yajl::Parser.parse(current_cfg)
@@ -80,7 +81,7 @@ module K8s
     # @param config_annotation [String]
     # @return [Boolean]
     def can_patch?(config_annotation)
-      !!metadata.annotations&.dig(config_annotation)
+      !!metadata.annotations&.dig(config_annotation.to_sym)
     end
 
     # @param hash [Hash]

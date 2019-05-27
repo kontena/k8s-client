@@ -478,7 +478,7 @@ RSpec.describe K8s::Transport do
 
         expect(list).to be_a K8s::API::MetaV1::List
         expect(list.items).to match [
-          hash_including('metadata' => hash_including('name' => 'ubuntu-xenial')),
+          hash_including(:metadata => hash_including(:name => 'ubuntu-xenial')),
         ]
       end
     end
