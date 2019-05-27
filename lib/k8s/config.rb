@@ -120,7 +120,18 @@ module K8s
         when 'current-context', 'preferences'
           self[key] = value
         else
-          self[key] ||= value
+          case old_value
+          when Array
+            (old_value + new_value).uniq
+          when Hash
+            old_value.merge(new_value) do |_key, inner_old_value, inner_new_value|
+              inner_old_value.nil? ? inner_new_value : inner_old_value
+            end
+          when NilClass
+            new_value
+          else
+            old_value
+          end
         end
       end
 

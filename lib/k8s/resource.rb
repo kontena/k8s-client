@@ -10,7 +10,6 @@ module K8s
   # generic untyped resource
   class Resource < HashStruct
     using YAMLSafeLoadStream
-    using K8s::Util::HashDeepMerge
 
     # @param data [String]
     # @return [self]
@@ -46,7 +45,9 @@ module K8s
     # @param attrs [Hash, K8s::Resource]
     # @return [K8s::Resource]
     def merge(attrs)
-      self.deep_merge!(attrs, overwrite_arrays: true, merge_nil_values: true)
+      self.class.new(
+        Util.deep_merge(self, attrs, overwrite_arrays: true, merge_nil_values: true)
+      )
     end
 
     # @return [String]
