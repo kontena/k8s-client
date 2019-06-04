@@ -231,7 +231,7 @@ module K8s
     def parse_response(response, request_options, response_class: nil)
       method = request_options[:method]
       path = request_options[:path]
-      content_type, = response.headers['Content-Type'].split(';')
+      content_type = response.headers['Content-Type']&.split(';', 2)&.first
 
       case content_type
       when 'application/json'
@@ -240,7 +240,7 @@ module K8s
       when 'text/plain'
         response_data = response.body # XXX: broken if status 2xx
       else
-        raise K8s::Error::API.new(method, path, response.status, "Invalid response Content-Type: #{response.headers['Content-Type']}")
+        raise K8s::Error::API.new(method, path, response.status, "Invalid response Content-Type: #{response.headers['Content-Type'].inspect}")
       end
 
       if response.status.between? 200, 299
