@@ -352,7 +352,7 @@ module K8s
 
     # @return [Boolean] true if delete options should be sent as bode of the DELETE request
     def need_delete_body?
-      @need_delete_body ||= Gem::Version.new(version.gitVersion.match(/v*(.*)/)[1]) < DELETE_OPTS_BODY_VERSION_MIN
+      @need_delete_body ||= Gem::Version.new(version.gitVersion.match(/^v*((\d|\.)*)/)[1]) < DELETE_OPTS_BODY_VERSION_MIN
     end
 
     # @param path [Array<String>] @see #path
