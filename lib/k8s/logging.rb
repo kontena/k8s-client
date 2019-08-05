@@ -9,7 +9,7 @@ module K8s
   # Instances can optionally also use logger! to define a per-instance Logger using a custom prefix.
   module Logging
     # Default log target
-    LOG_TARGET = STDERR
+    LOG_TARGET = $stderr
 
     # Default log level: show warnings.
     #

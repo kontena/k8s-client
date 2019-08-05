@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
   spec.required_ruby_version = '~> 2.4'
 
-  spec.add_runtime_dependency "excon", "~> 0.62.0"
+  spec.add_runtime_dependency "excon", "~> 0.64.0"
   spec.add_runtime_dependency 'hashdiff', '~> 0.3.7'
   spec.add_runtime_dependency 'jsonpath', '~> 0.9.5'
   spec.add_runtime_dependency 'yajl-ruby', '~> 1.4.0'

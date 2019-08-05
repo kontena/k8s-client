@@ -675,4 +675,31 @@ RSpec.describe K8s::Transport do
       end
     end
   end
+
+  describe '#need_delete_body?' do
+    it 'returns true if older than 1.11' do
+      allow(subject).to receive(:version).and_return(double(:version, gitVersion: '1.10.4'))
+      expect(subject.need_delete_body?).to be_truthy
+    end
+
+    it 'returns false if 1.11.0' do
+      allow(subject).to receive(:version).and_return(double(:version, gitVersion: '1.11.0'))
+      expect(subject.need_delete_body?).to be_falsey
+    end
+
+    it 'returns false newer than 1.11.0' do
+      allow(subject).to receive(:version).and_return(double(:version, gitVersion: '1.11.1'))
+      expect(subject.need_delete_body?).to be_falsey
+    end
+
+    it 'handles semver build metadata' do
+      allow(subject).to receive(:version).and_return(double(:version, gitVersion: '1.10.1+asdasd'))
+      expect(subject.need_delete_body?).to be_truthy
+    end
+
+    it 'handles semver pre-release' do
+      allow(subject).to receive(:version).and_return(double(:version, gitVersion: '1.10.1-rc.1'))
+      expect(subject.need_delete_body?).to be_truthy
+    end
+  end
 end
