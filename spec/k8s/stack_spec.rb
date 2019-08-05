@@ -64,11 +64,10 @@ RSpec.describe K8s::Stack do
       }
 
       before do
-        returned_resources = resources.dup
-        returned_resources[-1] = nil
-        returned_resources = returned_resources.map { |r| subject.prepare_resource(r) unless r.nil? }
+        returned_resources = resources[0..-2].map(&:dup)
+        returned_resources.each { |r| subject.prepare_resource(r) }
         allow(client).to receive(:get_resources).with([K8s::Resource, K8s::Resource, K8s::Resource]).and_return(returned_resources)
-        allow(client).to receive(:list_resources).with(labelSelector: { 'k8s.kontena.io/stack' => 'whoami' }, skip_forbidden: true).and_return(returned_resources)
+        allow(client).to receive(:list_resources).with(labelSelector: { :'k8s.kontena.io/stack' => 'whoami' }, skip_forbidden: true).and_return(returned_resources)
       end
 
       it "creates the missing resource" do
@@ -91,7 +90,6 @@ RSpec.describe K8s::Stack do
         returned_resources = returned_resources.map { |r| subject.prepare_resource(r) unless r.nil? }
         allow(client).to receive(:get_resources).with([K8s::Resource, K8s::Resource]).and_return(returned_resources)
         allow(client).to receive(:list_resources).with(labelSelector: { 'k8s.kontena.io/stack' => 'whoami' }, skip_forbidden: true).and_return(returned_resources + [extra_resource])
-
       end
 
       it "deletes the extra resource" do

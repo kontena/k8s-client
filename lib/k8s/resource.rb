@@ -35,10 +35,6 @@ module K8s
       end
     end
 
-    def __value(hash)
-      self.class.new(merge(hash))
-    end
-
     alias original_merge merge
 
     # merge in fields

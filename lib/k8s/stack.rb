@@ -11,10 +11,10 @@ module K8s
     LABEL = 'k8s.kontena.io/stack'
 
     # Annotation used to identify resource versions
-    CHECKSUM_ANNOTATION = 'k8s.kontena.io/stack-checksum'
+    CHECKSUM_ANNOTATION = :'k8s.kontena.io/stack-checksum'
 
     # Annotation used to identify last applied configuration
-    LAST_CONFIG_ANNOTATION = 'kubectl.kubernetes.io/last-applied-configuration'
+    LAST_CONFIG_ANNOTATION = :'kubectl.kubernetes.io/last-applied-configuration'
 
     # List of apiVersion:kind combinations to skip for stack prune
     # These would lead to stack prune misbehaving if not skipped.
@@ -101,7 +101,7 @@ module K8s
         if !server_resource
           logger.info "Create resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource.checksum}"
           keep_resource! client.create_resource(prepare_resource(resource))
-        elsif server_resource.metadata.annotations&.dig(@checksum_annotation.to_sym) != resource.checksum
+        elsif server_resource.metadata.dig(:annotations, @checksum_annotation) != resource.checksum
           logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource.checksum}"
           r = prepare_resource(resource)
           if server_resource.can_patch?(@last_config_annotation)
@@ -111,7 +111,7 @@ module K8s
             keep_resource! client.update_resource(server_resource.merge(prepare_resource(resource)))
           end
         else
-          logger.info "Keep resource #{server_resource.apiVersion}:#{server_resource.kind}/#{server_resource.metadata.name} in namespace #{server_resource.metadata.namespace} with checksum=#{server_resource.metadata.annotations&.dig(@checksum_annotation)}"
+          logger.info "Keep resource #{server_resource.apiVersion}:#{server_resource.kind}/#{server_resource.metadata.name} in namespace #{server_resource.metadata.namespace} with checksum=#{server_resource.metadata.dig(:annotations, @checksum_annotation)}"
           keep_resource! server_resource
         end
       end
@@ -123,13 +123,13 @@ module K8s
     # @param resource [K8s::Resource]
     # @return [K8s::Resource]
     def keep_resource!(resource)
-      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] = resource.metadata.annotations&.dig(@checksum_annotation)
+      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] = resource.metadata.dig(:annotations, @checksum_annotation)
     end
 
     # @param resource [K8s::Resource]
     # @return [Boolean]
     def keep_resource?(resource)
-      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] == resource.metadata.annotations&.dig(@checksum_annotation)
+      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] == resource.metadata.dig(:annotations, @checksum_annotation)
     end
 
     # Delete all stack resources that were not applied
@@ -150,12 +150,12 @@ module K8s
       end.each do |resource|
         next if PRUNE_IGNORE.include? "#{resource.apiVersion}:#{resource.kind}"
 
-        resource_label = resource.metadata.labels&.dig(@label)
-        resource_checksum = resource.metadata.annotations&.dig(@checksum_annotation)
+        resource_label = resource.metadata.dig(:labels, @label)
+        resource_checksum = resource.metadata.dig(:annotations, @checksum_annotation)
 
         logger.debug { "List resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource_checksum}" }
 
-        if resource_label != name
+        if resource_label.to_s != name
           # apiserver did not respect labelSelector
         elsif keep_resources && keep_resource?(resource)
           # resource is up-to-date

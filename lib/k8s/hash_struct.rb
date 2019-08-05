@@ -33,6 +33,10 @@ module K8s
       end
     end
 
+    def __value(hash = nil)
+      self.class.new(hash)
+    end
+
     def self.attribute(name, type, default: nil)
       attributes[name.to_sym] = type.new(default)
     end
@@ -49,9 +53,9 @@ module K8s
         send(:[]=, key, type.__value)
       end
 
-      hash.each do |key, value|
+      hash&.each do |key, value|
         send(:[]=, key.to_sym, value)
-      end if hash
+      end
     end
 
     def []=(key, value)
@@ -78,6 +82,18 @@ module K8s
     # Removes empty and nil children
     def recursive_compact!
       K8s::Util.recursive_compact(self)
+    end
+
+    def encode_with(coder)
+      coder.represent_map nil, to_h
+    end
+
+    def to_h
+      Yajl::Parser.parse(JSON.dump(self))
+    end
+
+    def dig(*args)
+      super(*args.map { |a| a.is_a?(String) ? a.to_sym : a })
     end
   end
 end
