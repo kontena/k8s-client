@@ -437,7 +437,7 @@ RSpec.describe K8s::Transport do
 
     describe '#get' do
       it "returns the test JSON" do
-        expect(subject.get('/test')).to eq({'test' => true})
+        expect(subject.get('/test')).to eq(K8s::Resource.new('test' => true))
       end
 
     end
@@ -473,10 +473,10 @@ RSpec.describe K8s::Transport do
     describe '#get response_class:' do
       it "returns the list" do
         list = subject.get('/api/v1/nodes',
-          response_class: K8s::API::MetaV1::List,
+          response_class: RecursiveOpenStruct,
         )
 
-        expect(list).to be_a K8s::API::MetaV1::List
+        expect(list).to be_a RecursiveOpenStruct
         expect(list.items).to match [
           hash_including('metadata' => hash_including('name' => 'ubuntu-xenial')),
         ]
@@ -557,9 +557,9 @@ RSpec.describe K8s::Transport do
         expect(subject).to receive(:requests).once.and_call_original
         expect(subject).to receive(:request).once.with(hash_including(path: '/apis/metrics.k8s.io/v1beta1/nodes')).and_call_original
 
-        result = subject.gets('/apis/metrics.k8s.io/v1beta1/nodes', '/apis/metrics.k8s.io/v1beta1/pods', response_class: K8s::API::MetaV1::List)
+        result = subject.gets('/apis/metrics.k8s.io/v1beta1/nodes', '/apis/metrics.k8s.io/v1beta1/pods')
 
-        expect(result).to match [K8s::API::MetaV1::List, K8s::API::MetaV1::List]
+        expect(result).to match [K8s::Resource, K8s::Resource]
       end
     end
   end
@@ -588,7 +588,7 @@ RSpec.describe K8s::Transport do
           skip_missing: true,
         )
 
-        expect(result).to match [Hash, nil]
+        expect(result).to match [K8s::Resource, nil]
       end
     end
 
@@ -644,7 +644,7 @@ RSpec.describe K8s::Transport do
           skip_forbidden: true,
         )
 
-        expect(result).to match [Hash, nil]
+        expect(result).to match [K8s::Resource, nil]
       end
     end
 

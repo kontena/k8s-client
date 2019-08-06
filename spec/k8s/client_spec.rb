@@ -222,7 +222,7 @@ RSpec.describe K8s::Client do
       end
 
       it "caches api_resources" do
-        expect(transport).to receive(:get).with('/api/v1', Hash).once.and_call_original
+        expect(transport).to receive(:get).with('/api/v1').once.and_call_original
 
         3.times do
           expect(subject.api.api_resources.map{|r| r.name }).to include 'nodes', 'pods', 'services'
@@ -412,8 +412,7 @@ RSpec.describe K8s::Client do
           it "prefetches API resources and pipelines the requests" do
             expect(transport).to receive(:requests).once.with(
               hash_including(path: '/api/v1'),
-              skip_missing: true,
-              response_class: anything,
+              skip_missing: true
             ).and_call_original
             expect(transport).to receive(:requests).once.with(
               hash_including(path: '/api/v1/namespaces/default/services/foo'),
@@ -513,7 +512,7 @@ RSpec.describe K8s::Client do
                 kind: 'ServiceList',
                 metadata: {},
                 items: [service_resource],
-              }.to_json,
+              }.to_json
             )
           stub_request(:get, 'localhost:8080/api/v1/configmaps')
             .to_return(
@@ -531,7 +530,7 @@ RSpec.describe K8s::Client do
         it "returns existing resources" do
           expect(subject.list_resources([
             subject.api('v1').resource('services'),
-            subject.api('v1').resource('configmaps'),
+            subject.api('v1').resource('configmaps')
           ])).to eq [service_resource]
         end
       end

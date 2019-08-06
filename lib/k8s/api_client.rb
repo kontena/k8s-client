@@ -43,8 +43,7 @@ module K8s
     #
     # @return [Array<K8s::API::MetaV1::APIResource>]
     def api_resources!
-      @api_resources = @transport.get(path,
-                                      response_class: K8s::API::MetaV1::APIResourceList).resources
+      @api_resources = @transport.get(path).resources
     end
 
     # Cached APIResources

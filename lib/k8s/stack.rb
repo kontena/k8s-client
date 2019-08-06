@@ -101,7 +101,7 @@ module K8s
         if !server_resource
           logger.info "Create resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource.checksum}"
           keep_resource! client.create_resource(prepare_resource(resource))
-        elsif server_resource.metadata.annotations&.dig(@checksum_annotation) != resource.checksum
+        elsif server_resource.metadata&.annotations&.dig(@checksum_annotation) != resource.checksum
           logger.info "Update resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource.checksum}"
           r = prepare_resource(resource)
           if server_resource.can_patch?(@last_config_annotation)
@@ -123,13 +123,13 @@ module K8s
     # @param resource [K8s::Resource]
     # @return [K8s::Resource]
     def keep_resource!(resource)
-      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] = resource.metadata.annotations[@checksum_annotation]
+      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] = resource.metadata&.annotations.dig(@checksum_annotation)
     end
 
     # @param resource [K8s::Resource]
     # @return [Boolean]
     def keep_resource?(resource)
-      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] == resource.metadata.annotations[@checksum_annotation]
+      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] == resource.metadata&.annotations&.dig(@checksum_annotation)
     end
 
     # Delete all stack resources that were not applied
@@ -150,10 +150,11 @@ module K8s
       end.each do |resource|
         next if PRUNE_IGNORE.include? "#{resource.apiVersion}:#{resource.kind}"
 
-        resource_label = resource.metadata.labels ? resource.metadata.labels[@label] : nil
-        resource_checksum = resource.metadata.annotations ? resource.metadata.annotations[@checksum_annotation] : nil
+        resource_label = resource.metadata&.labels&.dig(@label)
+        resource_checksum = resource.metadata&.annotations&.dig(@checksum_annotation)
 
         logger.debug { "List resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource_checksum}" }
+
 
         if resource_label != name
           # apiserver did not respect labelSelector

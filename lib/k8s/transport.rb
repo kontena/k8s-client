@@ -94,9 +94,9 @@ module K8s
     # @param auth_provider [K8s::Config::UserAuthProvider]
     # @return [String]
     def self.token_from_auth_provider(auth_provider)
-      auth_data = `#{auth_provider['cmd-path']} #{auth_provider['cmd-args']}`.strip
-      if auth_provider['token-key']
-        json_path = JsonPath.new(auth_provider['token-key'][1...-1])
+      auth_data = `#{auth_provider.cmd_path} #{auth_provider.cmd_args}`.strip
+      if auth_provider.token_key
+        json_path = JsonPath.new(auth_provider.token_key[1...-1])
         json_path.first(auth_data)
       else
         auth_data
@@ -228,7 +228,7 @@ module K8s
     # @raise [K8s::Error]
     # @raise [Excon::Error] TODO: wrap
     # @return [response_class, Hash]
-    def parse_response(response, request_options, response_class: nil)
+    def parse_response(response, request_options, response_class: K8s::Resource)
       method = request_options[:method]
       path = request_options[:path]
       content_type = response.headers['Content-Type']&.split(';', 2)&.first
@@ -250,14 +250,12 @@ module K8s
           raise K8s::Error::API.new(method, path, response.status, "Invalid JSON response: #{response_data.inspect}")
         end
 
-        return response_data unless response_class
-
         response_class.new(response_data)
       else
         error_class = K8s::Error::HTTP_STATUS_ERRORS[response.status] || K8s::Error::API
 
         if response_data.is_a?(Hash) && response_data['kind'] == 'Status'
-          status = K8s::API::MetaV1::Status.new(response_data)
+          status = K8s::Resource.new(response_data)
 
           raise error_class.new(method, path, response.status, response.reason_phrase, status)
         elsif response_data
@@ -271,7 +269,7 @@ module K8s
     # @param response_class [Class] coerce into response class using #new
     # @param options [Hash] @see Excon#request
     # @return [response_class, Hash]
-    def request(response_class: nil, **options)
+    def request(response_class: K8s::Resource, **options)
       if options[:method] == 'DELETE' && need_delete_body?
         options[:request_object] = options.delete(:query)
       end
@@ -312,7 +310,7 @@ module K8s
       t = Time.now - start
 
       objects = responses.zip(options).map{ |response, request_options|
-        response_class = request_options[:response_class] || common_options[:response_class]
+        response_class = request_options[:response_class] || common_options[:response_class] || K8s::Resource
 
         begin
           parse_response(response, request_options,
@@ -344,10 +342,7 @@ module K8s
 
     # @return [K8s::API::Version]
     def version
-      @version ||= get(
-        '/version',
-        response_class: K8s::API::Version
-      )
+      @version ||= get('/version')
     end
 
     # @return [Boolean] true if delete options should be sent as bode of the DELETE request

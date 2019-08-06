@@ -13,6 +13,8 @@ module K8s
         case selector
         when nil
           nil
+        when Symbol
+          selector.to_s
         when String
           selector
         when Hash
@@ -51,7 +53,7 @@ module K8s
       api_paths = resources.map{ |resource| resource.path(namespace: namespace) }
       api_lists = transport.gets(
         *api_paths,
-        response_class: K8s::API::MetaV1::List,
+        response_class: K8s::Resource,
         query: make_query(
           'labelSelector' => selector_query(labelSelector),
           'fieldSelector' => selector_query(fieldSelector)
@@ -210,7 +212,6 @@ module K8s
       @transport.request(
         method: 'GET',
         path: path(namespace: namespace),
-        response_class: K8s::API::MetaV1::List,
         query: make_query(
           'labelSelector' => selector_query(labelSelector),
           'fieldSelector' => selector_query(fieldSelector)
@@ -222,14 +223,14 @@ module K8s
     # @param fieldSelector [nil, String, Hash{String => String}]
     # @param resourceVersion [nil, String]
     # @param timeout [nil, Integer]
-    # @yield [K8S::API::MetaV1::WatchEvent]
+    # @yield [K8S::WatchEvent]
     # @raise [Excon::Error]
     def watch(labelSelector: nil, fieldSelector: nil, resourceVersion: nil, timeout: nil, namespace: @namespace)
       method = 'GET'
       path = path(namespace: namespace)
       parser = Yajl::Parser.new
       parser.on_parse_complete = lambda do |data|
-        event = K8s::API::MetaV1::WatchEvent.new(data)
+        event = K8s::WatchEvent.new(data)
         yield event
       end
       @transport.request(
@@ -332,8 +333,7 @@ module K8s
           'labelSelector' => selector_query(labelSelector),
           'fieldSelector' => selector_query(fieldSelector),
           'propagationPolicy' => propagationPolicy
-        ),
-        response_class: K8s::API::MetaV1::List # XXX: documented as returning Status
+        )
       )
       process_list(list)
     end

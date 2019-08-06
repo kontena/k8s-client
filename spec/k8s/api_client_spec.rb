@@ -48,7 +48,7 @@ RSpec.describe K8s::APIClient do
 
     describe '#api_resources' do
       it "returns array of APIResource" do
-        expect(subject.api_resources.first).to match K8s::API::MetaV1::APIResource
+        expect(subject.api_resources.first).to match K8s::Resource
         expect(subject.api_resources.map{|r| r.name}).to match(
           # curl http://localhost:8001/api/v1 | jq -r '.resources[].name'
           <<-EOM
