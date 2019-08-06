@@ -12,7 +12,7 @@
       "beta.kubernetes.io/os": "linux",
       "kubernetes.io/hostname": "ubuntu-xenial",
       "pharos-node.kontena.io/external-ip": "10.0.2.15",
-      "pharos-node.kontena.io/internal-ip": "192.168.56.11"
+      "pharos-node.kontena.io/internal-ip": "192.168.100.100"
     },
     "annotations": {
       "node.alpha.kubernetes.io/ttl": "0",
@@ -83,7 +83,7 @@
     "addresses": [
       {
         "type": "InternalIP",
-        "address": "192.168.56.11"
+        "address": "192.168.100.100"
       },
       {
         "type": "ExternalIP",
