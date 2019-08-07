@@ -11,6 +11,8 @@ module K8s
   # * normalizes foo-bar to foo_bar
   # @see https://godoc.org/k8s.io/client-go/tools/clientcmd/api/v1#Config
   class Config < RecursiveOpenStruct
+    using K8s::Util::HashBackport if RUBY_VERSION < "2.5"
+
     module KeyTransformations
       def initialize(hash = self.class.defaults, args = {})
         super(hash.transform_keys { |k| k.to_s.tr('-', '_').to_sym }, args.merge(recurse_over_arrays: true))

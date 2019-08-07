@@ -9,6 +9,8 @@ module K8s
   class Resource < RecursiveOpenStruct
     using YAMLSafeLoadStream
     using K8s::Util::HashDeepMerge
+    using K8s::Util::HashBackport if RUBY_VERSION < "2.5"
+
     include Comparable
 
     # @param data [String]
