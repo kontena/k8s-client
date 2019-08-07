@@ -66,7 +66,7 @@ module K8s
 
     # @param transport [K8s::Transport]
     # @param api_client [K8s::APIClient]
-    # @param api_resource [K8s::API::MetaV1::APIResource]
+    # @param api_resource [K8s::Resource]
     # @param namespace [String]
     # @param resource_class [Class]
     def initialize(transport, api_client, api_resource, namespace: nil, resource_class: K8s::Resource)
@@ -186,7 +186,7 @@ module K8s
       @api_resource.verbs.include? 'list'
     end
 
-    # @param list [K8s::API::MetaV1::List]
+    # @param list [K8s::Resource]
     # @return [Array<Object>] array of instances of resource_class
     def process_list(list)
       list.items.map { |item|
@@ -207,7 +207,7 @@ module K8s
     # @param labelSelector [nil, String, Hash{String => String}]
     # @param fieldSelector [nil, String, Hash{String => String}]
     # @param namespace [nil, String]
-    # @return [K8s::API::MetaV1::List]
+    # @return [K8s::Resource]
     def meta_list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
       @transport.request(
         method: 'GET',
@@ -308,7 +308,7 @@ module K8s
     # @param name [String]
     # @param namespace [String, nil]
     # @param propagationPolicy [String, nil] The propagationPolicy to use for the API call. Possible values include “Orphan”, “Foreground”, or “Background”
-    # @return [K8s::API::MetaV1::Status]
+    # @return [K8s::Resource]
     def delete(name, namespace: @namespace, propagationPolicy: nil)
       @transport.request(
         method: 'DELETE',
@@ -316,7 +316,7 @@ module K8s
         query: make_query(
           'propagationPolicy' => propagationPolicy
         ),
-        response_class: @resource_class # XXX: documented as returning Status
+        response_class: @resource_class
       )
     end
 
@@ -341,7 +341,7 @@ module K8s
     # @param resource [resource_class] with metadata
     # @param options [Hash]
     # @see #delete for possible options
-    # @return [K8s::API::MetaV1::Status]
+    # @return [K8s::Resource]
     def delete_resource(resource, **options)
       delete(resource.metadata.name, namespace: resource.metadata.namespace, **options)
     end

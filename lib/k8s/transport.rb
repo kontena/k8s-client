@@ -340,7 +340,7 @@ module K8s
       objects
     end
 
-    # @return [K8s::API::Version]
+    # @return [K8s::Resource]
     def version
       @version ||= get('/version')
     end

@@ -117,5 +117,13 @@ module K8s
     def dig(*args)
       super(*args.map { |a| a.is_a?(String) ? a.tr('-', '_').to_sym : a })
     end
+
+    def [](key)
+      super(key.to_s.tr('-', '_').to_sym)
+    end
+
+    def []=(key, value)
+      super(key.to_s.tr('-', '_').to_sym, value)
+    end
   end
 end
