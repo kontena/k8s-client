@@ -34,52 +34,52 @@ module K8s
     def self.config(config, server: nil, **overrides)
       options = {}
 
-      server ||= config.cluster.server
+      server ||= config.cluster&.server
 
-      if config.cluster.insecure_skip_tls_verify
+      if config.cluster&.insecure_skip_tls_verify
         logger.debug "Using config with .cluster.insecure_skip_tls_verify"
 
         options[:ssl_verify_peer] = false
       end
 
-      if path = config.cluster.certificate_authority
+      if path = config.cluster&.certificate_authority
         logger.debug "Using config with .cluster.certificate_authority"
 
         options[:ssl_ca_file] = path
       end
 
-      if data = config.cluster.certificate_authority_data
+      if data = config.cluster&.certificate_authority_data
         logger.debug "Using config with .cluster.certificate_authority_data"
 
         ssl_cert_store = options[:ssl_cert_store] = OpenSSL::X509::Store.new
         ssl_cert_store.add_cert(OpenSSL::X509::Certificate.new(Base64.decode64(data)))
       end
 
-      if (cert = config.user.client_certificate) && (key = config.user.client_key)
+      if (cert = config.user&.client_certificate) && (key = config.user&.client_key)
         logger.debug "Using config with .user.client_certificate/client_key"
 
         options[:client_cert] = cert
         options[:client_key] = key
       end
 
-      if (cert_data = config.user.client_certificate_data) && (key_data = config.user.client_key_data)
+      if (cert_data = config.user&.client_certificate_data) && (key_data = config&.user.client_key_data)
         logger.debug "Using config with .user.client_certificate_data/client_key_data"
 
         options[:client_cert_data] = Base64.decode64(cert_data)
         options[:client_key_data] = Base64.decode64(key_data)
       end
 
-      if token = config.user.token
+      if token = config.user&.token
         logger.debug "Using config with .user.token=..."
 
         options[:auth_token] = token
-      elsif config.user.auth_provider && auth_provider = config.user.auth_provider.config
+      elsif config.user&.auth_provider && auth_provider = config.user&.auth_provider&.config
         logger.debug "Using config with .user.auth-provider.name=#{config.user.auth_provider.name}"
         options[:auth_token] = token_from_auth_provider(auth_provider)
-      elsif exec_conf = config.user.exec
+      elsif exec_conf = config.user&.exec
         logger.debug "Using config with .user.exec.command=#{exec_conf.command}"
         options[:auth_token] = token_from_exec(exec_conf)
-      elsif config.user.username && config.user.password
+      elsif config.user&.username && config.user&.password
         logger.debug "Using config with .user.password=..."
 
         options[:auth_username] = config.user.username
