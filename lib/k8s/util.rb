@@ -98,7 +98,7 @@ module K8s
     # @param patch_to [Hash] Hash to compute patches against
     # @param patch_from [Hash] New Hash to compute patches "from"
     def self.json_patch(patch_to, patch_from)
-      diffs = HashDiff.diff(patch_to, patch_from, array_path: true)
+      diffs = Hashdiff.diff(patch_to, patch_from, array_path: true)
       ops = []
       # Each diff is like:
       # ["+", ["spec", "selector", "food"], "kebab"]
