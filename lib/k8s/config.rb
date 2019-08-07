@@ -3,6 +3,7 @@
 require 'recursive-open-struct'
 require 'base64'
 require 'yaml'
+require 'time'
 
 module K8s
   # Common struct type for kubeconfigs:
@@ -120,7 +121,7 @@ module K8s
 
     # @param name [String]
     # @raise [K8s::Error::Configuration]
-    # @return [K8s::Config::Context]
+    # @return [K8s::Config::Child]
     def context(name = current_context)
       return nil if name.nil?
 
@@ -129,7 +130,7 @@ module K8s
 
     # @param name [String]
     # @raise [K8s::Error::Configuration]
-    # @return [K8s::Config::Cluster]
+    # @return [K8s::Config::Child]
     def cluster(name = context&.cluster)
       return nil if name.nil?
 
