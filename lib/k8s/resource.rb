@@ -43,7 +43,7 @@ module K8s
     # @param options [Hash] see RecursiveOpenStruct#initialize
     def initialize(hash, recurse_over_arrays: true, **options)
       super(
-        (hash.is_a?(Hash) ? hash : hash.to_h).transform_keys { |k| k.to_s.tr('-', '_').to_sym },
+        hash.is_a?(Hash) ? hash : hash.to_h,
         recurse_over_arrays: recurse_over_arrays,
         **options
       )
@@ -51,10 +51,6 @@ module K8s
 
     def <=>(other)
       to_h <=> (other.is_a?(Hash) ? other : other.to_h)
-    end
-
-    def to_h
-      super.transform_keys { |k| k.to_s.tr('_', '-').to_sym }
     end
 
     # @param options [Hash] see Hash#to_json
@@ -114,18 +110,6 @@ module K8s
     # @return [Hash]
     def stringify_hash(hash)
       Yajl::Parser.parse(JSON.dump(hash))
-    end
-
-    def dig(*args)
-      super(*args.map { |a| a.is_a?(String) ? a.tr('-', '_').to_sym : a })
-    end
-
-    def [](key)
-      super(key.to_s.tr('-', '_').to_sym)
-    end
-
-    def []=(key, value)
-      super(key.to_s.tr('-', '_').to_sym, value)
     end
   end
 end
