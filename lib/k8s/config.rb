@@ -16,7 +16,7 @@ module K8s
 
     module KeyTransformations
       def initialize(hash = self.class.defaults, args = {})
-        super(hash.transform_keys { |k| k.to_s.tr('-', '_').to_sym }, args.merge(recurse_over_arrays: true))
+        super(hash.to_h.transform_keys { |k| k.to_s.tr('-', '_').to_sym }, args.merge(recurse_over_arrays: true))
       end
 
       def to_h
