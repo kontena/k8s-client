@@ -180,7 +180,8 @@ module K8s
     # @param parts [Array<String>] join path parts together to build the full URL
     # @return [String]
     def path(*parts)
-      File.join(path_prefix, *parts)
+      joined_parts = File.join(*parts)
+      joined_parts.start_with?(path_prefix) ? joined_parts : File.join(path_prefix, joined_parts)
     end
 
     # @param request_object [Object] include request body using to_json
