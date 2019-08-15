@@ -439,7 +439,23 @@ RSpec.describe K8s::Transport do
       it "returns the test JSON" do
         expect(subject.get('/test')).to eq({'test' => true})
       end
+    end
 
+    context '#get with path prefix' do
+      before do
+        stub_request(:get, 'localhost:8080/path/prefix/test')
+          .to_return(
+            status: 200,
+            body: JSON.dump({'test' => true}),
+            headers: { 'Content-Type' => 'application/json' }
+          )
+      end
+
+      let(:server) { 'http://localhost:8080/path/prefix' }
+
+      it "returns the test JSON" do
+        expect(subject.get('/test')).to eq({'test' => true})
+      end
     end
   end
 
