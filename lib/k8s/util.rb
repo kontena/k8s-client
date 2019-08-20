@@ -57,6 +57,36 @@ module K8s
     PATH_TR_MAP = { '~' => '~0', '/' => '~1' }.freeze
     PATH_REGEX = %r{(/|~(?!1))}.freeze
 
+    # Deep transform hash keys or hashes inside arrays
+    #
+    # @example Stringify hash keys using a symbol
+    #   deep_transform_keys(hash, :to_s)
+    #
+    # @example Stringify hash keys using a block
+    #   deep_transform_keys(hash) { |key| key.to_s.upcase }
+    #
+    # @param value [Hash,Array,Object]
+    # @param transform_method [Symbol] for example :to_s
+    def self.deep_transform_keys(value = nil, transform_method = nil, &block)
+      case value
+      when Array
+        value.map { |v| deep_transform_keys(v, transform_method, &block) }
+      when Hash
+        {}.tap do |result|
+          value.each do |key, value|
+            new_key = if key.is_a?(String) || key.is_a?(Symbol)
+                        transform_method ? key.send(transform_method) : block.call(key)
+                      else
+                        key
+                      end
+            result[new_key] = deep_transform_keys(value, transform_method, &block)
+          end
+        end
+      else
+        value
+      end
+    end
+
     # Yield with all non-nil args, returning matching array with corresponding return values or nils.
     #
     # Args must be usable as hash keys. Duplicate args will all map to the same return value.
