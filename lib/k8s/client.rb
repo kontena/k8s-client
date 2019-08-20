@@ -83,8 +83,14 @@ module K8s
         configuration = K8s::Config.build(server: ENV['KUBE_SERVER'], ca: ENV['KUBE_CA'], auth_token: token)
       elsif !ENV['KUBECONFIG'].to_s.empty?
         configuration = K8s::Config.from_kubeconfig_env(ENV['KUBECONFIG'])
-      elsif File.exist?(File.join(Dir.home, '.kube', 'config'))
-        configuration = K8s::Config.load_file(File.join(Dir.home, '.kube', 'config'))
+      else
+        found_config = [
+          File.join(Dir.home, '.kube', 'config'),
+          '/etc/kubernetes/admin.conf',
+          '/etc/kubernetes/kubelet.conf'
+        ].find { |f| File.exist?(f) && File.readable?(f) }
+
+        configuration = K8s::Config.load_file(found_config) if found_config
       end
 
       if configuration

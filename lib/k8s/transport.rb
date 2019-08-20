@@ -131,7 +131,7 @@ module K8s
       raise(K8s::Error::Configuration, "in_cluster_config failed: KUBERNETES_SERVICE_HOST environment not set") if host.empty?
 
       port = ENV['KUBERNETES_SERVICE_PORT_HTTPS'].to_s
-      raise(K8s::Error::Configuration, "in_cluster_config failed: KUBERNETES_SERVICE_HOST environment not set") if port.empty?
+      raise(K8s::Error::Configuration, "in_cluster_config failed: KUBERNETES_SERVICE_PORT_HTTPS environment not set") if port.empty?
 
       new(
         "https://#{host}:#{port}",
@@ -180,7 +180,8 @@ module K8s
     # @param parts [Array<String>] join path parts together to build the full URL
     # @return [String]
     def path(*parts)
-      File.join(path_prefix, *parts)
+      joined_parts = File.join(*parts)
+      joined_parts.start_with?(path_prefix) ? joined_parts : File.join(path_prefix, joined_parts)
     end
 
     # @param request_object [Object] include request body using to_json
@@ -231,7 +232,7 @@ module K8s
     def parse_response(response, request_options, response_class: nil)
       method = request_options[:method]
       path = request_options[:path]
-      content_type, = response.headers['Content-Type'].split(';')
+      content_type = response.headers['Content-Type']&.split(';', 2)&.first
 
       case content_type
       when 'application/json'
@@ -240,7 +241,7 @@ module K8s
       when 'text/plain'
         response_data = response.body # XXX: broken if status 2xx
       else
-        raise K8s::Error::API.new(method, path, response.status, "Invalid response Content-Type: #{response.headers['Content-Type']}")
+        raise K8s::Error::API.new(method, path, response.status, "Invalid response Content-Type: #{response.headers['Content-Type'].inspect}")
       end
 
       if response.status.between? 200, 299
@@ -352,7 +353,7 @@ module K8s
 
     # @return [Boolean] true if delete options should be sent as bode of the DELETE request
     def need_delete_body?
-      @need_delete_body ||= Gem::Version.new(version.gitVersion.match(/v*(.*)/)[1]) < DELETE_OPTS_BODY_VERSION_MIN
+      @need_delete_body ||= Gem::Version.new(version.gitVersion.match(/^v*((\d|\.)*)/)[1]) < DELETE_OPTS_BODY_VERSION_MIN
     end
 
     # @param path [Array<String>] @see #path

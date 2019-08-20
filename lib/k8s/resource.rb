@@ -12,7 +12,6 @@ module K8s
     include Comparable
 
     using YAMLSafeLoadStream
-    using K8s::Util::HashDeepMerge
 
     # @param data [String]
     # @return [self]
@@ -66,13 +65,9 @@ module K8s
     # @param attrs [Hash, K8s::Resource]
     # @return [K8s::Resource]
     def merge(attrs)
-      # deep clone of attrs
-      h = to_hash
-
-      # merge in-place
-      h.deep_merge!(attrs.to_hash, overwrite_arrays: true, merge_nil_values: true)
-
-      self.class.new(h)
+      self.class.new(
+        Util.deep_merge(to_hash, attrs.to_hash, overwrite_arrays: true, merge_nil_values: true)
+      )
     end
 
     # @return [String]

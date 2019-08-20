@@ -7,6 +7,10 @@ RSpec.describe K8s::Transport do
 
       subject { described_class.config(K8s::Config.load_file(fixture_path('config/kubeadm-admin.conf')))}
 
+      before do
+        allow_any_instance_of(OpenSSL::X509::Store).to receive(:verify).with(server_cert).and_return(true)
+      end
+
       it 'uses the correct server' do
         expect(subject.server).to eq 'https://192.168.56.11:6443'
       end
@@ -24,7 +28,7 @@ RSpec.describe K8s::Transport do
       end
 
       it 'uses an ssl_cert_store that verifies the server cert' do
-        expect(subject.options[:ssl_cert_store].verify(server_cert)).to eq true
+        expect(subject.options[:ssl_cert_store]).to be_a OpenSSL::X509::Store
       end
 
       context "for URIs with a path prefix" do
@@ -44,10 +48,6 @@ RSpec.describe K8s::Transport do
             client_cert_data: /^-----BEGIN CERTIFICATE-----\n/,
             client_key_data: /^-----BEGIN RSA PRIVATE KEY-----\n/,
           )
-        end
-
-        it 'uses an ssl_cert_store that verifies the server cert' do
-          expect(subject.options[:ssl_cert_store].verify(server_cert)).to eq true
         end
       end
 
@@ -439,7 +439,23 @@ RSpec.describe K8s::Transport do
       it "returns the test JSON" do
         expect(subject.get('/test')).to eq({'test' => true})
       end
+    end
 
+    context '#get with path prefix' do
+      before do
+        stub_request(:get, 'localhost:8080/path/prefix/test')
+          .to_return(
+            status: 200,
+            body: JSON.dump({'test' => true}),
+            headers: { 'Content-Type' => 'application/json' }
+          )
+      end
+
+      let(:server) { 'http://localhost:8080/path/prefix' }
+
+      it "returns the test JSON" do
+        expect(subject.get('/test')).to eq({'test' => true})
+      end
     end
   end
 
@@ -673,6 +689,33 @@ RSpec.describe K8s::Transport do
           )
         }.to raise_error(K8s::Error::NotFound)
       end
+    end
+  end
+
+  describe '#need_delete_body?' do
+    it 'returns true if older than 1.11' do
+      allow(subject).to receive(:version).and_return(double(:version, gitVersion: '1.10.4'))
+      expect(subject.need_delete_body?).to be_truthy
+    end
+
+    it 'returns false if 1.11.0' do
+      allow(subject).to receive(:version).and_return(double(:version, gitVersion: '1.11.0'))
+      expect(subject.need_delete_body?).to be_falsey
+    end
+
+    it 'returns false newer than 1.11.0' do
+      allow(subject).to receive(:version).and_return(double(:version, gitVersion: '1.11.1'))
+      expect(subject.need_delete_body?).to be_falsey
+    end
+
+    it 'handles semver build metadata' do
+      allow(subject).to receive(:version).and_return(double(:version, gitVersion: '1.10.1+asdasd'))
+      expect(subject.need_delete_body?).to be_truthy
+    end
+
+    it 'handles semver pre-release' do
+      allow(subject).to receive(:version).and_return(double(:version, gitVersion: '1.10.1-rc.1'))
+      expect(subject.need_delete_body?).to be_truthy
     end
   end
 end
