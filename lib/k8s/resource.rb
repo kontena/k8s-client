@@ -2,16 +2,15 @@
 
 require 'recursive-open-struct'
 require 'hashdiff'
-require 'forwardable'
 require 'yaml/safe_load_stream'
 
 module K8s
   # generic untyped resource
   class Resource < RecursiveOpenStruct
-    extend Forwardable
-    include Comparable
-
     using YAMLSafeLoadStream
+    using K8s::Util::HashBackport if RUBY_VERSION < "2.5"
+
+    include Comparable
 
     # @param data [String]
     # @return [self]
@@ -42,22 +41,21 @@ module K8s
     # @param recurse_over_arrays [Boolean]
     # @param options [Hash] see RecursiveOpenStruct#initialize
     def initialize(hash, recurse_over_arrays: true, **options)
-      super(hash,
+      super(
+        hash.is_a?(Hash) ? hash : hash.to_h,
         recurse_over_arrays: recurse_over_arrays,
         **options
       )
     end
 
+    def <=>(other)
+      to_h <=> (other.is_a?(Hash) ? other : other.to_h)
+    end
+
     # @param options [Hash] see Hash#to_json
     # @return [String]
     def to_json(**options)
-      to_hash.to_json(**options)
-    end
-
-    # @param other [K8s::Resource]
-    # @return [Boolean]
-    def <=>(other)
-      to_hash <=> other.to_hash
+      to_h.to_json(**options)
     end
 
     # merge in fields
@@ -72,7 +70,7 @@ module K8s
 
     # @return [String]
     def checksum
-      @checksum ||= Digest::MD5.hexdigest(Marshal.dump(to_hash))
+      @checksum ||= Digest::MD5.hexdigest(Marshal.dump(to_h))
     end
 
     # @param attrs [Hash]

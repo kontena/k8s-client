@@ -5,7 +5,7 @@ RSpec.describe K8s::ResourceClient do
 
   context "for the nodes API" do
     let(:api_client) { K8s::APIClient.new(transport, 'v1') }
-    let(:api_resource) { K8s::API::MetaV1::APIResource.new(
+    let(:api_resource) { K8s::Resource.new(
       name: "nodes",
       singularName: "",
       namespaced: false,
@@ -162,7 +162,7 @@ RSpec.describe K8s::ResourceClient do
 
   context "for the nodes status API" do
     let(:api_client) { K8s::APIClient.new(transport, 'v1') }
-    let(:api_resource) { K8s::API::MetaV1::APIResource.new(
+    let(:api_resource) { K8s::Resource.new(
       name: "nodes/status",
       singularName: "",
       namespaced: false,
@@ -220,7 +220,7 @@ RSpec.describe K8s::ResourceClient do
 
   context "for the pods API" do
     let(:api_client) { K8s::APIClient.new(transport, 'v1') }
-    let(:api_resource) { K8s::API::MetaV1::APIResource.new(
+    let(:api_resource) { K8s::Resource.new(
       name: "pods",
       singularName: "",
       namespaced: true,
@@ -249,7 +249,7 @@ RSpec.describe K8s::ResourceClient do
       kind: 'Pod',
       metadata: { name: 'test', namespace: 'default' },
     ) }
-    let(:resource_list) { K8s::API::MetaV1::List.new(metadata: {}, items: [resource]) }
+    let(:resource_list) { K8s::Resource.new(metadata: {}, items: [resource]) }
 
     context "POST /api/v1/pods/namespaces/default/pods" do
       before do

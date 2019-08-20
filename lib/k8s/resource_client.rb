@@ -13,6 +13,8 @@ module K8s
         case selector
         when nil
           nil
+        when Symbol
+          selector.to_s
         when String
           selector
         when Hash
@@ -51,7 +53,7 @@ module K8s
       api_paths = resources.map{ |resource| resource.path(namespace: namespace) }
       api_lists = transport.gets(
         *api_paths,
-        response_class: K8s::API::MetaV1::List,
+        response_class: K8s::Resource,
         query: make_query(
           'labelSelector' => selector_query(labelSelector),
           'fieldSelector' => selector_query(fieldSelector)
@@ -64,7 +66,7 @@ module K8s
 
     # @param transport [K8s::Transport]
     # @param api_client [K8s::APIClient]
-    # @param api_resource [K8s::API::MetaV1::APIResource]
+    # @param api_resource [K8s::Resource]
     # @param namespace [String]
     # @param resource_class [Class]
     def initialize(transport, api_client, api_resource, namespace: nil, resource_class: K8s::Resource)
@@ -184,7 +186,7 @@ module K8s
       @api_resource.verbs.include? 'list'
     end
 
-    # @param list [K8s::API::MetaV1::List]
+    # @param list [K8s::Resource]
     # @return [Array<Object>] array of instances of resource_class
     def process_list(list)
       list.items.map { |item|
@@ -205,12 +207,11 @@ module K8s
     # @param labelSelector [nil, String, Hash{String => String}]
     # @param fieldSelector [nil, String, Hash{String => String}]
     # @param namespace [nil, String]
-    # @return [K8s::API::MetaV1::List]
+    # @return [K8s::Resource]
     def meta_list(labelSelector: nil, fieldSelector: nil, namespace: @namespace)
       @transport.request(
         method: 'GET',
         path: path(namespace: namespace),
-        response_class: K8s::API::MetaV1::List,
         query: make_query(
           'labelSelector' => selector_query(labelSelector),
           'fieldSelector' => selector_query(fieldSelector)
@@ -222,14 +223,16 @@ module K8s
     # @param fieldSelector [nil, String, Hash{String => String}]
     # @param resourceVersion [nil, String]
     # @param timeout [nil, Integer]
-    # @yield [K8S::API::MetaV1::WatchEvent]
+    # @yield [K8S::WatchEvent]
     # @raise [Excon::Error]
     def watch(labelSelector: nil, fieldSelector: nil, resourceVersion: nil, timeout: nil, namespace: @namespace)
       method = 'GET'
       path = path(namespace: namespace)
+
       parser = K8s::JSONParser.new do |data|
-        yield K8s::API::MetaV1::WatchEvent.new(data)
+        yield K8s::WatchEvent.new(data)
       end
+
       @transport.request(
         method: method,
         path: path,
@@ -305,7 +308,7 @@ module K8s
     # @param name [String]
     # @param namespace [String, nil]
     # @param propagationPolicy [String, nil] The propagationPolicy to use for the API call. Possible values include “Orphan”, “Foreground”, or “Background”
-    # @return [K8s::API::MetaV1::Status]
+    # @return [K8s::Resource]
     def delete(name, namespace: @namespace, propagationPolicy: nil)
       @transport.request(
         method: 'DELETE',
@@ -313,7 +316,7 @@ module K8s
         query: make_query(
           'propagationPolicy' => propagationPolicy
         ),
-        response_class: @resource_class # XXX: documented as returning Status
+        response_class: @resource_class
       )
     end
 
@@ -330,8 +333,7 @@ module K8s
           'labelSelector' => selector_query(labelSelector),
           'fieldSelector' => selector_query(fieldSelector),
           'propagationPolicy' => propagationPolicy
-        ),
-        response_class: K8s::API::MetaV1::List # XXX: documented as returning Status
+        )
       )
       process_list(list)
     end
@@ -339,7 +341,7 @@ module K8s
     # @param resource [resource_class] with metadata
     # @param options [Hash]
     # @see #delete for possible options
-    # @return [K8s::API::MetaV1::Status]
+    # @return [K8s::Resource]
     def delete_resource(resource, **options)
       delete(resource.metadata.name, namespace: resource.metadata.namespace, **options)
     end

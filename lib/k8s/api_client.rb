@@ -36,27 +36,26 @@ module K8s
       !!@api_resources
     end
 
-    # @param api_resources [Array<K8s::API::MetaV1::APIResource>]
+    # @param api_resources [Array<K8s::Resource>]
     attr_writer :api_resources
 
     # Force-update APIResources
     #
-    # @return [Array<K8s::API::MetaV1::APIResource>]
+    # @return [Array<K8s::Resource>]
     def api_resources!
-      @api_resources = @transport.get(path,
-                                      response_class: K8s::API::MetaV1::APIResourceList).resources
+      @api_resources = @transport.get(path).resources
     end
 
     # Cached APIResources
     #
-    # @return [Array<K8s::API::MetaV1::APIResource>]
+    # @return [Array<K8s::Resource>]
     def api_resources
       @api_resources || api_resources!
     end
 
     # @param resource_name [String]
     # @raise [K8s::Error::UndefinedResource]
-    # @return [K8s::API::MetaV1::APIResource]
+    # @return [K8s::Resource]
     def find_api_resource(resource_name)
       found_resource = api_resources.find{ |api_resource| api_resource.name == resource_name }
       found_resource ||= api_resources!.find{ |api_resource| api_resource.name == resource_name }

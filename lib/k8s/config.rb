@@ -1,110 +1,46 @@
 # frozen_string_literal: true
 
-require 'dry-struct'
-require 'dry-types'
+require 'recursive-open-struct'
 require 'base64'
 require 'yaml'
+require 'time'
 
 module K8s
   # Common struct type for kubeconfigs:
   #
   # * converts string keys to symbols
   # * normalizes foo-bar to foo_bar
-  class ConfigStruct < Dry::Struct
-    transform_keys do |key|
-      case key
-      when String
-        key.tr('-', '_').to_sym
-      else
-        key
+  # @see https://godoc.org/k8s.io/client-go/tools/clientcmd/api/v1#Config
+  class Config < RecursiveOpenStruct
+    using K8s::Util::HashBackport if RUBY_VERSION < "2.5"
+
+    module KeyTransformations
+      def initialize(hash = self.class.defaults, args = {})
+        super(hash.to_h.transform_keys { |k| k.to_s.tr('-', '_').to_sym }, args.merge(recurse_over_arrays: true))
+      end
+
+      def to_h
+        super.transform_keys { |k| k.to_s.tr('_', '-').to_sym }
       end
     end
-  end
 
-  # @see https://godoc.org/k8s.io/client-go/tools/clientcmd/api/v1#Config
-  class Config < ConfigStruct
-    # Common dry-types for config
-    class Types
-      include Dry::Types.module
+    class Child < RecursiveOpenStruct
+      include KeyTransformations
     end
 
-    # structured cluster
-    class Cluster < ConfigStruct
-      attribute :server, Types::String
-      attribute :insecure_skip_tls_verify, Types::Bool.optional.default(nil)
-      attribute :certificate_authority, Types::String.optional.default(nil)
-      attribute :certificate_authority_data, Types::String.optional.default(nil)
-      attribute :extensions, Types::Strict::Array.optional.default(nil)
-    end
+    include KeyTransformations
 
-    # structured cluster with name
-    class NamedCluster < ConfigStruct
-      attribute :name, Types::String
-      attribute :cluster, Cluster
+    def self.defaults
+      {
+        :apiVersion => 'v1',
+        :clusters=> [],
+        :contexts => [],
+        :current_context => nil,
+        :kind => 'Config',
+        :preferences => {},
+        :users => []
+      }
     end
-
-    # structured user auth provider
-    class UserAuthProvider < ConfigStruct
-      attribute :name, Types::String
-      attribute :config, Types::Strict::Hash
-    end
-
-    # structured user exec
-    class UserExec < ConfigStruct
-      attribute :command, Types::String
-      attribute :apiVersion, Types::String
-      attribute :env, Types::Strict::Array.of(Types::Hash).optional.default(nil)
-      attribute :args, Types::Strict::Array.of(Types::String).optional.default(nil)
-    end
-
-    # structured user
-    class User < ConfigStruct
-      attribute :client_certificate, Types::String.optional.default(nil)
-      attribute :client_certificate_data, Types::String.optional.default(nil)
-      attribute :client_key, Types::String.optional.default(nil)
-      attribute :client_key_data, Types::String.optional.default(nil)
-      attribute :token, Types::String.optional.default(nil)
-      attribute :tokenFile, Types::String.optional.default(nil)
-      attribute :as, Types::String.optional.default(nil)
-      attribute :as_groups, Types::Array.of(Types::String).optional.default(nil)
-      attribute :as_user_extra, Types::Hash.optional.default(nil)
-      attribute :username, Types::String.optional.default(nil)
-      attribute :password, Types::String.optional.default(nil)
-      attribute :auth_provider, UserAuthProvider.optional.default(nil)
-      attribute :exec, UserExec.optional.default(nil)
-      attribute :extensions, Types::Strict::Array.optional.default(nil)
-    end
-
-    # structured user with name
-    class NamedUser < ConfigStruct
-      attribute :name, Types::String
-      attribute :user, User
-    end
-
-    # structured context
-    #
-    # Referrs to other named User/cluster objects within the same config.
-    class Context < ConfigStruct
-      attribute :cluster, Types::Strict::String
-      attribute :user, Types::Strict::String
-      attribute :namespace, Types::Strict::String.optional.default(nil)
-      attribute :extensions, Types::Strict::Array.optional.default(nil)
-    end
-
-    # named context
-    class NamedContext < ConfigStruct
-      attribute :name, Types::String
-      attribute :context, Context
-    end
-
-    attribute :kind, Types::Strict::String.optional.default(nil)
-    attribute :apiVersion, Types::Strict::String.optional.default(nil)
-    attribute :preferences, Types::Strict::Hash.optional.default(proc { {} })
-    attribute :clusters, Types::Strict::Array.of(NamedCluster).optional.default(proc { [] })
-    attribute :users, Types::Strict::Array.of(NamedUser).optional.default(proc { [] })
-    attribute :contexts, Types::Strict::Array.of(NamedContext).optional.default(proc { [] })
-    attribute :current_context, Types::Strict::String.optional.default(nil)
-    attribute :extensions, Types::Strict::Array.optional.default(proc { [] })
 
     # Loads a configuration from a YAML file
     #
@@ -155,8 +91,8 @@ module K8s
     # @param other [Hash, K8s::Config]
     # @return [K8s::Config]
     def merge(other)
-      old_attributes = attributes
-      other_attributes = other.is_a?(Hash) ? other : other.attributes
+      old_attributes = to_h
+      other_attributes = other.is_a?(Hash) ? other : other.to_h
 
       old_attributes.merge!(other_attributes) do |key, old_value, new_value|
         case key
@@ -185,24 +121,48 @@ module K8s
 
     # @param name [String]
     # @raise [K8s::Error::Configuration]
-    # @return [K8s::Config::Context]
+    # @return [K8s::Config::Child]
     def context(name = current_context)
-      found = contexts.find{ |context| context.name == name }
-      raise K8s::Error::Configuration, "context not found: #{name.inspect}" unless found
+      return nil if name.nil?
 
-      found.context
+      contexts.find { |context| context.name == name }&.context || raise(K8s::Error::Configuration, "context not found: #{name.inspect}")
     end
 
     # @param name [String]
-    # @return [K8s::Config::Cluster]
-    def cluster(name = context.cluster)
-      clusters.find{ |cluster| cluster.name == name }.cluster
+    # @raise [K8s::Error::Configuration]
+    # @return [K8s::Config::Child]
+    def cluster(name = context&.cluster)
+      return nil if name.nil?
+
+      clusters.find { |cluster| cluster.name == name }&.cluster || raise(K8s::Error::Configuration, "cluster not found: #{name.inspect}")
     end
 
     # @param name [String]
+    # @raise [K8s::Error::Configuration]
     # @return [K8s::Config::User]
-    def user(name = context.user)
-      users.find{ |user| user.name == name }.user
+    def user(name = context&.user)
+      return nil if name.nil?
+
+      users.find { |user| user.name == name }&.user || raise(K8s::Error::Configuration, "user not found: #{name.inspect}")
+    end
+
+    private
+
+    # Patch the RecursiveOpenStruct#recurse_over_array method to use a different child class
+    def recurse_over_array(array)
+      array.each_with_index do |a, i|
+        if a.is_a?(Hash)
+          array[i] = Child.new(
+            a,
+            recurse_over_arrays: true,
+            mutate_input_hash: true,
+            preserve_original_keys: @preserve_original_keys
+          )
+        elsif a.is_a?(Array)
+          array[i] = recurse_over_array(a)
+        end
+      end
+      array
     end
   end
 end

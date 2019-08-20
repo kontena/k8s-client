@@ -3,6 +3,16 @@
 module K8s
   # Miscellaneous helpers
   module Util
+    module HashBackport
+      refine Hash do
+        def transform_keys
+          each.with_object({}) do |(key, value), hash|
+            hash[yield key] = value
+          end
+        end
+      end
+    end
+
     # Deep merge hashes
     #
     # @param input [Hash]
