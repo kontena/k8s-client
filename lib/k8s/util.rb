@@ -13,60 +13,89 @@ module K8s
       end
     end
 
-    module HashDeepMerge
-      refine Hash do
-        # @param other [Hash]
-        # @param overwrite_arrays [Boolean] when encountering an array, replace the array with the new array
-        # @param union_arrays [Boolean] when encountering an array, use Array#union to combine with the existing array
-        # @param keep_existing [Boolean] prefer old value over new value
-        # @param merge_nil_values [Boolean] overwrite an existing value with a nil value
-        # @param merge_non_hash [Boolean] calls .merge on objects that respond to .merge
-        def deep_merge(other, overwrite_arrays: true, union_arrays: false, keep_existing: false, merge_nil_values: false, merge_non_hash: false)
-          merge(other) do |key, old_value, new_value|
-            case old_value
-            when Hash
-              raise "#{key} : #{new_value.class.name} can not be merged into a Hash" unless new_value.is_a?(Hash)
+    # Deep merge hashes
+    #
+    # @param input [Hash]
+    # @param other [Hash]
+    # @param overwrite_arrays [Boolean] when encountering an array, replace the array with the new array
+    # @param union_arrays [Boolean] when encountering an array, use Array#union to combine with the existing array
+    # @param keep_existing [Boolean] prefer old value over new value
+    # @param merge_nil_values [Boolean] overwrite an existing value with a nil value
+    # @param merge_non_hash [Boolean] calls .merge on objects that respond to .merge
+    def self.deep_merge(input, other, overwrite_arrays: true, union_arrays: false, keep_existing: false, merge_nil_values: false, merge_non_hash: false)
+      raise ArgumentError, "input expected to be Hash, was #{input.class.name}" unless input.is_a?(Hash)
+      raise ArgumentError, "other expected to be Hash, was #{other.class.name}" unless other.is_a?(Hash)
 
-              old_value.deep_merge(
-                new_value,
-                overwrite_arrays: overwrite_arrays,
-                union_arrays: union_arrays,
-                keep_existing: keep_existing,
-                merge_nil_values: merge_nil_values,
-                merge_non_hash: merge_non_hash
-              )
-            when Array
-              if overwrite_arrays
-                new_value
-              elsif union_arrays
-                raise "#{key} : #{new_value.class.name} can not be merged into an Array" unless new_value.is_a?(Array)
+      input.merge(other) do |key, old_value, new_value|
+        case old_value
+        when Hash
+          raise "#{key} : #{new_value.class.name} can not be merged into a Hash" unless new_value.is_a?(Hash)
 
-                old_value | new_value
-              else
-                old_value + new_value
-              end
-            else
-              if keep_existing
-                old_value
-              elsif new_value.nil? && merge_nil_values
-                nil
-              elsif merge_non_hash && old_value.respond_to?(:merge)
-                old_value.merge(new_value)
-              else
-                new_value.nil? ? old_value : new_value
-              end
-            end
+          deep_merge(
+            old_value,
+            new_value,
+            overwrite_arrays: overwrite_arrays,
+            union_arrays: union_arrays,
+            keep_existing: keep_existing,
+            merge_nil_values: merge_nil_values,
+            merge_non_hash: merge_non_hash
+          )
+        when Array
+          if overwrite_arrays
+            new_value
+          elsif union_arrays
+            raise "#{key} : #{new_value.class.name} can not be merged into an Array" unless new_value.is_a?(Array)
+
+            old_value | new_value
+          else
+            old_value + new_value
           end
-        end
-
-        def deep_merge!(other, **options)
-          replace(deep_merge(other, **options))
+        else
+          if keep_existing
+            old_value
+          elsif new_value.nil? && merge_nil_values
+            nil
+          elsif merge_non_hash && old_value.respond_to?(:merge)
+            old_value.merge(new_value)
+          else
+            new_value.nil? ? old_value : new_value
+          end
         end
       end
     end
 
     PATH_TR_MAP = { '~' => '~0', '/' => '~1' }.freeze
     PATH_REGEX = %r{(/|~(?!1))}.freeze
+
+    # Deep transform hash keys or hashes inside arrays
+    #
+    # @example Stringify hash keys using a symbol
+    #   deep_transform_keys(hash, :to_s)
+    #
+    # @example Stringify hash keys using a block
+    #   deep_transform_keys(hash) { |key| key.to_s.upcase }
+    #
+    # @param value [Hash,Array,Object]
+    # @param transform_method [Symbol] for example :to_s
+    def self.deep_transform_keys(value = nil, transform_method = nil, &block)
+      case value
+      when Array
+        value.map { |v| deep_transform_keys(v, transform_method, &block) }
+      when Hash
+        {}.tap do |result|
+          value.each do |key, value|
+            new_key = if key.is_a?(String) || key.is_a?(Symbol)
+                        transform_method ? key.send(transform_method) : block.call(key)
+                      else
+                        key
+                      end
+            result[new_key] = deep_transform_keys(value, transform_method, &block)
+          end
+        end
+      else
+        value
+      end
+    end
 
     # Yield with all non-nil args, returning matching array with corresponding return values or nils.
     #
@@ -108,7 +137,7 @@ module K8s
     # @param patch_to [Hash] Hash to compute patches against
     # @param patch_from [Hash] New Hash to compute patches "from"
     def self.json_patch(patch_to, patch_from)
-      diffs = HashDiff.diff(patch_to, patch_from, array_path: true)
+      diffs = Hashdiff.diff(patch_to, patch_from, array_path: true)
       ops = []
       # Each diff is like:
       # ["+", ["spec", "selector", "food"], "kebab"]

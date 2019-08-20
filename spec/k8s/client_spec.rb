@@ -123,17 +123,23 @@ RSpec.describe K8s::Client do
       end
     end
 
-    context 'from default ~/.kube/config' do
-      it 'loads the file' do
-        expect(File).to receive(:exist?).with(default_kubeconfig_path).and_return(true)
-        expect(File).to receive(:read).with(default_kubeconfig_path).and_return(kubeconfig)
+    context 'from default file locations' do
+      before do
+        expect(File).to receive(:exist?).with(default_kubeconfig_path).and_return(false)
+        expect(File).to receive(:exist?).with('/etc/kubernetes/admin.conf').and_return(false)
+        expect(File).to receive(:exist?).with('/etc/kubernetes/kubelet.conf').and_return(true)
+        expect(File).to receive(:readable?).with('/etc/kubernetes/kubelet.conf').and_return(true)
+      end
+
+      it 'loads a file if found' do
+        expect(File).to receive(:read).with('/etc/kubernetes/kubelet.conf').and_return(kubeconfig)
         expect(subject.autoconfig).to be_a K8s::Client
       end
     end
 
     context 'from in_cluster_config' do
       before do
-        allow(File).to receive(:exist?).with(default_kubeconfig_path).and_return(false)
+        allow(File).to receive(:exist?).with(anything).and_return(false)
         stub_const("ENV", {})
       end
 

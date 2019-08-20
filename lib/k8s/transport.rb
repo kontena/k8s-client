@@ -117,7 +117,7 @@ module K8s
       auth_json = `#{cmd.join(' ')}`.strip
       ENV.replace(orig_env)
 
-      JSON.parse(auth_json).dig('status', 'token')
+      K8s::JSONParser.parse(auth_json).dig('status', 'token')
     end
 
     # In-cluster config within a kube pod, using the kubernetes service envs and serviceaccount secrets
@@ -180,7 +180,8 @@ module K8s
     # @param parts [Array<String>] join path parts together to build the full URL
     # @return [String]
     def path(*parts)
-      File.join(path_prefix, *parts)
+      joined_parts = File.join(*parts)
+      joined_parts.start_with?(path_prefix) ? joined_parts : File.join(path_prefix, joined_parts)
     end
 
     # @param request_object [Object] include request body using to_json
@@ -235,7 +236,7 @@ module K8s
 
       case content_type
       when 'application/json'
-        response_data = Yajl::Parser.parse(response.body)
+        response_data = K8s::JSONParser.parse(response.body)
 
       when 'text/plain'
         response_data = response.body # XXX: broken if status 2xx

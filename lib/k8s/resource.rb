@@ -8,7 +8,6 @@ module K8s
   # generic untyped resource
   class Resource < RecursiveOpenStruct
     using YAMLSafeLoadStream
-    using K8s::Util::HashDeepMerge
     using K8s::Util::HashBackport if RUBY_VERSION < "2.5"
 
     include Comparable
@@ -16,7 +15,7 @@ module K8s
     # @param data [String]
     # @return [self]
     def self.from_json(data)
-      new(Yajl::Parser.parse(data))
+      new(K8s::JSONParser.parse(data))
     end
 
     # @param filename [String] file path
@@ -64,13 +63,9 @@ module K8s
     # @param attrs [Hash, K8s::Resource]
     # @return [K8s::Resource]
     def merge(attrs)
-      # deep clone of attrs
-      h = to_h
-
-      # merge in-place
-      h.deep_merge!(attrs.to_h, overwrite_arrays: true, merge_nil_values: true)
-
-      self.class.new(h)
+      self.class.new(
+        Util.deep_merge(to_hash, attrs.to_hash, overwrite_arrays: true, merge_nil_values: true)
+      )
     end
 
     # @return [String]
@@ -82,7 +77,7 @@ module K8s
     # @param config_annotation [String]
     # @return [Hash]
     def merge_patch_ops(attrs, config_annotation)
-      Util.json_patch(current_config(config_annotation), stringify_hash(attrs))
+      Util.json_patch(current_config(config_annotation), Util.deep_transform_keys(attrs, :to_s))
     end
 
     # Gets the existing resources (on kube api) configuration, an empty hash if not present
@@ -93,7 +88,7 @@ module K8s
       current_cfg = metadata.annotations&.dig(config_annotation)
       return {} unless current_cfg
 
-      current_hash = Yajl::Parser.parse(current_cfg)
+      current_hash = K8s::JSONParser.parse(current_cfg)
       # kubectl adds empty metadata.namespace, let's fix it
       current_hash['metadata'].delete('namespace') if current_hash.dig('metadata', 'namespace').to_s.empty?
 
@@ -104,12 +99,6 @@ module K8s
     # @return [Boolean]
     def can_patch?(config_annotation)
       !!metadata.annotations&.dig(config_annotation)
-    end
-
-    # @param hash [Hash]
-    # @return [Hash]
-    def stringify_hash(hash)
-      Yajl::Parser.parse(JSON.dump(hash))
     end
   end
 end
