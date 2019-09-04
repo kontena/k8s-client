@@ -129,7 +129,10 @@ module K8s
     # @param resource [K8s::Resource]
     # @return [Boolean]
     def keep_resource?(resource)
-      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] == resource.metadata.annotations[@checksum_annotation]
+      keep_annotation = @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"]
+      return false unless keep_annotation
+
+      keep_annotation == resource.metadata&.annotations.dig(@checksum_annotation)
     end
 
     # Delete all stack resources that were not applied
@@ -157,6 +160,8 @@ module K8s
 
         if resource_label != name
           # apiserver did not respect labelSelector
+        elsif resource.metadata&.ownerReferences && !resource.metadata.ownerReferences.empty?
+          logger.info "Server resource #{resource.apiVersion}:#{resource.apiKind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} has ownerReferences and will be kept"
         elsif keep_resources && keep_resource?(resource)
           # resource is up-to-date
         else
