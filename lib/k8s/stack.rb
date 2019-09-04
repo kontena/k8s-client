@@ -126,7 +126,7 @@ module K8s
     # @param resource [K8s::Resource]
     # @return [K8s::Resource]
     def keep_resource!(resource)
-      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] = annotation
+      @keep_resources["#{resource.kind}:#{resource.metadata.name}@#{resource.metadata.namespace}"] = resource.metadata&.annotations.dig(@checksum_annotation)
     end
 
     # @param resource [K8s::Resource]
