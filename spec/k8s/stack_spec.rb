@@ -80,6 +80,32 @@ RSpec.describe K8s::Stack do
       end
     end
 
+    context "which has extra resources with owner references" do
+      let(:resources) {
+        subject.resources
+      }
+
+      before do
+        extra_resource = subject.prepare_resource(subject.resources.pop)
+        extra_resource.metadata.ownerReferences = [
+          {
+            :apiVersion=>"certmanager.k8s.io/v1alpha1",
+            :kind=>"Certificate",
+            :name=>"kontena-lens"
+          }
+        ]
+        returned_resources = resources.dup
+        returned_resources = returned_resources.map { |r| subject.prepare_resource(r) unless r.nil? }
+        allow(client).to receive(:get_resources).with([K8s::Resource, K8s::Resource]).and_return(returned_resources)
+        allow(client).to receive(:list_resources).with(labelSelector: { 'k8s.kontena.io/stack' => 'whoami' }, skip_forbidden: true).and_return(returned_resources + [extra_resource])
+      end
+
+      it "keeps the resource" do
+        expect(client).not_to receive(:delete_resource)
+        subject.apply(client, prune: true)
+      end
+    end
+
     context "which has extra resources on server" do
       let(:resources) {
         subject.resources
