@@ -175,6 +175,8 @@ module K8s
         headers: REQUEST_HEADERS,
         **@options
       )
+    rescue Excon::Error => e
+      raise K8s::Error::Transport, "#{e.message} (#{e.class})"
     end
 
     # @param parts [Array<String>] join path parts together to build the full URL
@@ -227,7 +229,6 @@ module K8s
     # @param request_options [Hash] as passed to Excon#request
     # @param response_class [Class] coerce into response body using #new
     # @raise [K8s::Error]
-    # @raise [Excon::Error] TODO: wrap
     # @return [response_class, Hash]
     def parse_response(response, request_options, response_class: K8s::Resource)
       method = request_options[:method]
@@ -270,6 +271,7 @@ module K8s
     # @param response_class [Class] coerce into response class using #new
     # @param options [Hash] @see Excon#request
     # @return [response_class, Hash]
+    # @raise [K8s::Error::SSL, K8s::Error::Socket, K8s::Error::Transport, K8s::Error::API]
     def request(response_class: K8s::Resource, **options)
       if options[:method] == 'DELETE' && need_delete_body?
         options[:request_object] = options.delete(:query)
@@ -283,6 +285,12 @@ module K8s
       t = Time.now - start
 
       obj = options[:response_block] ? {} : parse_response(response, options, response_class: response_class)
+    rescue Excon::Error::Certificate, Excon::Errors::CertificateError => e
+      raise K8s::Error::SSL, "#{e.socket_error.message} (#{e.socket_error.class})"
+    rescue Excon::Error::Socket, Excon::Errors::SocketError => e
+      raise K8s::Error::Socket, "#{e.socket_error.message} (#{e.socket_error.class})"
+    rescue Excon::Error => e
+      raise K8s::Error::Transport, "#{e.message} (#{e.class})"
     rescue K8s::Error::API => e
       logger.warn { "#{format_request(options)} => HTTP #{e.code} #{e.reason} in #{'%.3f' % t}s" }
       logger.debug { "Request: #{excon_options[:body]}" } if excon_options[:body]

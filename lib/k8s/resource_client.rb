@@ -224,7 +224,6 @@ module K8s
     # @param resourceVersion [nil, String]
     # @param timeout [nil, Integer]
     # @yield [K8S::WatchEvent]
-    # @raise [Excon::Error]
     def watch(labelSelector: nil, fieldSelector: nil, resourceVersion: nil, timeout: nil, namespace: @namespace)
       method = 'GET'
       path = path(namespace: namespace)
