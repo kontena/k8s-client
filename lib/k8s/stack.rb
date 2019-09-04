@@ -101,7 +101,7 @@ module K8s
         if !server_resource
           logger.info "Create resource #{resource.apiVersion}:#{resource.kind}/#{resource.metadata.name} in namespace #{resource.metadata.namespace} with checksum=#{resource.checksum}"
           keep_resource! client.create_resource(prepare_resource(resource))
-        elsif server_resource.metadata&.ownerReference
+        elsif server_resource.metadata&.ownerReference && !server_resource.metadata.ownerReference.empty?
           logger.info "Server resource #{server_resource.apiVersion}:#{server_resource.apiKind}/#{server_resource.metadata.name} in namespace #{server_resource.metadata.namespace} has an ownerReference and will be kept"
           keep_resource! server_resource
         elsif server_resource.metadata&.annotations&.dig(@checksum_annotation) != resource.checksum
