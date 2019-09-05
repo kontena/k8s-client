@@ -1,6 +1,7 @@
 # K8s::Client
 
 [![Build Status](https://travis-ci.com/kontena/k8s-client.svg?branch=master)](https://travis-ci.com/kontena/k8s-client)
+[![Coverage Status](https://coveralls.io/repos/github/kontena/k8s-client/badge.svg)](https://coveralls.io/github/kontena/k8s-client)
 [![Gem Version](https://badge.fury.io/rb/k8s-client.svg)](https://badge.fury.io/rb/k8s-client)
 [![Yard Docs](http://img.shields.io/badge/yard-docs-blue.svg)](http://www.rubydoc.info/github/kontena/k8s-client/master)
 
