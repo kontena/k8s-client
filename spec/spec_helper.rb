@@ -1,6 +1,9 @@
 require "bundler/setup"
 require 'webmock/rspec'
 
+require 'coveralls'
+Coveralls.wear!
+
 require "k8s-client"
 
 require_relative 'helpers/fixture_helpers'
