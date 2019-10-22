@@ -13,6 +13,19 @@ module K8s
       end
     end
 
+    def self.hashify(input)
+      case input
+      when Hash
+        input
+      when -> (input) { input.respond_to?(:to_hash) }
+        input.to_hash
+      when -> (input) { input.respond_to?(:to_h) }
+        input.to_h
+      else
+        raise TypeError, "#{input.class.name} can not be converted to Hash"
+      end
+    end
+
     # Deep merge hashes
     #
     # @param input [Hash]
@@ -22,9 +35,13 @@ module K8s
     # @param keep_existing [Boolean] prefer old value over new value
     # @param merge_nil_values [Boolean] overwrite an existing value with a nil value
     # @param merge_non_hash [Boolean] calls .merge on objects that respond to .merge
-    def self.deep_merge(input, other, overwrite_arrays: true, union_arrays: false, keep_existing: false, merge_nil_values: false, merge_non_hash: false)
-      raise ArgumentError, "input expected to be Hash, was #{input.class.name}" unless input.is_a?(Hash)
-      raise ArgumentError, "other expected to be Hash, was #{other.class.name}" unless other.is_a?(Hash)
+    def self.deep_merge(input, other, overwrite_arrays: true, union_arrays: false, keep_existing: false, merge_nil_values: false, merge_non_hash: false, stringify_keys: true)
+      input = hashify(input)
+      other = hashify(other)
+      if stringify_keys
+        input = deep_transform_keys(input, :to_s)
+        other = deep_transform_keys(other, :to_s)
+      end
 
       input.merge(other) do |key, old_value, new_value|
         case old_value

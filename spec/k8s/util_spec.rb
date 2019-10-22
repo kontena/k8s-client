@@ -12,6 +12,37 @@ RSpec.describe K8s::Util do
       )
     end
 
+    describe 'source is an RecursiveOpenStruct' do
+      let(:hash2) { RecursiveOpenStruct.new({ 'foo' => { 'bar' => { 'buzz' => 'aldrin' } } }) }
+
+      it 'deep merges' do
+        expect(subject).to eq(
+          { 'foo' => { 'bar' => { 'baz' => 'dog', 'buzz' => 'aldrin' } } }
+        )
+      end
+    end
+
+    describe 'target is an RecursiveOpenStruct' do
+      let(:hash1) { RecursiveOpenStruct.new({ 'foo' => { 'bar' => { 'baz' => 'dog' } } }) }
+
+      it 'deep merges' do
+        expect(subject).to eq(
+          { 'foo' => { 'bar' => { 'baz' => 'dog', 'buzz' => 'aldrin' } } }
+        )
+      end
+    end
+
+    describe 'source and target are RecursiveOpenStructs' do
+      let(:hash1) { RecursiveOpenStruct.new({ 'foo' => { 'bar' => { 'baz' => 'dog' } } }) }
+      let(:hash2) { RecursiveOpenStruct.new({ 'foo' => { 'bar' => { 'buzz' => 'aldrin' } } }) }
+
+      it 'deep merges' do
+        expect(subject).to eq(
+          { 'foo' => { 'bar' => { 'baz' => 'dog', 'buzz' => 'aldrin' } } }
+        )
+      end
+    end
+
     describe 'overwrite_arrays: true' do
       let(:hash1) { { 'foo' => { 'bar' => [ 'baz' ] } } }
       let(:hash2) { { 'foo' => { 'bar' => [ 'dog' ] } } }
