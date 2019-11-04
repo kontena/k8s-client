@@ -59,8 +59,6 @@ Individual resources are returned as `K8s::Resource` instances, which provide at
 
 The different `K8s::Error::API` subclasses represent different HTTP response codes, such as `K8s::Error::NotFound` or `K8s::Error::Conflict`.
 
-See [`bin/k8s-client`](bin/k8s-client) for example code.
-
 ### Creating a client
 
 #### Unauthenticated client
