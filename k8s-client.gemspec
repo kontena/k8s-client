@@ -35,4 +35,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "webmock", "~> 3.6.2"
   spec.add_development_dependency "rubocop", "~> 0.59"
   spec.add_development_dependency 'yajl-ruby', '~> 1.4.0'
+  spec.add_development_dependency 'coveralls', '~> 0.8'
 end
