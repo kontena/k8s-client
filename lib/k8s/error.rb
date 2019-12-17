@@ -5,6 +5,10 @@ require 'forwardable'
 module K8s
   # Top-level class for all errors raised by this gem.
   class Error < StandardError
+    Transport = Class.new(Error).freeze
+    SSL = Class.new(Transport).freeze
+    Socket = Class.new(Transport).freeze
+
     # Kube API error, related to a HTTP response with a non-2xx code
     class API < Error
       extend Forwardable
