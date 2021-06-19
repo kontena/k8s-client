@@ -37,14 +37,21 @@ module K8s
       end
     end
 
+    def self.default_options
+      {
+        mutate_input_hash: false,
+        recurse_over_arrays: true,
+        preserve_original_keys: false
+      }
+    end
+
     # @param hash [Hash]
     # @param recurse_over_arrays [Boolean]
     # @param options [Hash] see RecursiveOpenStruct#initialize
-    def initialize(hash, recurse_over_arrays: true, **options)
+    def initialize hash, options = {}
       super(
         hash.is_a?(Hash) ? hash : hash.to_h,
-        recurse_over_arrays: recurse_over_arrays,
-        **options
+        options
       )
     end
 
@@ -54,8 +61,8 @@ module K8s
 
     # @param options [Hash] see Hash#to_json
     # @return [String]
-    def to_json(**options)
-      to_h.to_json(**options)
+    def to_json(options = {})
+      to_h.to_json(options)
     end
 
     # merge in fields

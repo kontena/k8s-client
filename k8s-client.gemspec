@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "k8s/client/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "k8s-client"
+  spec.name          = "k8s-client-renewed"
   spec.version       = K8s::Client::VERSION
   spec.authors       = ["Kontena, Inc."]
   spec.email         = ["info@kontena.io"]
@@ -21,18 +21,19 @@ Gem::Specification.new do |spec|
   spec.bindir        = "bin"
   spec.executables   = []
   spec.require_paths = ["lib"]
-  spec.required_ruby_version = '~> 2.4'
+#  spec.required_ruby_version = '> 2.4'
 
-  spec.add_runtime_dependency "excon", "~> 0.66"
-  spec.add_runtime_dependency "recursive-open-struct", "~> 1.1.0"
-  spec.add_runtime_dependency 'hashdiff', '~> 1.0.0'
-  spec.add_runtime_dependency 'jsonpath', '~> 0.9.5'
-  spec.add_runtime_dependency "yaml-safe_load_stream", "~> 0.1"
+  spec.add_runtime_dependency "excon"#, "~> 0.66"
+  spec.add_runtime_dependency "recursive-open-struct"#, "~> 1.1.0"
+  spec.add_runtime_dependency 'hashdiff'#, '~> 1.0.0'
+  spec.add_runtime_dependency 'jsonpath'#, '~> 0.9.5'
+  spec.add_runtime_dependency "yaml-safe_load_stream-renewed"#, "~> 0.1"
 
-  spec.add_development_dependency "bundler", ">= 1.17", "< 3.0"
-  spec.add_development_dependency "rake", "~> 10.0"
-  spec.add_development_dependency "rspec", "~> 3.7"
-  spec.add_development_dependency "webmock", "~> 3.6.2"
-  spec.add_development_dependency "rubocop", "~> 0.59"
-  spec.add_development_dependency 'yajl-ruby', '~> 1.4.0'
+#  spec.add_development_dependency "bundler"#, ">= 1.17", "< 3.0"
+  spec.add_development_dependency "byebug"#, "~> 10.0"
+  spec.add_development_dependency "rake"#, "~> 10.0"
+  spec.add_development_dependency "rspec"#, "~> 3.7"
+  spec.add_development_dependency "webmock"#, "~> 3.6.2"
+  spec.add_development_dependency "rubocop"#, "~> 0.59"
+  spec.add_development_dependency 'yajl-ruby'#, '~> 1.4.0'
 end
