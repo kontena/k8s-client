@@ -1,5 +1,8 @@
 # K8s::Client
 
+# unmaintained, moved to https://github.com/k8s-ruby/k8s-ruby
+
+
 [![Build Status](https://travis-ci.com/kontena/k8s-client.svg?branch=master)](https://travis-ci.com/kontena/k8s-client)
 [![Gem Version](https://badge.fury.io/rb/k8s-client.svg)](https://badge.fury.io/rb/k8s-client)
 [![Yard Docs](http://img.shields.io/badge/yard-docs-blue.svg)](http://www.rubydoc.info/github/kontena/k8s-client/master)
